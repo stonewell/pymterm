@@ -26,7 +26,9 @@ def _expand_cap(termcap_filepath, cap, depth):
 
 def _get_entry(termcap_filepath, name, depth):
 	if name in _entry_cache:
-		return _expand_cap(termcap_filepath, _entry_cache[name], depth)
+		cap_array = _entry_cache[name]
+		cap_array[0] = _expand_cap(termcap_filepath, cap_array[0], depth)
+		return cap_array[0]
 
 	if depth > MAX_DEPTH:
 		return None
@@ -71,8 +73,9 @@ def _get_entry(termcap_filepath, name, depth):
 			cap = _expand_cap(termcap_filepath, cap, depth)
 		
 		#cache name with cap
+		cap_array = [cap]
 		for n in names:
-			_entry_cache[n] = cap
+			_entry_cache[n] = cap_array
 
 		if name in names:
 			break
@@ -81,7 +84,7 @@ def _get_entry(termcap_filepath, name, depth):
 
 	f.close()
 	
-	return _entry_cache[name]
+	return _entry_cache[name][0]
 		
 if __name__ == '__main__':
 	print get_entry(sys.argv[1], 'xterm-color'), '\n'		
