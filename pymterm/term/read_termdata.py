@@ -87,9 +87,12 @@ def _get_entry(termcap_filepath, name, depth):
 	return _entry_cache[name][0]
 		
 if __name__ == '__main__':
-	print get_entry(sys.argv[1], 'xterm-color'), '\n'		
-	print get_entry(sys.argv[1], 'linux'), '\n'		
-	print get_entry(sys.argv[1], 'putty'), '\n'		
+#	print get_entry(sys.argv[1], 'xterm'), '\n'		
+	print get_entry(sys.argv[1], 'xterm-256color'), '\n'		
+#	print get_entry(sys.argv[1], 'linux'), '\n'		
+#	print get_entry(sys.argv[1], 'ansi'), '\n'		
+#	print get_entry(sys.argv[1], 'vt100'), '\n'		
+#	print get_entry(sys.argv[1], 'vt200'), '\n'		
 
 		
 		
