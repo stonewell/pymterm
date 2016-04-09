@@ -28,7 +28,7 @@ class ControlDataState:
 	def __init__(self):
 		self.cap_name = ''
 		self.next_states = {}
-		self.increase = False
+		self.increase_param = False
 		self.digit_state = None
 
 	def add_state(self, c, state):
@@ -194,7 +194,10 @@ def build_parser_state_machine(cap_str_value, start_state):
 		is_digit_state = False
 			
 		pos += 1
-		
+
+	cur_state.increase_param = increase_param
+
+	return cur_state
                 
 def parse_str_cap(field, start_state):
 	cap_str_value = CapStringValue()
@@ -210,7 +213,8 @@ def parse_str_cap(field, start_state):
 	#build the parser state machine
 	value = cap_str_value.value = value[pos:]
 
-	build_parser_state_machine(cap_str_value, start_state)
+	cap_state = build_parser_state_machine(cap_str_value, start_state)
+	cap_state.cap_name = cap_str_value.name
 	
 	return {parts[0]:cap_str_value}
 
