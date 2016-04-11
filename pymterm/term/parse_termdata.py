@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 
 class Cap:
 	def __init__(self):
@@ -24,11 +25,17 @@ def parse_cap(cap_str):
 
 	return cap
 
+class ControlDataParserContext:
+	def __init__(self):
+		self.params = []
+
+	def push_param(self, param):
+		self.params.append(param)
+		
 class ControlDataState:
 	def __init__(self):
-		self.cap_name = ''
+		self.cap_name = {}
 		self.next_states = {}
-		self.increase_param = False
 		self.digit_state = None
 
 	def add_state(self, c, state):
@@ -45,13 +52,46 @@ class ControlDataState:
 		self.digit_state = state
 		return state
 
-	def handle(self, c):
-		pass
+	def handle(self, context, c):
+		if c in self.next_states:
+			return self.next_states[c]
+
+		return self.digit_state.handle(context, c) if self.digit_state else None
+
+	def get_cap(self, params):
+		if len(params) == 0:
+			return self.cap_name[''] if '' in self.cap_name else None
+
+		str_match = ','.join([str(x) for x in params])
+		
+		for k in self.cap_name:
+			re_str = k.replace('*', '[0-9]+')
+
+			if re.match(re_str, str_match):
+				return self.cap_name[k]
+
+		return None
+			
 
 class DigitState(ControlDataState):
 	def __init__(self):
 		ControlDataState.__init__(self)
 		self.digit_base = 10
+		self.digits = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F']
+		self.value = None
+
+	def handle(self, context, cc):
+		c = cc.upper()
+		
+		if c in self.digits[:self.digit_base]:
+			self.value = self.value * self.digit_base + self.digits.index(c) if self.value else self.digits.index(c)
+
+			return self
+		else:
+			if self.value:
+				context.push_param(self.value)
+				self.value = None
+			return ControlDataState.handle(self, context, cc)
 		
 class CapStringValue:
 	def __init__(self):
@@ -113,6 +153,7 @@ def build_parser_state_machine(cap_str_value, start_state):
 	increase_param = False
 	is_digit_state = False
 	digit_base = 10
+	params = []
 	
 	while pos <len(value):
 		c = value[pos]
@@ -179,11 +220,30 @@ def build_parser_state_machine(cap_str_value, start_state):
 				digit_base = 16
 			else:
 				raise ValueError('unknown format string:' + c + "," + str(pos) + "," + value)
+		elif c.isdigit():
+			v = 0
+			while pos < len(value) and c.isdigit():
+				v = v * 10 + int(c)
+				pos += 1
+				if pos < len(value):
+					c = value[pos]
+
+			if not c.isdigit():
+				pos -= 1
+				#restore the last digit
+				c = value[pos]
+
+			#save the params
+			params.append(str(v))
 
 		#build state with c
 		if is_digit_state:
 			cur_state = cur_state.add_digit_state(DigitState())
 			cur_state.digit_base = digit_base
+			#save the params
+			params.append('*')
+		elif c.isdigit():
+			cur_state = cur_state.add_digit_state(DigitState())
 		else:
 			cur_state = cur_state.add_state(c, ControlDataState())
 
@@ -195,9 +255,7 @@ def build_parser_state_machine(cap_str_value, start_state):
 			
 		pos += 1
 
-	cur_state.increase_param = increase_param
-
-	return cur_state
+	return (cur_state, params, increase_param)
                 
 def parse_str_cap(field, start_state):
 	cap_str_value = CapStringValue()
@@ -213,16 +271,22 @@ def parse_str_cap(field, start_state):
 	#build the parser state machine
 	value = cap_str_value.value = value[pos:]
 
-	cap_state = build_parser_state_machine(cap_str_value, start_state)
-	cap_state.cap_name = cap_str_value.name
+	cap_state, params, increase_param = build_parser_state_machine(cap_str_value, start_state)
+
+	cap_name_key = ','.join(params)
+
+	if cap_name_key in cap_state.cap_name:
+		raise ValueError('same parameter for different cap name:[' + cap_name_key + '],' + cap_str_value.name)
 	
+	cap_state.cap_name[cap_name_key] = (cap_str_value.name, increase_param)
+
 	return {parts[0]:cap_str_value}
 
 if __name__ == '__main__':
 	import read_termdata
 	cap_str = read_termdata.get_entry(sys.argv[1], 'xterm-256color')
 
-	cap = parse_cap(cap_str)
+	cap1 = cap = parse_cap(cap_str)
 	print cap.flags, cap.cmds
 	
 	cap = parse_cap(":cm=1.3*\E")
@@ -230,7 +294,36 @@ if __name__ == '__main__':
 
 	cap = parse_cap(":cm=1a.a.3*\E")
 	print cap.flags, cap.cmds
+
+	context = ControlDataParserContext()
+
+	state = cap1.control_data_start_state
+	next_state = None
+
+	def try_parse(v):	
+		state = cap1.control_data_start_state
+		next_state = None
+		context.params = []
 		
+		for c in v:
+			next_state = state.handle(context, c)
+
+			if not next_state:
+				break
+
+			state = next_state
+
+		print state.cap_name, context.params
+
+		print 'matched cap:', state.get_cap(context.params)
+
+	try_parse('\x1B[10;15H')
+	try_parse('\x1B[1;2H')
+	try_parse('\x1B[10;15R')
+	try_parse('\x1B[1;4R')
+	try_parse('^H')
+	try_parse('^H100')
+	try_parse('^100H100')
 		
 		
 		
