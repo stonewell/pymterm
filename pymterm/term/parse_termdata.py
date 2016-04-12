@@ -207,7 +207,7 @@ def build_parser_state_machine(cap_str_value, start_state):
 			if pos >= len(value):
 				raise ValueError("Unterminaled str")
 			
-			c = chr(ord(value[pos]) - ord('A'))
+			c = chr(ord(value[pos]) - ord('A') + 1)
 		elif c == '%':
 			pos += 1
 

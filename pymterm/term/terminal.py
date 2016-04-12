@@ -99,5 +99,11 @@ class Terminal:
             self.status_file = None
 
     def cursor_left(self, context):
-        sys.stdout.write(chr(ord('H') - ord('A')))
-        self.enter_status_line(False)
+        sys.stdout.write(chr(ord('H') - ord('A') + 1))
+        
+    def cursor_down(self, context):
+        sys.stdout.write(chr(ord('J') - ord('A') + 1))
+
+    def carriage_return(self, context):
+        sys.stdout.write(chr(ord('M') - ord('A') + 1))
+        
