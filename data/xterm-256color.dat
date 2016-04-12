@@ -15,7 +15,6 @@ xterm-256color|xterm with 256 colors:\
 	lines#24:\
 	max_colors#256:\
 	max_pairs#32767:\
-	acs_chars=``aaffggiijjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:\
 	back_tab=\E[Z:\
 	bell=^G:\
 	carriage_return=^M:\

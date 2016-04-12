@@ -201,6 +201,13 @@ def build_parser_state_machine(cap_str_value, start_state):
 				c = chr(v)
 			else:
 				raise ValueError("unknown escape string:" + c + "," + str(pos) + "," + value)
+		elif c == '^':
+			pos += 1
+
+			if pos >= len(value):
+				raise ValueError("Unterminaled str")
+			
+			c = chr(ord(value[pos]) - ord('A'))
 		elif c == '%':
 			pos += 1
 

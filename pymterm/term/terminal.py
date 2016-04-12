@@ -6,6 +6,7 @@ import time
 import traceback
 import read_termdata
 import parse_termdata
+import cap.cap_manager
 
 class Terminal:
     def __init__(self, cfg):
@@ -16,6 +17,8 @@ class Terminal:
         self.context = parse_termdata.ControlDataParserContext()
         self.state = self.cap.control_data_start_state
         self.control_data = []
+        self.in_status_line = False
+        self.status_file = None
 
     def __load_cap_str__(self, term_name):
         term_path = os.path.dirname(os.path.realpath(__file__))
@@ -27,13 +30,28 @@ class Terminal:
 
     def on_control_data(self, cap_turple):
         cap_name, increase_params = cap_turple
-        print 'matched:', cap_turple, self.context.params
-        if cap_name == 'carriage_return':
-            sys.stdout.write('\r\n')
+        cap_handler = cap.cap_manager.get_cap_handler(cap_name)
+
+        if not cap_handler:
+            print 'matched:', cap_turple, self.context.params
+        elif cap_handler:
+            cap_handler.handle(self, self.context, cap_turple)
 
     def output_data(self, c):
+        if self.in_status_line:
+            self.output_status_line_data(c)
+        else:
+            self.output_normal_data(c)
+
+    def output_normal_data(self, c):
         sys.stdout.write(c)
 
+    def output_status_line_data(self, c):
+        if c == '\x1b':
+            sys.exit(1)
+        self.status_file.write(c)
+        pass
+        
     def __try_parse__(self, data):	
         next_state = None
 
@@ -45,23 +63,41 @@ class Terminal:
 
                 if cap_turple:
                     self.on_control_data(cap_turple)
-                    d = ''.join(self.control_data)
-                    self.output_data(d.replace('\\E', '\x1B'))
                 elif len(self.control_data) > 0:
                     print 'current state:', self.state.cap_name, self.context.params
-                    print "unknown control data:" + ''.join(self.control_data)
+                    print "unknown control data:" + ''.join(self.control_data) + "," + c
 
-                    d = ''.join(self.control_data)
-                    self.output_data(d.replace('\\E', '\x1B'))
-                    pass
+                    sys.exit(1)
 
                 self.state = self.cap.control_data_start_state
                 self.context.params = []
-                self.output_data(c)
                 self.control_data = []
+
+                if cap_turple:
+                    # retry last char
+                    next_state = self.state.handle(self.context, c)
+
+                    if next_state:
+                        self.state = next_state
+                        self.control_data.append(c if not c == '\x1B' else '\\E')
+                    else:
+                        self.output_data(c)
+                else:
+                    self.output_data(c)
                 
                 continue
 
             self.state = next_state
             self.control_data.append(c if not c == '\x1B' else '\\E')
         
+    def enter_status_line(self, enter):
+        self.in_status_line = enter
+        if self.in_status_line:
+            self.status_file = open('status.log', 'a')
+        else:
+            self.status_file.close()
+            self.status_file = None
+
+    def cursor_left(self, context):
+        sys.stdout.write(chr(ord('H') - ord('A')))
+        self.enter_status_line(False)
