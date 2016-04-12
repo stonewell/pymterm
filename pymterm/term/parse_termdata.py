@@ -63,8 +63,11 @@ class ControlDataState:
 			return self.cap_name[''] if '' in self.cap_name else None
 
 		str_match = ','.join([str(x) for x in params])
+
+		if str_match in self.cap_name:
+			return self.cap_name[str_match]
 		
-		for k in self.cap_name:
+		for k in sorted(self.cap_name, key=lambda v: str(v.count('*')) + v):
 			re_str = k.replace('*', '[0-9]+')
 
 			if re.match(re_str, str_match):
@@ -88,7 +91,7 @@ class DigitState(ControlDataState):
 
 			return self
 		else:
-			if self.value:
+			if self.value is not None:
 				context.push_param(self.value)
 				self.value = None
 			return ControlDataState.handle(self, context, cc)
@@ -308,22 +311,29 @@ if __name__ == '__main__':
 		for c in v:
 			next_state = state.handle(context, c)
 
-			if not next_state:
+			if not next_state or state.get_cap(context.params):
 				break
 
+			print 'next state:', c, next_state.next_states
 			state = next_state
 
 		print state.cap_name, context.params
 
-		print 'matched cap:', state.get_cap(context.params)
+		print 'matched cap:', state.get_cap(context.params), state.next_states
 
-	try_parse('\x1B[10;15H')
-	try_parse('\x1B[1;2H')
-	try_parse('\x1B[10;15R')
-	try_parse('\x1B[1;4R')
-	try_parse('^H')
-	try_parse('^H100')
-	try_parse('^100H100')
+#	try_parse('\x1B[10;15H')
+#	try_parse('\x1B[1;2H')
+#	try_parse('\x1B[10;15R')
+#	try_parse('\x1B[1;4R')
+#	try_parse('^H')
+#	try_parse('^H100')
+#	try_parse('^100H100')
+#	try_parse('\x1B]0;')
+#	try_parse('\x1B[97m')
+#	try_parse('\x1B[1;34m')
+
+	try_parse('\x1B[?1h\x1B=\x1B')
+	try_parse('\x1B[?1034h\x1B=\x1B')
 		
 		
 		
