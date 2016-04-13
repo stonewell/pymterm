@@ -18,7 +18,6 @@ class Terminal:
         self.state = self.cap.control_data_start_state
         self.control_data = []
         self.in_status_line = False
-        self.status_file = None
 
     def __load_cap_str__(self, term_name):
         term_path = os.path.dirname(os.path.realpath(__file__))
@@ -89,13 +88,11 @@ class Terminal:
         
     def enter_status_line(self, enter):
         self.in_status_line = enter
-        if self.in_status_line:
-            self.status_file = open('status.log', 'a')
-        elif self.status_file:
-            self.status_file.close()
-            self.status_file = None
 
     def cursor_left(self, context):
+        raise ValueError('not implemented')
+                    
+    def cursor_right(self, context):
         raise ValueError('not implemented')
         
     def cursor_down(self, context):

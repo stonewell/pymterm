@@ -47,23 +47,25 @@ class Session:
                 if not data:
                     sys.stdout.write('\r\n*** EOF ***\r\n\r\n')
                     sys.stdout.flush()
-
-                    sock.send('ls\n');
-                    
-                    r, w, e = select.select([sock.fileno()], [], [])
-
-                    if sys.stdin.fileno() in r:
-                        x = sys.stdin.read(1)
-                        if len(x) > 0:
-                            sock.send(x)
-                        if x == 'q':
-	                        break
-                    continue
+                    break
                 self.terminal.on_data(data)
+                
+        def read_input(sock):
+            while True:
+                x = sys.stdin.read(1)
+                if len(x) > 0:
+                    sock.send(x)
+                    if x == 'q':
+                        break
+
+                
 
         chan.send('echo $TERM\x01abc\r\n')
         chan.send('ls\r\n')
-        chan.send('exit\r\n')
+#        chan.send('exit\r\n')
         writer = threading.Thread(target=writeall, args=(chan,))
         writer.start()
+        reader = threading.Thread(target=read_input, args=(chan,))
+        reader.start()
         writer.join()
+        reader.join()
