@@ -5,12 +5,12 @@ import sys
 import time
 import traceback
 
-from term.terminal import Terminal
+from term.terminal_console import TerminalConsole
 
 class Session:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.terminal = Terminal(cfg)
+        self.terminal = TerminalConsole(cfg)
 
     def connect(self):
         username = self.cfg.username
@@ -34,7 +34,7 @@ class Session:
         print('^^^^ ' + msg);
 
     def interactive_shell(self, chan):
-        chan.get_pty(term=self.cfg.term_name)
+        chan.get_pty(term=self.cfg.term_name, width=160)
         chan.invoke_shell()
         self.windows_shell(chan)
 
@@ -61,7 +61,7 @@ class Session:
                     continue
                 self.terminal.on_data(data)
 
-        chan.send('echo $TERM\r\n')
+        chan.send('echo $TERM\x01abc\r\n')
         chan.send('ls\r\n')
         chan.send('exit\r\n')
         writer = threading.Thread(target=writeall, args=(chan,))
