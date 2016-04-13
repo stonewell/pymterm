@@ -12,7 +12,12 @@ class Terminal:
     def __init__(self, cfg):
         self.cfg = cfg
 
-        self.cap_str = self.__load_cap_str__(self.cfg.term_name) + self.__load_cap_str__('generic-color')
+        try:
+            self.cap_str = self.__load_cap_str__(self.cfg.term_name)
+        except:
+            self.cap_str = self.__load_cap_str__('xterm-256color')
+
+        self.cap_str += self.__load_cap_str__('generic-color')
         self.cap = parse_termdata.parse_cap(self.cap_str)
         self.context = parse_termdata.ControlDataParserContext()
         self.state = self.cap.control_data_start_state
