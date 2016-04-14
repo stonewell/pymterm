@@ -14,7 +14,7 @@ class TerminalConsole(Terminal):
     def __init__(self, cfg):
 	    Terminal.__init__(self, cfg)
 
-    def output_normal_data(self, c):
+    def output_normal_data(self, c, insert = False):
         if c == '\x1b':
             sys.exit(1)
         sys.stdout.write(c)

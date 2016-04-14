@@ -47,12 +47,6 @@ class Terminal:
         else:
             self.output_normal_data(c)
 
-    def output_normal_data(self, c):
-        raise ValueError('not implemented')
-
-    def output_status_line_data(self, c):
-        raise ValueError('not implemented')
-        
     def __try_parse__(self, data):	
         next_state = None
 
@@ -93,21 +87,3 @@ class Terminal:
         
     def enter_status_line(self, enter):
         self.in_status_line = enter
-
-    def cursor_left(self, context):
-        raise ValueError('not implemented')
-                    
-    def cursor_right(self, context):
-        raise ValueError('not implemented')
-        
-    def cursor_down(self, context):
-        raise ValueError('not implemented')
-
-    def carriage_return(self, context):
-        raise ValueError('not implemented')
-        
-    def set_foreground(self, light, color_idx):
-        raise ValueError('not implemented')
-	    
-    def origin_pair(self):
-        raise ValueError('not implemented')

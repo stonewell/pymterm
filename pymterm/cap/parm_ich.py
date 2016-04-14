@@ -8,4 +8,5 @@ def handle(term, context, cap_turple):
 		for idx in range(len(context.params)):
 			context.params[idx] -= 1
 
-	sys.stdout.write('\x1B%d' % context.params[0])
+	term.output_normal_data(' ', True)
+
