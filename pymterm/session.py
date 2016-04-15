@@ -6,11 +6,17 @@ import time
 import traceback
 
 from term.terminal_console import TerminalConsole
+from term_kivy.term_kivy import TerminalKivyApp
 
 class Session:
     def __init__(self, cfg):
         self.cfg = cfg
-        self.terminal = TerminalConsole(cfg)
+
+        if self.cfg.console:
+            self.terminal = TerminalConsole(cfg)
+        else:
+	        self.term_kivy_app = TerminalKivyApp()
+	        self.terminal = self.term_kivy_app.terminal(cfg)
 
     def connect(self):
         username = self.cfg.username
@@ -58,14 +64,17 @@ class Session:
                     if x == 'q':
                         break
 
-                
 
         chan.send('echo $TERM\x01abc\r\n')
         chan.send('ls\r\n')
-#        chan.send('exit\r\n')
+
         writer = threading.Thread(target=writeall, args=(chan,))
         writer.start()
-        reader = threading.Thread(target=read_input, args=(chan,))
-        reader.start()
+
+        if self.cfg.console:
+	        reader = threading.Thread(target=read_input, args=(chan,))
+	        reader.start()
+        else:
+            self.term_kivy_app.run()
+            
         writer.join()
-        reader.join()

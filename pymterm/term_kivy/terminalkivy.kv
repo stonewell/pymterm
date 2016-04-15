@@ -1,0 +1,10 @@
+<RootWidget>:
+    txtBuffer: txtBuffer
+    ScrollView:
+        id: e_scroll
+        TextInput:
+            id: txtBuffer
+            size_hint_y: None
+            size_hint_x: None
+            height: max(e_scroll.height, self.minimum_height)
+            width: max(e_scroll.width, self.width)

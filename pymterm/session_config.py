@@ -1,8 +1,9 @@
 import os
 import sys
+import getpass
 
 def get_default_user():
-    pass
+	return getpass.getuser()
 
 class SessionConfig:
     def __init__(self, args):
