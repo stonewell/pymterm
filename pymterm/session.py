@@ -54,11 +54,12 @@ class Session:
 			        break
 		        self.terminal.on_data(data)
 
-		chan.send('echo $TERM\x01abc\r\n')
-        chan.send('ls\r\n')
-
         self.writer = writer = threading.Thread(target=writeall, args=(chan,))
         writer.start()
+
+        chan.send('echo $TERM\x01abc\r\n')
+        chan.send('ls\r\n')
+
 
     def wait_for_quit(self):
         self.writer.join()
