@@ -2,9 +2,9 @@ import os
 import sys
 import argparse
 
-import ssh.client
-import session
 import session_config
+
+from term.terminal_console import TerminalConsoleApp
 
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
@@ -26,7 +26,9 @@ if __name__ == '__main__':
     except(ValueError) as e:
         args_parser().print_help()
         sys.exit(1)
-    
-    session = session.Session(cfg)
 
-    ssh.client.start_client(session, cfg)
+    if cfg.console:
+	    TerminalConsoleApp(cfg).start()
+    else:
+        from term_kivy.term_kivy import TerminalKivyApp
+        TerminalKivyApp(cfg).start()

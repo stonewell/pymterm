@@ -5,18 +5,14 @@ import sys
 import time
 import traceback
 
-from term.terminal_console import TerminalConsole
-from term_kivy.term_kivy import TerminalKivyApp
-
 class Session:
-    def __init__(self, cfg):
+    def __init__(self, cfg, terminal):
         self.cfg = cfg
-
-        if self.cfg.console:
-            self.terminal = TerminalConsole(cfg)
-        else:
-	        self.term_kivy_app = TerminalKivyApp()
-	        self.terminal = self.term_kivy_app.terminal(cfg)
+        self.terminal = terminal
+        self.session = None
+        self.sock = None
+        self.writer = None
+        self.chan = None
 
     def connect(self):
         username = self.cfg.username
@@ -25,7 +21,7 @@ class Session:
 
         # now connect
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.sock = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((hostname, port))
 
             return sock
@@ -47,34 +43,22 @@ class Session:
     def windows_shell(self, chan):
         import threading
 
+        self.chan = chan
+	    
         def writeall(sock):
-            while True:
-                data = sock.recv(256)
-                if not data:
-                    sys.stdout.write('\r\n*** EOF ***\r\n\r\n')
-                    sys.stdout.flush()
-                    break
-                self.terminal.on_data(data)
-                
-        def read_input(sock):
-            while True:
-                x = sys.stdin.read(1)
-                if len(x) > 0:
-                    sock.send(x)
-                    if x == 'q':
-                        break
+	        while True:
+		        data = sock.recv(256)
+		        if not data:
+			        sys.stdout.write('\r\n*** EOF ***\r\n\r\n')
+			        sys.stdout.flush()
+			        break
+		        self.terminal.on_data(data)
 
-
-        chan.send('echo $TERM\x01abc\r\n')
+		chan.send('echo $TERM\x01abc\r\n')
         chan.send('ls\r\n')
 
-        writer = threading.Thread(target=writeall, args=(chan,))
+        self.writer = writer = threading.Thread(target=writeall, args=(chan,))
         writer.start()
 
-        if self.cfg.console:
-	        reader = threading.Thread(target=read_input, args=(chan,))
-	        reader.start()
-        else:
-            self.term_kivy_app.run()
-            
-        writer.join()
+    def wait_for_quit(self):
+        self.writer.join()

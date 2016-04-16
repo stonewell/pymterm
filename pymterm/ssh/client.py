@@ -146,9 +146,8 @@ def start_client(session, cfg):
         chan = t.open_session()
         print('*** Here we go!\n')
         session.interactive_shell(chan)
-        chan.close()
-        t.close()
 
+        return (t, chan)
     except Exception as e:
         print('*** Caught exception: ' + str(e.__class__) + ': ' + str(e))
         traceback.print_exc()
