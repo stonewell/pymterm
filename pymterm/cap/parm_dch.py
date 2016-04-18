@@ -8,5 +8,5 @@ def handle(term, context, cap_turple):
 		for idx in range(len(context.params)):
 			context.params[idx] -= 1
 
-	term.output_normal_data(' ' * context.params[0], True)
+	term.delete_chars(context.params[0])
 

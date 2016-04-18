@@ -36,7 +36,10 @@ class Session:
         print('^^^^ ' + msg);
 
     def interactive_shell(self, chan):
-        chan.get_pty(term=self.cfg.term_name, width=160)
+        cols = self.terminal.get_cols()
+        rows = self.terminal.get_rows()
+        
+        chan.get_pty(term=self.cfg.term_name, width=cols, height = rows)
         chan.invoke_shell()
         self.windows_shell(chan)
 
@@ -60,6 +63,8 @@ class Session:
         chan.send('echo $TERM\x01abc\r\n')
         chan.send('ls\r\n')
 
-
     def wait_for_quit(self):
         self.writer.join()
+
+    def get_tab_width(self):
+        return self.terminal.get_tab_width()

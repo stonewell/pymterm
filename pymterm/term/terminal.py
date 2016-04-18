@@ -87,3 +87,22 @@ class Terminal:
         
     def enter_status_line(self, enter):
         self.in_status_line = enter
+
+    def get_cols(self):
+        if 'columns' in self.cap.flags:
+            return self.cap.flags['columns']
+
+        return 80
+
+    def get_rows(self):
+        if 'lines' in self.cap.flags:
+            return self.cap.flags['lines']
+
+        return 24
+
+    def get_tab_width(self):
+        if 'init_tabs' in self.cap.flags:
+            return self.cap.flags['init_tabs']
+
+        return 8
+    
