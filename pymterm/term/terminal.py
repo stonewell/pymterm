@@ -47,20 +47,23 @@ class Terminal:
         else:
             self.output_normal_data(c)
 
-    def __handle_cap__(self):
+    def __handle_cap__(self, check_unknown = True):
         cap_turple = self.state.get_cap(self.context.params)
 
         if cap_turple:
             self.on_control_data(cap_turple)
-        elif len(self.control_data) > 0:
+            
+            self.state = self.cap.control_data_start_state
+            self.context.params = []
+            self.control_data = []
+        elif check_unknown and len(self.control_data) > 0:
             print 'current state:', self.state.cap_name, self.context.params
-            print "unknown control data:" + ''.join(self.control_data) + "," + c
+            print "unknown control data:" + ''.join(self.control_data)
 
             sys.exit(1)
 
-        self.state = self.cap.control_data_start_state
-        self.context.params = []
-        self.control_data = []
+        if not check_unknown and not cap_turple and len(self.control_data) > 0:
+            print 'found unfinished data'
 
         return cap_turple
 	    
@@ -91,7 +94,7 @@ class Terminal:
             self.control_data.append(c if not c == '\x1B' else '\\E')
 	
         if self.state:
-	        self.__handle_cap__()
+	        self.__handle_cap__(False)
 	        
     def enter_status_line(self, enter):
         self.in_status_line = enter
