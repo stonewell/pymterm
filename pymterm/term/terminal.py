@@ -37,7 +37,7 @@ class Terminal:
         cap_handler = cap.cap_manager.get_cap_handler(cap_name)
 
         if not cap_handler:
-            print 'matched:', cap_turple, self.context.params
+            print 'no matched:', cap_turple, self.context.params
         elif cap_handler:
             cap_handler.handle(self, self.context, cap_turple)
 
@@ -84,7 +84,16 @@ class Terminal:
 
             self.state = next_state
             self.control_data.append(c if not c == '\x1B' else '\\E')
-        
+	
+        if self.state and self.state.get_cap(self.context.params):
+            cap_turple = self.state.get_cap(self.context.params)
+
+            if cap_turple:
+                self.on_control_data(cap_turple)
+                self.state = self.cap.control_data_start_state
+                self.context.params = []
+                self.control_data = []
+                
     def enter_status_line(self, enter):
         self.in_status_line = enter
 

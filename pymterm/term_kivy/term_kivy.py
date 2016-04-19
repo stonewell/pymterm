@@ -22,8 +22,6 @@ from term.terminal import Terminal
 from kivy.lang import Builder
 from kivy.uix.textinput import TextInput
 
-bk = False
-
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
 class RootWidget(FloatLayout):
@@ -43,7 +41,6 @@ class TermTextInput(TextInput):
         print('The key', keycode, 'have been pressed')
         print(' - text is %r' % text)
         print(' - modifiers are %r' % modifiers)
-        bk = False
 
         if modifiers == ['ctrl'] and text:
             for c in text:
@@ -60,8 +57,6 @@ class TermTextInput(TextInput):
         if not text:
             if code == 8:
                 #backspace
-                print 'handle backspace'
-                bk = True
                 self.channel.send('\177')
             elif code < 256:
                 self.channel.send(chr(code))
@@ -133,8 +128,6 @@ class TerminalKivy(Terminal):
         return self.get_line(self.row)
     
     def save_buffer(self, c, insert = False):
-        if bk:
-            print "save_buffer:", c
         line = self.get_cur_line()
         if len(line) <= self.col:
             line.append(c)
