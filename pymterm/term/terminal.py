@@ -47,6 +47,23 @@ class Terminal:
         else:
             self.output_normal_data(c)
 
+    def __handle_cap__(self):
+        cap_turple = self.state.get_cap(self.context.params)
+
+        if cap_turple:
+            self.on_control_data(cap_turple)
+        elif len(self.control_data) > 0:
+            print 'current state:', self.state.cap_name, self.context.params
+            print "unknown control data:" + ''.join(self.control_data) + "," + c
+
+            sys.exit(1)
+
+        self.state = self.cap.control_data_start_state
+        self.context.params = []
+        self.control_data = []
+
+        return cap_turple
+	    
     def __try_parse__(self, data):	
         next_state = None
 
@@ -54,19 +71,7 @@ class Terminal:
             next_state = self.state.handle(self.context, c)
 
             if not next_state or self.state.get_cap(self.context.params):
-                cap_turple = self.state.get_cap(self.context.params)
-
-                if cap_turple:
-                    self.on_control_data(cap_turple)
-                elif len(self.control_data) > 0:
-                    print 'current state:', self.state.cap_name, self.context.params
-                    print "unknown control data:" + ''.join(self.control_data) + "," + c
-
-                    sys.exit(1)
-
-                self.state = self.cap.control_data_start_state
-                self.context.params = []
-                self.control_data = []
+                cap_turple = self.__handle_cap__()
 
                 if cap_turple:
                     # retry last char
@@ -85,15 +90,9 @@ class Terminal:
             self.state = next_state
             self.control_data.append(c if not c == '\x1B' else '\\E')
 	
-        if self.state and self.state.get_cap(self.context.params):
-            cap_turple = self.state.get_cap(self.context.params)
-
-            if cap_turple:
-                self.on_control_data(cap_turple)
-                self.state = self.cap.control_data_start_state
-                self.context.params = []
-                self.control_data = []
-                
+        if self.state:
+	        self.__handle_cap__()
+	        
     def enter_status_line(self, enter):
         self.in_status_line = enter
 
