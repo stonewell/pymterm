@@ -68,6 +68,12 @@ class ControlDataState:
             return self.cap_name[str_match]
         
         for k in sorted(self.cap_name, key=lambda v: str(v.count('*')) + v):
+            if k.find('*') < 0:
+                if k == str_match:
+                    return self.cap_name[k]
+                else:
+                    continue
+            
             re_str = k.replace(',**','(,[0-9]+)?')
             re_str = re_str.replace('**','([0-9]+)?')
             re_str = re_str.replace('*', '[0-9]+')
@@ -271,7 +277,13 @@ def build_parser_state_machine(cap_str_value, start_state):
             repeat_char = c
 
         if not is_repeat_state and repeat_enter_state:
+            old_cur_state = cur_state
             cur_state = repeat_enter_state.add_state(c, cur_state)
+
+            if cur_state != old_cur_state:
+                #merge the state
+                print 'should put generic pattern before special pattern'
+                sys.exit(1)
             repeat_enter_state = None
 
         is_digit_state = False

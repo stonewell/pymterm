@@ -172,4 +172,6 @@ xterm-256color|xterm with 256 colors:\
 	user6=\E[%i%d;%dR:\
 	user7=\E[6n:\
 	user8=\E[?1;2c:\
-	user9=\E[c:
+	user9=\E[c:\
+	set_a_foreground=\E[38;5;%dm:\
+	set_a_background=\E[48;5;%dm:
