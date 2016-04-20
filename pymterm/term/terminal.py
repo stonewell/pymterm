@@ -12,7 +12,7 @@ class Terminal:
     def __init__(self, cfg):
         self.cfg = cfg
 
-        self.cap_str = self.__load_cap_str__('generic-color')
+        self.cap_str = self.__load_cap_str__('generic-cap')
         try:
             self.cap_str += self.__load_cap_str__(self.cfg.term_name)
         except:
