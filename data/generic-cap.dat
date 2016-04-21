@@ -1,3 +1,5 @@
 generic-cap|generic ansi escape:\
 	to_status_line=\E]0;:\
-	set_attributes=\E[%d\(;%d\)m:
+	set_attributes=\E[%d\(;%d\)m:\
+	qet_attributes=\E]%d;?^G:\
+	qet1_attributes=\E]%d;?\234:
