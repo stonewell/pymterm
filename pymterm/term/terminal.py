@@ -47,7 +47,7 @@ class Terminal:
         else:
             self.output_normal_data(c)
 
-    def __handle_cap__(self, check_unknown = True):
+    def __handle_cap__(self, check_unknown = True, data = None):
         cap_turple = self.state.get_cap(self.context.params)
 
         if cap_turple:
@@ -59,6 +59,7 @@ class Terminal:
         elif check_unknown and len(self.control_data) > 0:
             print 'current state:', self.state.cap_name, self.context.params
             print "unknown control data:" + ''.join(self.control_data)
+            print 'data:' + data.replace('\x1B', '\\E')
 
             sys.exit(1)
 
@@ -74,7 +75,7 @@ class Terminal:
             next_state = self.state.handle(self.context, c)
 
             if not next_state or self.state.get_cap(self.context.params):
-                cap_turple = self.__handle_cap__()
+                cap_turple = self.__handle_cap__(data=data)
 
                 if cap_turple:
                     # retry last char

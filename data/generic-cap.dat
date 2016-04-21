@@ -2,4 +2,9 @@ generic-cap|generic ansi escape:\
 	to_status_line=\E]0;:\
 	set_attributes=\E[%d\(;%d\)m:\
 	qet_attributes=\E]%d;?^G:\
-	qet1_attributes=\E]%d;?\234:
+	qet_attributes=\E]%d;?\234:\
+	orig_pair=\E[m:\
+	clr_eos=\E[2J:\
+	client_report_version=\E[>c:
+
+	
