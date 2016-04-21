@@ -143,6 +143,7 @@ class TerminalKivy(Terminal):
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
+            print 'normal data has escape char'
             sys.exit(1)
                         
         self.save_buffer(c, insert)
@@ -151,6 +152,7 @@ class TerminalKivy(Terminal):
 
     def output_status_line_data(self, c):
         if c == '\x1b':
+            print 'status line data has escape char'
             sys.exit(1)
         pass
         
