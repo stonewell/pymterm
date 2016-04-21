@@ -48,6 +48,8 @@ class TermTextInput(TextInput):
                     self.channel.send(chr(ord(c) - ord('a') + 1))
                 elif c>= '[' and c <= '_':
                     self.channel.send(chr(ord(c) - ord('[') + 27))
+                elif c == '.':
+                    self.channel.send('\x1B[3;5~')
                 else:
                     return False
             return True

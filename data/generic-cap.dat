@@ -4,7 +4,8 @@ generic-cap|generic ansi escape:\
 	qet_attributes=\E]%d;?^G:\
 	qet_attributes=\E]%d;?\234:\
 	orig_pair=\E[m:\
-	clr_eos=\E[2J:\
-	client_report_version=\E[>c:
+	clr_eos=\E[%dJ:\
+	client_report_version=\E[>c:\
+	client_report_version=\E[>0c:
 
 	
