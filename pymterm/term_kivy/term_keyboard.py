@@ -57,8 +57,8 @@ def translate_key(term, keycode, text, modifiers):
     #not handled and no text
     if not handled and not text:
         #todo convert keycode to bytes
-        if ord(text) < 256:
-            result.append(chr(text))
+        if code < 256:
+            result.append(chr(code))
             handled = True
         
     return (''.join(result), handled)
