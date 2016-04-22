@@ -168,6 +168,7 @@ def build_parser_state_machine(cap_str_value, start_state):
     is_digit_state = False
     digit_base = 10
     params = []
+    cap_value = []
     
     while pos <len(value):
         c = value[pos]
@@ -271,6 +272,7 @@ def build_parser_state_machine(cap_str_value, start_state):
             cur_state = cur_state.add_digit_state(DigitState())
         else:
             cur_state = cur_state.add_state(c, ControlDataState())
+            cap_value.append(c)
 
         if is_repeat_state and not repeat_state:
             repeat_state = cur_state
@@ -290,7 +292,7 @@ def build_parser_state_machine(cap_str_value, start_state):
             
         pos += 1
 
-    return (cur_state, params, increase_param)
+    return (cur_state, params, increase_param, ''.join(cap_value))
                 
 def parse_str_cap(field, start_state):
     cap_str_value = CapStringValue()
@@ -306,12 +308,15 @@ def parse_str_cap(field, start_state):
     #build the parser state machine
     value = cap_str_value.value = value[pos:]
 
-    cap_state, params, increase_param = build_parser_state_machine(cap_str_value, start_state)
+    cap_state, params, increase_param, cap_str_value.cap_value = build_parser_state_machine(cap_str_value, start_state)
 
     cap_name_key = ','.join(params)
 
     if cap_name_key in cap_state.cap_name:
-        raise ValueError('same parameter for different cap name:[' + cap_name_key + '],' + cap_str_value.name)
+        e_name, e_inc_param = cap_state.cap_name[cap_name_key]
+
+        if (e_name != cap_str_value.name) or (e_inc_param != increase_param):
+            raise ValueError('same parameter for different cap name:[' + cap_name_key + '],' + cap_str_value.name)
     
     cap_state.cap_name[cap_name_key] = (cap_str_value.name, increase_param)
 

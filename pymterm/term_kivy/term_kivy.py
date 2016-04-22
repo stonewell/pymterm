@@ -4,9 +4,13 @@ import socket
 import sys
 import time
 import traceback
+
+import cap.cap_manager
+
 import term.read_termdata
 import term.parse_termdata
-import cap.cap_manager
+
+import term_keyboard
 
 import session
 import ssh.client
@@ -42,31 +46,14 @@ class TermTextInput(TextInput):
         print(' - text is %r' % text)
         print(' - modifiers are %r' % modifiers)
 
-        if modifiers == ['ctrl'] and text:
-            for c in text:
-                if (c >= 'a' and c <= 'z'):
-                    self.channel.send(chr(ord(c) - ord('a') + 1))
-                elif c>= '[' and c <= '_':
-                    self.channel.send(chr(ord(c) - ord('[') + 27))
-                elif c == '.':
-                    self.channel.send('\x1B[3;5~')
-                else:
-                    return False
-            return True
-            
-        code, key = keycode
+        v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
 
-        if not text:
-            if code == 8:
-                #backspace
-                self.channel.send('\177')
-            elif code < 256:
-                self.channel.send(chr(code))
-            return True
+        if len(v) > 0:
+            self.channel.send(v)
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
-        return False
+        return handled
 
     def insert_text(self, substring, from_undo=False):
         return

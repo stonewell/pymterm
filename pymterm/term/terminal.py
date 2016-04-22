@@ -23,6 +23,7 @@ class Terminal:
         self.state = self.cap.control_data_start_state
         self.control_data = []
         self.in_status_line = False
+        self.keypad_transmit_mode = False
 
     def __load_cap_str__(self, term_name):
         term_path = os.path.dirname(os.path.realpath(__file__))

@@ -6,6 +6,18 @@ generic-cap|generic ansi escape:\
 	orig_pair=\E[m:\
 	clr_eos=\E[%dJ:\
 	client_report_version=\E[>c:\
-	client_report_version=\E[>0c:
+	client_report_version=\E[>0c:\
+	cursor_end=\E[4~:\
+	cursor_home=\E[1~:\
+	cursor_up=\E[A:\
+	cursor_down=\E[B:\
+	cursor_left=\E[D:\
+	cursor_right=\E[C:\
+	key_end=\E[OF:\
+	key_home=\EOH:\
+	key_up=\EOA:\
+	key_down=\EOB:\
+	key_left=\EOD:\
+	key_right=\EOC:
 
 	
