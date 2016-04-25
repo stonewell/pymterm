@@ -21,10 +21,11 @@ from kivy.properties import ObjectProperty
 from kivy.clock import Clock
 from kivy.core.window import Window
 
-from term.terminal import Terminal
-
 from kivy.lang import Builder
 from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
+
+from term.terminal import Terminal
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -64,13 +65,15 @@ class TermTextInput(TextInput):
 class TerminalKivyApp(App):
     def __init__(self, cfg):
         App.__init__(self)
-        
+
         self.cfg = cfg
         self.session = None
         self.transport = None
         self.channel = None
         
     def build(self):
+        a = TermTextInput()
+        
         self.root_widget = RootWidget()
         self.root_widget.txtBuffer.focus = True
         return self.root_widget
@@ -137,8 +140,6 @@ class TerminalKivy(Terminal):
                         
         self.save_buffer(c, insert)
 
-        self.refresh_display()
-
     def output_status_line_data(self, c):
         if c == '\x1b':
             print 'status line data has escape char'
@@ -146,31 +147,13 @@ class TerminalKivy(Terminal):
         pass
         
     def cursor_right(self, context):
-        def update(dt):
-            self.txt_buffer.do_cursor_movement('cursor_right')
-
-        Clock.schedule_once(update)
-
         self.col += 1
 
     def cursor_left(self, context):
-        def update(dt):
-            self.txt_buffer.do_cursor_movement('cursor_left')
-
-        Clock.schedule_once(update)
-
         if self.col > 0:
             self.col -= 1
 
     def cursor_down(self, context):
-        def update(dt):
-            self.txt_buffer.do_cursor_movement('cursor_down')
-
-        #only move when there is enough text
-        #otherwise do it when real text coming
-        if self.row < len(self.lines):
-            Clock.schedule_once(update)
-
         self.row += 1
 
     def carriage_return(self, context):
@@ -187,8 +170,6 @@ class TerminalKivy(Terminal):
         for i in range(self.col, len(line)):
             line[i] = ' '
 
-        self.refresh_display()
-
     def delete_chars(self, count):
         line = self.get_cur_line()
         for i in range(self.col, len(line)):
@@ -196,8 +177,6 @@ class TerminalKivy(Terminal):
                 line[i] = line[i + count]
             else:
                 line[i] = ' '
-
-        self.refresh_display()
 
     def refresh_display(self):
         def update_cursor(dt):
@@ -209,3 +188,7 @@ class TerminalKivy(Terminal):
 
         Clock.schedule_once(update)
 
+    def on_data(self, data):
+        Terminal.on_data(self, data)
+
+        self.refresh_display()
