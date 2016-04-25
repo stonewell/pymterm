@@ -168,7 +168,6 @@ class TerminalKivy(Terminal):
             return '\r\n'.join([''.join(line) for line in self.lines])
         else:
             return '\r\n'.join([''.join(line) for line in self.lines[len(self.lines) - self.get_rows():]])
-            
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
