@@ -21,9 +21,6 @@ def get_cap_handler(name):
 
         return imp.load_module(name, fp, pathname, description)
     except ImportError:
-        import traceback
-        exc_type, exc_value, exc_traceback = sys.exc_info()
-        traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stderr)
         return unknown_cap
     finally:
         # Since we may exit via an exception, close fp explicitly.

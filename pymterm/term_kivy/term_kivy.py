@@ -62,6 +62,31 @@ class TermTextInput(TextInput):
     def real_insert_text(self, substring, from_undo=False):
         TextInput.insert_text(self, substring, from_undo)
 
+    def get_visible_rows(self):
+        lh = self.line_height
+        dy = lh + self.line_spacing
+        padding_left, padding_top, padding_right, padding_bottom = self.padding
+        vh = self.height - padding_top - padding_bottom
+
+        return int(float(vh) / float(dy))
+
+    def get_visible_cols(self):
+        padding_left, padding_top, padding_right, padding_bottom = self.padding
+        vw = self.width - padding_left - padding_right
+        text = ''.join([chr(c) for c in range(ord('A'), ord('Z') + 1)])
+        
+        tw = self._get_text_width(text, self.tab_width, None)
+
+        return int(float(vw) / float(tw) * 26)
+
+    def on_size(self, instance, value):
+        padding_left, padding_top, padding_right, padding_bottom = self.padding
+        vh = self.height - padding_top - padding_bottom
+        vw = self.width - padding_left - padding_right
+
+        print 'cols=', self.get_visible_cols(), 'rows=', self.get_visible_rows()
+        self.channel.resize_pty(self.get_visible_cols(), self.get_visible_rows(), vw, vh)
+
 class TerminalKivyApp(App):
     def __init__(self, cfg):
         App.__init__(self)
@@ -86,11 +111,11 @@ class TerminalKivyApp(App):
         
     def on_start(self):
         self.session = session.Session(self.cfg, self.terminal(self.cfg))
+        self.root_widget.txtBuffer.session = self.session
+        self.root_widget.txtBuffer.tab_width = self.session.get_tab_width()
         
         self.transport, self.channel = ssh.client.start_client(self.session, self.cfg)
         self.root_widget.txtBuffer.channel = self.channel
-        self.root_widget.txtBuffer.session = self.session
-        self.root_widget.txtBuffer.tab_width = self.session.get_tab_width()
 
     def on_stop(self):
         self.channel.close()
@@ -130,8 +155,20 @@ class TerminalKivy(Terminal):
             line[self.col] = c
             self.col += 1
 
+    def get_rows(self):
+        return self.txt_buffer.get_visible_rows()
+
+    def get_cols(self):
+        cols =  self.txt_buffer.get_visible_cols()
+
+        return cols
+    
     def get_text(self):
-        return '\r\n'.join([''.join(line) for line in self.lines])
+        if len(self.lines) <= self.get_rows():
+            return '\r\n'.join([''.join(line) for line in self.lines])
+        else:
+            return '\r\n'.join([''.join(line) for line in self.lines[len(self.lines) - self.get_rows():]])
+            
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
@@ -155,6 +192,10 @@ class TerminalKivy(Terminal):
 
     def cursor_down(self, context):
         self.row += 1
+
+    def cursor_up(self, context):
+        if self.row > 0:
+            self.row -= 1
 
     def carriage_return(self, context):
         self.col = 0
@@ -192,3 +233,6 @@ class TerminalKivy(Terminal):
         Terminal.on_data(self, data)
 
         self.refresh_display()
+
+    def meta_on(self, context):
+        print 'meta_on'
