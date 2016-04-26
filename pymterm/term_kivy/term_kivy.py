@@ -26,6 +26,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 
 from term.terminal import Terminal
+from uix.TerminalWidgetKivy import TerminalWidgetKivy
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -34,10 +35,12 @@ class RootWidget(FloatLayout):
     
     pass
 
-class TermTextInput(TextInput):
+class TermTextInput(TerminalWidgetKivy):
     def __init__(self, **kwargs):
         super(TermTextInput, self).__init__(**kwargs)
         self.channel = None
+        self.visible_rows = 0
+        self.visible_cols = 0
 
     def keyboard_on_textinput(self, window, text):
         self.channel.send(text)
@@ -62,30 +65,34 @@ class TermTextInput(TextInput):
     def real_insert_text(self, substring, from_undo=False):
         TextInput.insert_text(self, substring, from_undo)
 
-    def get_visible_rows(self):
+    def cal_visible_rows(self):
         lh = self.line_height
         dy = lh + self.line_spacing
         padding_left, padding_top, padding_right, padding_bottom = self.padding
         vh = self.height - padding_top - padding_bottom
 
-        return int(float(vh) / float(dy))
+        self.visible_rows = int(float(vh) / float(dy))
 
-    def get_visible_cols(self):
+    def cal_visible_cols(self):
         padding_left, padding_top, padding_right, padding_bottom = self.padding
         vw = self.width - padding_left - padding_right
         text = ''.join([chr(c) for c in range(ord('A'), ord('Z') + 1)])
         
         tw = self._get_text_width(text, self.tab_width, None)
 
-        return int(float(vw) / float(tw) * 26)
+        self.visible_cols = int(float(vw) / float(tw) * 26)
 
     def on_size(self, instance, value):
         padding_left, padding_top, padding_right, padding_bottom = self.padding
         vh = self.height - padding_top - padding_bottom
         vw = self.width - padding_left - padding_right
+        
+        self.cal_visible_rows()
+        self.cal_visible_cols()
 
-        print 'cols=', self.get_visible_cols(), 'rows=', self.get_visible_rows()
-        self.channel.resize_pty(self.get_visible_cols(), self.get_visible_rows(), vw, vh)
+        print 'on size:', self.visible_cols, self.visible_rows, vw, vh, self.size
+        
+        self.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
 
 class TerminalKivyApp(App):
     def __init__(self, cfg):
@@ -156,10 +163,10 @@ class TerminalKivy(Terminal):
             self.col += 1
 
     def get_rows(self):
-        return self.txt_buffer.get_visible_rows()
+        return self.txt_buffer.visible_rows
 
     def get_cols(self):
-        cols =  self.txt_buffer.get_visible_cols()
+        cols =  self.txt_buffer.visible_cols
 
         return cols
     
@@ -167,7 +174,9 @@ class TerminalKivy(Terminal):
         if len(self.lines) <= self.get_rows():
             return '\r\n'.join([''.join(line) for line in self.lines])
         else:
-            return '\r\n'.join([''.join(line) for line in self.lines[len(self.lines) - self.get_rows():]])
+            lines = self.lines[len(self.lines) - self.get_rows():]
+            
+            return '\r\n'.join([''.join(line) for line in lines])
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
@@ -220,7 +229,10 @@ class TerminalKivy(Terminal):
 
     def refresh_display(self):
         def update_cursor(dt):
-            self.txt_buffer.cursor = [self.col, self.row]
+            if len(self.lines) <= self.get_rows():
+                self.txt_buffer.cursor = [self.col, self.row]
+            else:
+                self.txt_buffer.cursor = [self.col, self.row - len(self.lines) + self.get_rows()]
         
         def update(dt):
             self.txt_buffer.text = self.get_text()
