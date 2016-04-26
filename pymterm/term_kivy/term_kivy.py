@@ -172,11 +172,11 @@ class TerminalKivy(Terminal):
     
     def get_text(self):
         if len(self.lines) <= self.get_rows():
-            return '\r\n'.join([''.join(line) for line in self.lines])
+            return '\n'.join([''.join(line) for line in self.lines])
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
             
-            return '\r\n'.join([''.join(line) for line in lines])
+            return '\n'.join([''.join(line) for line in lines])
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':

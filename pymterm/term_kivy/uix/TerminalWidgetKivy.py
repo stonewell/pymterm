@@ -32,7 +32,7 @@ from kivy.core.text import Label as CoreLabel
 from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
 from kivy.utils import get_hex_from_color
 
-class TerminalWidgetKivy(FocusBehavior, Label):
+class TerminalWidgetKivy(FocusBehavior, Widget):
     _font_properties = ('text', 'font_size', 'font_name', 'bold', 'italic',
                         'underline', 'strikethrough', 
                         'halign', 'valign', 'padding_left', 'padding_top',
@@ -121,7 +121,12 @@ class TerminalWidgetKivy(FocusBehavior, Label):
                 self.texture = self._label.texture
                 self.texture_size = list(self.texture.size)
 
-            print 'texture size:', self.texture_size, self.size, self._label.text
+            print 'texture size:', self.texture_size, self.size, texture
+
+        self.canvas.clear()
+        r = Rectangle(size=self.texture.size)
+        r.texture = texture
+        self.canvas.add(r)
 
     def _get_text_width(self, text, tab_width, _label_cached):
         txt = text.replace('\t', ' ' * tab_width)
@@ -148,7 +153,7 @@ class TerminalWidgetKivy(FocusBehavior, Label):
     padding = ReferenceListProperty(padding_left, padding_top, padding_right, padding_bottom)
     halign = OptionProperty('left', options=['left', 'center', 'right',
                             'justify'])
-    valign = OptionProperty('bottom',
+    valign = OptionProperty('top',
                             options=['bottom', 'middle', 'center', 'top'])
     texture = ObjectProperty(None, allownone=True)
     texture_size = ListProperty([0, 0])
@@ -160,8 +165,28 @@ class TerminalWidgetKivy(FocusBehavior, Label):
     max_lines = NumericProperty(0)
     strip = BooleanProperty(False)
     font_hinting = OptionProperty(
-        'normal', options=[None, 'normal', 'light', 'mono'], allownone=True)
+        'mono', options=[None, 'normal', 'light', 'mono'], allownone=True)
     font_kerning = BooleanProperty(True)
     font_blended = BooleanProperty(True)
 
-                
+if __name__ == '__main__':
+    from kivy.app import App
+    from kivy.uix.label import Label
+    from kivy.clock import Clock
+    from kivy.graphics import Color, Rectangle
+
+
+    class TestApp(App):
+
+        def build(self):
+            label = Label(
+                text='[color=#ff00ffff]a\\\\nChars [/color]b\\n[ref=myref]ref[/ref]',
+                markup=True)
+
+            def update(dt):
+                print label.texture, label.texture_size
+            Clock.schedule_once(update)
+            return label
+
+    TestApp().run()
+                    
