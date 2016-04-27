@@ -59,12 +59,6 @@ class TermTextInput(TerminalWidgetKivy):
         # the system.
         return handled
 
-    def insert_text(self, substring, from_undo=False):
-        return
-
-    def real_insert_text(self, substring, from_undo=False):
-        TextInput.insert_text(self, substring, from_undo)
-
     def cal_visible_rows(self):
         lh = self.line_height
         dy = lh + self.line_spacing
@@ -172,11 +166,11 @@ class TerminalKivy(Terminal):
     
     def get_text(self):
         if len(self.lines) <= self.get_rows():
-            return '\n'.join([''.join(line) for line in self.lines])
+            return self.lines
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
             
-            return '\n'.join([''.join(line) for line in lines])
+            return lines
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
@@ -228,18 +222,11 @@ class TerminalKivy(Terminal):
                 line[i] = ' '
 
     def refresh_display(self):
-        def update_cursor(dt):
-            if len(self.lines) <= self.get_rows():
-                self.txt_buffer.cursor = [self.col, self.row]
-            else:
-                self.txt_buffer.cursor = [self.col, self.row - len(self.lines) + self.get_rows()]
+        lines = self.get_text()
         
-        def update(dt):
-            self.txt_buffer.text = self.get_text()
-            Clock.schedule_once(update_cursor)
-
-        Clock.schedule_once(update)
-
+        self.txt_buffer.lines = lines
+        self.txt_buffer.refresh()
+        
     def on_data(self, data):
         Terminal.on_data(self, data)
 

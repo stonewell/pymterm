@@ -33,11 +33,11 @@ from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
 from kivy.utils import get_hex_from_color
 
 class TerminalWidgetKivy(FocusBehavior, Widget):
-    _font_properties = ('text', 'font_size', 'font_name', 'bold', 'italic',
+    _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
                         'underline', 'strikethrough', 
                         'halign', 'valign', 'padding_left', 'padding_top',
                         'padding_right', 'padding_bottom',
-                        'text_size', 'shorten', 'mipmap', 
+                        'shorten', 'mipmap', 
                         'line_height', 'max_lines', 'strip',
                         'split_str', 'unicode_errors',
                         'font_hinting', 'font_kerning', 'font_blended')
@@ -58,6 +58,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._label = None
         self._create_label()
 
+        self._line_labels = []
+        
         # force the texture creation
         self._trigger_texture()
         
@@ -76,6 +78,11 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         self._update_line_options()
 
+    def _create_line_label(self):
+        d = TerminalWidgetKivy._font_properties
+        dkw = dict(list(zip(d, [getattr(self, x) for x in d])))
+        return CoreMarkupLabel(**dkw)
+        
     def _update_line_options(self):
         min_line_ht = self._label.get_extents('_')[1]
         self.line_height = min_line_ht
@@ -84,60 +91,66 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     def _trigger_texture_update(self, name=None, source=None, value=None):
         # check if the label core class need to be switch to a new one
         if source:
-            if name == 'text':
-                self._label.text = value
-            elif name == 'text_size':
-                self._label.usersize = value
+            if name == 'lines':
+                pass
             elif name == 'font_size':
                 self._label.options[name] = value
             else:
                 self._label.options[name] = value
-                
+
         self._trigger_texture()
 
+    def _create_line_labels(self, c):
+        if len(self._line_labels) == c:
+            return
+
+        if len(self._line_labels) > c:
+            self._line_labels = self.line_labels[0:c]
+        else:
+            for i in range(len(self._line_labels), c):
+                self._line_labels.append(self._create_line_label())
+                 
     def texture_update(self, *largs):
-        self.texture = None
-        
         self._update_line_options()
 
-        if False:
-            pass
-        else:
-            text = self.text
-            # we must strip here, otherwise, if the last line is empty,
-            # markup will retain the last empty line since it only strips
-            # line by line within markup
-            if self.halign == 'justify' or self.strip:
-                text = text.strip()
-            self._label.text = ''.join(('[color=',
-                                            get_hex_from_color([1,0,0,1]),
-                                            ']', text, '[/color]'))
-            self._label.refresh()
-            # force the rendering to get the references
-            if self._label.texture:
-                self._label.texture.bind()
-            texture = self._label.texture
-            if texture is not None:
-                self.texture = self._label.texture
-                self.texture_size = list(self.texture.size)
+        lines = self.lines[:]
 
-            print 'texture size:', self.texture_size, self.size, texture
-
+        self._create_line_labels(len(lines))
+        
         self.canvas.clear()
-        r = Rectangle(size=self.texture.size)
-        r.texture = texture
-        self.canvas.add(r)
+
+        dy = self.line_height + self.line_spacing
+        y = self.height
+        x = 0
+        
+        for i in range(len(lines)):
+            label = self._line_labels[i]
+            line = lines[i]
+
+            label.text = ''.join(line)
+            label.refresh()
+
+            if label.texture:
+                label.texture.bind()
+
+            r = Rectangle(size=label.texture.size, pos=(x, y - (i + 1) * dy))
+            r.texture = label.texture
+            self.canvas.add(r)
 
     def _get_text_width(self, text, tab_width, _label_cached):
         txt = text.replace('\t', ' ' * tab_width)
         
         return self._label.get_extents(txt)[0]
+
+    def refresh(self):
+        self._trigger_texture()
+        
     #
     # Properties
     #
 
-    text = StringProperty('')
-    text_size = ListProperty([None, None])
+    lines = ListProperty([])
+    cursor = ListProperty([0,0])
     font_name = StringProperty('Roboto')
     font_size = NumericProperty('15sp')
     line_height = NumericProperty(1.0)
