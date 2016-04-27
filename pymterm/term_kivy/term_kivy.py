@@ -270,19 +270,19 @@ class TerminalKivy(Terminal):
         
         if f_color_idx >= 0:
             print 'set fore color:', color_set, f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_SET[color_set * 8 + f_color_idx]
+            fore_color = TerminalKivy.COLOR_TABLE[color_set * 8 + f_color_idx]
         else:
             #reset fore color
             print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_SET[color_set * 8 + 7]
+            fore_color = TerminalKivy.COLOR_TABLE[color_set * 8 + 7]
 
         if b_color_idx >= 0:
             print 'set back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_SET[color_set * 8 + b_color_idx]
+            back_color = TerminalKivy.COLOR_TABLE[color_set * 8 + b_color_idx]
         else:
             #reset back color
             print 'reset back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_SET[color_set * 8 + 0]
+            back_color = TerminalKivy.COLOR_TABLE[color_set * 8 + 0]
 
         self.save_line_option((fore_color, back_color))
         
