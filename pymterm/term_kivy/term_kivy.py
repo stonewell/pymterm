@@ -229,8 +229,13 @@ class TerminalKivy(Terminal):
 
     def clr_eol(self, context):
         line = self.get_cur_line()
+        line_option = self.get_cur_line_option()
+        
         for i in range(self.col, len(line)):
             line[i] = ' '
+
+            if i < len(line_option):
+                line_option[i] = None
 
     def delete_chars(self, count):
         line = self.get_cur_line()
@@ -333,7 +338,6 @@ class TerminalKivy(Terminal):
         line_option[self.col] = option
 
     def cursor_address(self, context):
-        print 'cursor address:', context.params[0], context.params[1]
         self.set_cursor(context.params[1], context.params[0])
         
     def cursor_home(self, context):
@@ -356,10 +360,10 @@ class TerminalKivy(Terminal):
             
             for i in range(len(line)):
                 line[i] = ' '
+                if i < len(line_option):
+                    line_option[i] = None
 
     def parm_right_cursor(self, context):
-        print 'cursor right:', context.params[0]
-
         self.col += context.params[0]
 
     def client_report_version(self, context):
