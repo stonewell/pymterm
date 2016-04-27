@@ -137,6 +137,7 @@ class TerminalKivy(Terminal):
         self.col = 0
         self.row = 0
         self.channel = None
+        self.init_color_table()
 
     def get_line(self, row):
         if row >= len(self.lines):
@@ -283,6 +284,23 @@ class TerminalKivy(Terminal):
         [1, 1, 1, 1], #WHITE
         ]
 
+    def init_color_table(self):
+        for i in range(240):
+            if i < 216:
+                r = i / 36
+                g = (i / 6) % 6
+                b = i % 6
+                TerminalKivy.COLOR_TABLE.append([float(r * 40 + 55) / 255 if r > 0 else 0,
+                                                 float(g * 40 + 55) / 255 if g > 0 else 0,
+                                                 float(b * 40 + 55) / 255 if b > 0 else 0,
+                                                 1])
+            else:
+                shade = (i - 216) * 10 + 8
+                TerminalKivy.COLOR_TABLE.append([float(shade) / 255,
+                                                 float(shade) / 255,
+                                                 float(shade) / 255,
+                                                 1])
+                
     def get_color(self, mode, idx):
         if mode < 0:
             color_set = 0
@@ -293,8 +311,10 @@ class TerminalKivy(Terminal):
             return TerminalKivy.COLOR_TABLE[color_set * 8 + idx]
         elif idx < 16:
             return TerminalKivy.COLOR_TABLE[idx]
+        elif idx < 256:
+            return TerminalKivy.COLOR_TABLE[idx]
         else:
-            print 'not implemented 256 color'
+            print 'not implemented color', idx, mode
             sys.exit(1)
             
     def set_attributes(self, mode, f_color_idx, b_color_idx):
@@ -341,12 +361,7 @@ class TerminalKivy(Terminal):
         self.set_cursor(context.params[1], context.params[0])
         
     def cursor_home(self, context):
-        if len(self.lines) <= self.get_rows():
-            self.col = 0
-            self.row = 0
-        else:
-            self.col = 0
-            self.row = len(self.lines) - self.get_rows()
+        self.set_cursor(0, 0)
 
     def clr_eos(self, context):
         self.get_cur_line()
@@ -376,3 +391,8 @@ class TerminalKivy(Terminal):
         elif context.params[0] == 5:
             self.channel.send('\033[0n')
 
+    def tab(self, context):
+        self.save_buffer('\t', False)
+
+    def row_address(self, context):
+        self.set_cursor(self.col, context.params[0])

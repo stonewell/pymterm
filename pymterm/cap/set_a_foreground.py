@@ -11,9 +11,11 @@ def handle(term, context, cap_turple):
         for idx in range(len(context.params)):
             context.params[idx] -= 1
 
-    if len(context.params) > 1:
+    if len(context.params) == 2:
         light = context.params[0] == 1
         color_idx = context.params[1] - 30
+    elif len(context.params) == 3 and context.params[0] == 38 and context.params[1] == 5:
+        color_idx = context.params[2]
     else:
         color_idx = context.params[0] - 30
 
