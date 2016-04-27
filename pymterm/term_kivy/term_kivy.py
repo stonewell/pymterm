@@ -72,7 +72,7 @@ class TermTextInput(TerminalWidgetKivy):
         vw = self.width - padding_left - padding_right
         text = ''.join([chr(c) for c in range(ord('A'), ord('Z') + 1)])
         
-        tw = self._get_text_width(text, self.tab_width, None)
+        tw = self._get_text_width(text)
 
         self.visible_cols = int(float(vw) / float(tw) * 26)
 
@@ -132,6 +132,7 @@ class TerminalKivy(Terminal):
         Terminal.__init__(self, cfg)
         self.txt_buffer = txtBuffer
         self.lines = []
+        self.line_options = []
         self.col = 0
         self.row = 0
 
@@ -147,10 +148,13 @@ class TerminalKivy(Terminal):
     
     def save_buffer(self, c, insert = False):
         line = self.get_cur_line()
+        self.get_cur_line_option()
+        
         if len(line) <= self.col:
-            line.append(c)
-            self.col += 1
-        elif insert:
+            while len(line) <= self.col:
+                line.append(' ')
+
+        if insert:
             line.insert(self.col, c)
         else:
             line[self.col] = c
@@ -166,11 +170,11 @@ class TerminalKivy(Terminal):
     
     def get_text(self):
         if len(self.lines) <= self.get_rows():
-            return self.lines
+            return self.lines, self.line_options
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
-            
-            return lines
+            line_options = self.line_options[len(self.lines) - self.get_rows():]
+            return lines, line_options
         
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
@@ -222,9 +226,10 @@ class TerminalKivy(Terminal):
                 line[i] = ' '
 
     def refresh_display(self):
-        lines = self.get_text()
+        lines, line_options = self.get_text()
         
         self.txt_buffer.lines = lines
+        self.txt_buffer.line_options = line_options
         self.txt_buffer.refresh()
         
     def on_data(self, data):
@@ -234,3 +239,54 @@ class TerminalKivy(Terminal):
 
     def meta_on(self, context):
         print 'meta_on'
+
+    COLOR_TABLE = [
+        [0, 0, 0, 1], #BLACK
+        [1, 0, 0, 1], #RED
+        [0, 1, 0, 1], #GREEN
+        [1, 1, 0, 1], #YELLOW
+        [0, 0, 1, 1], #BLUE
+        [1, 0, 1, 1], #MAGENTA
+        [0, 1, 1, 1], #CYAN
+        [1, 1, 1, 1], #WHITE
+        ]
+        
+    def set_attributes(self, mode, f_color_idx, b_color_idx):
+        fore_color = None
+        back_color = None
+        
+        if f_color_idx >= 0:
+            print 'set fore color:', f_color_idx, ' at ', self.col, self.row
+            fore_color = TerminalKivy.COLOR_TABLE[f_color_idx]
+        else:
+            #reset fore color
+            print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
+            fore_color = TerminalKivy.COLOR_TABLE[7]
+
+        if b_color_idx >= 0:
+            print 'set back color:', b_color_idx, ' at ', self.col, self.row
+            back_color = TerminalKivy.COLOR_TABLE[b_color_idx]
+        else:
+            #reset back color
+            print 'reset back color:', b_color_idx, ' at ', self.col, self.row
+            back_color = TerminalKivy.COLOR_TABLE[0]
+
+        self.save_line_option((fore_color, back_color))
+        
+    def get_line_option(self, row):
+        if row >= len(self.line_options):
+            for i in range(len(self.line_options), row + 1):
+                self.line_options.append([])
+                
+        return self.line_options[row]
+                
+    def get_cur_line_option(self):
+        return self.get_line_option(self.row)
+    
+    def save_line_option(self, option):
+        line_option = self.get_cur_line_option()
+        if len(line_option) <= self.col:
+            while len(line_option) <= self.col:
+                line_option.append(None)
+                
+        line_option[self.col] = option

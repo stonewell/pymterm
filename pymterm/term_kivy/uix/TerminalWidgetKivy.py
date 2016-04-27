@@ -114,7 +114,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._update_line_options()
 
         lines = self.lines[:]
-
+        line_options = self.line_options[:]
+        
         self._create_line_labels(len(lines))
         
         self.canvas.clear()
@@ -124,21 +125,53 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         x = 0
         
         for i in range(len(lines)):
+            x = 0
             label = self._line_labels[i]
             line = lines[i]
+            line_option = line_options[i]
 
-            label.text = ''.join(line)
-            label.refresh()
+            col = 0
+            last_col = 0
+            text = ''
+            for col in range(len(line_option)):
+                if line_option[col] is None:
+                    continue
 
-            if label.texture:
-                label.texture.bind()
+                if last_col < col:
+                    text += ''.join(line[last_col:col])
+                    text += '[/color]' if text.find('[color=') == 0 else ''
 
-            r = Rectangle(size=label.texture.size, pos=(x, y - (i + 1) * dy))
-            r.texture = label.texture
-            self.canvas.add(r)
+                    self.add_text(text, x, y - (i + 1) * dy)
+                    x += self._get_text_width(''.join(line[last_col:col]))
+                    text = ''
+                    
+                last_col = col
+                text = ''.join(['[color=', get_hex_from_color(line_option[col][0]), ']'])
 
-    def _get_text_width(self, text, tab_width, _label_cached):
-        txt = text.replace('\t', ' ' * tab_width)
+            if last_col < len(line):
+                text += ''.join(line[last_col:])
+                text += '[/color]' if text.find('[color=') == 0 else ''
+
+                self.add_text(text, x, y - (i + 1) * dy)
+                
+    def add_text(self, text, x, y):
+        if not text or len(text) == 0:
+            return
+
+        label = self._create_line_label()
+        text = text.replace('\t', ' ' * self.tab_width)
+        label.text = text
+        label.refresh()
+
+        if label.texture:
+            label.texture.bind()
+
+        r = Rectangle(size=label.texture.size, pos=(x, y))
+        r.texture = label.texture
+        self.canvas.add(r)
+
+    def _get_text_width(self, text):
+        txt = text.replace('\t', ' ' * self.tab_width)
         
         return self._label.get_extents(txt)[0]
 
@@ -150,6 +183,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     #
 
     lines = ListProperty([])
+    line_options = ListProperty([])
     cursor = ListProperty([0,0])
     font_name = StringProperty('Roboto')
     font_size = NumericProperty('15sp')
