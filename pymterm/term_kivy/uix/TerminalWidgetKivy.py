@@ -133,6 +133,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             col = 0
             last_col = 0
             text = ''
+            text_parts = []
             for col in range(len(line_option)):
                 if line_option[col] is None:
                     continue
@@ -141,8 +142,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     text += ''.join(line[last_col:col])
                     text += '[/color]' if text.find('[color=') == 0 else ''
 
-                    self.add_text(text, x, y - (i + 1) * dy)
-                    x += self._get_text_width(''.join(line[last_col:col]))
+                    text_parts.append(text)
                     text = ''
                     
                 last_col = col
@@ -152,13 +152,14 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 text += ''.join(line[last_col:])
                 text += '[/color]' if text.find('[color=') == 0 else ''
 
-                self.add_text(text, x, y - (i + 1) * dy)
+                text_parts.append(text)
+
+            self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
                 
-    def add_text(self, text, x, y):
+    def add_text(self, label, text, x, y):
         if not text or len(text) == 0:
             return
 
-        label = self._create_line_label()
         text = text.replace('\t', ' ' * self.tab_width)
         label.text = text
         label.refresh()
