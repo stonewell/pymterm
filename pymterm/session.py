@@ -50,7 +50,7 @@ class Session:
 	    
         def writeall(sock):
 	        while True:
-		        data = sock.recv(256)
+		        data = sock.recv(4096)
 		        if not data:
 			        sys.stdout.write('\r\n*** EOF ***\r\n\r\n')
 			        sys.stdout.flush()

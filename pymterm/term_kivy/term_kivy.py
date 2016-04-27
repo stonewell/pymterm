@@ -240,36 +240,49 @@ class TerminalKivy(Terminal):
     def meta_on(self, context):
         print 'meta_on'
 
+    COLOR_SET_0_RATIO = float(0x44) / 0xff
+    COLOR_SET_1_RATIO = float(0xaa) / 0xff
+
+    #ansi color
     COLOR_TABLE = [
         [0, 0, 0, 1], #BLACK
-        [1, 0, 0, 1], #RED
-        [0, 1, 0, 1], #GREEN
-        [1, 1, 0, 1], #YELLOW
-        [0, 0, 1, 1], #BLUE
-        [1, 0, 1, 1], #MAGENTA
-        [0, 1, 1, 1], #CYAN
+        [COLOR_SET_0_RATIO, 0, 0, 1], #RED
+        [0, COLOR_SET_0_RATIO, 0, 1], #GREEN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0, 1], #BROWN
+        [0, 0, COLOR_SET_0_RATIO, 1], #BLUE
+        [COLOR_SET_0_RATIO, 0, COLOR_SET_0_RATIO, 1], #MAGENTA
+        [0, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 1], #CYAN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 1], #LIGHT GRAY
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1], #DARK_GREY
+        [1, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1], #RED
+        [COLOR_SET_1_RATIO, 1, COLOR_SET_1_RATIO, 1], #GREEN
+        [1, 1, COLOR_SET_1_RATIO, 1], #YELLOW
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1, 1], #BLUE
+        [1, COLOR_SET_1_RATIO, 1, 1], #MAGENTA
+        [COLOR_SET_1_RATIO, 1, 1, 1], #CYAN
         [1, 1, 1, 1], #WHITE
         ]
         
     def set_attributes(self, mode, f_color_idx, b_color_idx):
         fore_color = None
         back_color = None
+        color_set = mode & 1
         
         if f_color_idx >= 0:
-            print 'set fore color:', f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_TABLE[f_color_idx]
+            print 'set fore color:', color_set, f_color_idx, ' at ', self.col, self.row
+            fore_color = TerminalKivy.COLOR_SET[color_set * 8 + f_color_idx]
         else:
             #reset fore color
             print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_TABLE[7]
+            fore_color = TerminalKivy.COLOR_SET[color_set * 8 + 7]
 
         if b_color_idx >= 0:
             print 'set back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_TABLE[b_color_idx]
+            back_color = TerminalKivy.COLOR_SET[color_set * 8 + b_color_idx]
         else:
             #reset back color
             print 'reset back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_TABLE[0]
+            back_color = TerminalKivy.COLOR_SET[color_set * 8 + 0]
 
         self.save_line_option((fore_color, back_color))
         
