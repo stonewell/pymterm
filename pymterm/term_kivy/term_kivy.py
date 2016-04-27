@@ -117,6 +117,7 @@ class TerminalKivyApp(App):
         
         self.transport, self.channel = ssh.client.start_client(self.session, self.cfg)
         self.root_widget.txtBuffer.channel = self.channel
+        self.session.terminal.channel = self.channel
 
     def on_stop(self):
         self.channel.close()
@@ -135,6 +136,7 @@ class TerminalKivy(Terminal):
         self.line_options = []
         self.col = 0
         self.row = 0
+        self.channel = None
 
     def get_line(self, row):
         if row >= len(self.lines):
@@ -188,6 +190,19 @@ class TerminalKivy(Terminal):
             print 'status line data has escape char'
             sys.exit(1)
         pass
+
+    def get_cursor(self):
+        if len(self.lines) <= self.get_rows():
+            return (self.col, self.row)
+        else:
+            return (self.col, self.row - len(self.lines) + self.get_rows())
+
+    def set_cursor(self, col, row):
+        self.col = col
+        if len(self.lines) <= self.get_rows():
+            self.row = row
+        else:
+            self.row = row + len(self.lines) - self.get_rows()
         
     def cursor_right(self, context):
         self.col += 1
@@ -207,10 +222,10 @@ class TerminalKivy(Terminal):
         self.col = 0
         
     def set_foreground(self, light, color_idx):
-        pass
+        self.set_attributes(1 if light else 0, color_idx, -1)
     
     def origin_pair(self):
-        pass
+        self.set_attributes(-1, -1, -1)
 
     def clr_eol(self, context):
         line = self.get_cur_line()
@@ -262,27 +277,40 @@ class TerminalKivy(Terminal):
         [COLOR_SET_1_RATIO, 1, 1, 1], #CYAN
         [1, 1, 1, 1], #WHITE
         ]
-        
+
+    def get_color(self, mode, idx):
+        if mode < 0:
+            color_set = 0
+        else:
+            color_set = mode & 1
+
+        if idx < 8:
+            return TerminalKivy.COLOR_TABLE[color_set * 8 + idx]
+        elif idx < 16:
+            return TerminalKivy.COLOR_TABLE[idx]
+        else:
+            print 'not implemented 256 color'
+            sys.exit(1)
+            
     def set_attributes(self, mode, f_color_idx, b_color_idx):
         fore_color = None
         back_color = None
-        color_set = mode & 1
         
         if f_color_idx >= 0:
-            print 'set fore color:', color_set, f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_TABLE[color_set * 8 + f_color_idx]
+            print 'set fore color:', f_color_idx, ' at ', self.col, self.row
+            fore_color = self.get_color(mode, f_color_idx)
         else:
             #reset fore color
             print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
-            fore_color = TerminalKivy.COLOR_TABLE[color_set * 8 + 7]
+            fore_color = self.get_color(mode, 7)
 
         if b_color_idx >= 0:
             print 'set back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_TABLE[color_set * 8 + b_color_idx]
+            back_color = self.get_color(mode, b_color_idx)
         else:
             #reset back color
             print 'reset back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = TerminalKivy.COLOR_TABLE[color_set * 8 + 0]
+            back_color = self.get_color(mode, 0)
 
         self.save_line_option((fore_color, back_color))
         
@@ -303,3 +331,44 @@ class TerminalKivy(Terminal):
                 line_option.append(None)
                 
         line_option[self.col] = option
+
+    def cursor_address(self, context):
+        print 'cursor address:', context.params[0], context.params[1]
+        self.set_cursor(context.params[1], context.params[0])
+        
+    def cursor_home(self, context):
+        if len(self.lines) <= self.get_rows():
+            self.col = 0
+            self.row = 0
+        else:
+            self.col = 0
+            self.row = len(self.lines) - self.get_rows()
+
+    def clr_eos(self, context):
+        self.get_cur_line()
+        self.get_cur_line_option()
+
+        self.clr_eol(context)
+
+        for row in range(self.row + 1, len(self.lines)):
+            line = self.get_line(row)
+            line_option = self.get_line_option(row)
+            
+            for i in range(len(line)):
+                line[i] = ' '
+
+    def parm_right_cursor(self, context):
+        print 'cursor right:', context.params[0]
+
+        self.col += context.params[0]
+
+    def client_report_version(self, context):
+        self.channel.send('\033[>0;136;0c')
+
+    def user7(self, context):
+        if (context.params[0] == 6):
+            col, row = self.get_cursor()
+            self.channel.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
+        elif context.params[0] == 5:
+            self.channel.send('\033[0n')
+

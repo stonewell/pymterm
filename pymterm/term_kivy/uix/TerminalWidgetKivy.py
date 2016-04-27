@@ -154,7 +154,10 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
                 text_parts.append(text)
 
-            self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
+            try:
+                self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
+            except:
+                print 'show text', ''.join(text_parts), x, y - (i + 1) * dy
                 
     def add_text(self, label, text, x, y):
         if not text or len(text) == 0:
@@ -185,7 +188,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
     lines = ListProperty([])
     line_options = ListProperty([])
-    cursor = ListProperty([0,0])
     font_name = StringProperty('RobotoMono-Regular')
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
