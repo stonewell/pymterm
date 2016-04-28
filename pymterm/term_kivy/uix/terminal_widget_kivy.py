@@ -30,6 +30,7 @@ from kivy.properties import StringProperty, OptionProperty, \
 
 from kivy.core.text import Label as CoreLabel
 from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
+from kivy.utils import escape_markup
 
 class TerminalWidgetKivy(FocusBehavior, Widget):
     _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
@@ -142,7 +143,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     continue
 
                 if last_col < col:
-                    text += ''.join(line[last_col:col])
+                    text += escape_markup(''.join(line[last_col:col]))
                     if text.find('[color=') == 0:
                         text += '[/color]'
 
@@ -175,7 +176,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     last_b_color = None
 
             if last_col < len(line):
-                text = ''.join(line[last_col:])
+                text += escape_markup(''.join(line[last_col:]))
                 if text.find('[color=') == 0:
                     text += '[/color]'
 
@@ -196,7 +197,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if not text or len(text) == 0:
             return
 
-        return
         from kivy.graphics import Color
         from kivy.graphics.instructions import InstructionGroup
 

@@ -138,6 +138,8 @@ class TerminalKivy(Terminal):
         self.row = 0
         self.channel = None
         self.init_color_table()
+        self.last_line_option_row = -1
+        self.last_line_option_col = -1
 
     def get_line(self, row):
         if row >= len(self.lines):
@@ -157,6 +159,9 @@ class TerminalKivy(Terminal):
             while len(line) <= self.col:
                 line.append(' ')
 
+        if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
+            self.save_line_option(None, True)
+
         if insert:
             line.insert(self.col, c)
         else:
@@ -167,7 +172,7 @@ class TerminalKivy(Terminal):
         return self.txt_buffer.visible_rows
 
     def get_cols(self):
-        cols =  self.txt_buffer.visible_cols
+        cols = self.txt_buffer.visible_cols
 
         return cols
     
@@ -238,8 +243,8 @@ class TerminalKivy(Terminal):
         for i in range(self.col, len(line)):
             line[i] = ' '
 
-            if i < len(line_option):
-                line_option[i] = None
+        for i in range(self.col, len(line_option)):
+            line_option[i] = None
 
     def delete_chars(self, count):
         line = self.get_cur_line()
@@ -357,13 +362,17 @@ class TerminalKivy(Terminal):
     def get_cur_line_option(self):
         return self.get_line_option(self.row)
     
-    def save_line_option(self, option):
+    def save_line_option(self, option, clear = False):
         line_option = self.get_cur_line_option()
         if len(line_option) <= self.col:
             while len(line_option) <= self.col:
                 line_option.append(None)
                 
         line_option[self.col] = option
+
+        if not clear:
+            self.last_line_option_row = self.row
+            self.last_line_option_col = self.col
 
     def cursor_address(self, context):
         self.set_cursor(context.params[1], context.params[0])
@@ -383,8 +392,9 @@ class TerminalKivy(Terminal):
             
             for i in range(len(line)):
                 line[i] = ' '
-                if i < len(line_option):
-                    line_option[i] = None
+
+            for i in range(len(line_option)):
+                line_option[i] = None
 
     def parm_right_cursor(self, context):
         self.col += context.params[0]
