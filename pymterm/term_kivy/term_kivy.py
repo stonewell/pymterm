@@ -26,7 +26,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 
 from term.terminal import Terminal
-from uix.TerminalWidgetKivy import TerminalWidgetKivy
+from uix.terminal_widget_kivy import TerminalWidgetKivy
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -223,7 +223,10 @@ class TerminalKivy(Terminal):
         self.col = 0
         
     def set_foreground(self, light, color_idx):
-        self.set_attributes(1 if light else 0, color_idx, -1)
+        self.set_attributes(1 if light else 0, color_idx, -2)
+        
+    def set_background(self, light, color_idx):
+        self.set_attributes(1 if light else 0, -2, color_idx)
     
     def origin_pair(self):
         self.set_attributes(-1, -1, -1)
@@ -261,27 +264,27 @@ class TerminalKivy(Terminal):
     def meta_on(self, context):
         print 'meta_on'
 
-    COLOR_SET_0_RATIO = float(0x44) / 0xff
-    COLOR_SET_1_RATIO = float(0xaa) / 0xff
+    COLOR_SET_0_RATIO = 0x44
+    COLOR_SET_1_RATIO = 0xaa
 
     #ansi color
     COLOR_TABLE = [
-        [0, 0, 0, 1], #BLACK
-        [COLOR_SET_0_RATIO, 0, 0, 1], #RED
-        [0, COLOR_SET_0_RATIO, 0, 1], #GREEN
-        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0, 1], #BROWN
-        [0, 0, COLOR_SET_0_RATIO, 1], #BLUE
-        [COLOR_SET_0_RATIO, 0, COLOR_SET_0_RATIO, 1], #MAGENTA
-        [0, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 1], #CYAN
-        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 1], #LIGHT GRAY
-        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1], #DARK_GREY
-        [1, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1], #RED
-        [COLOR_SET_1_RATIO, 1, COLOR_SET_1_RATIO, 1], #GREEN
-        [1, 1, COLOR_SET_1_RATIO, 1], #YELLOW
-        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 1, 1], #BLUE
-        [1, COLOR_SET_1_RATIO, 1, 1], #MAGENTA
-        [COLOR_SET_1_RATIO, 1, 1, 1], #CYAN
-        [1, 1, 1, 1], #WHITE
+        [0, 0, 0, 0xFF], #BLACK
+        [COLOR_SET_0_RATIO, 0, 0, 0xFF], #RED
+        [0, COLOR_SET_0_RATIO, 0, 0xFF], #GREEN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0, 0xFF], #BROWN
+        [0, 0, COLOR_SET_0_RATIO, 0xFF], #BLUE
+        [COLOR_SET_0_RATIO, 0, COLOR_SET_0_RATIO, 0xFF], #MAGENTA
+        [0, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #CYAN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #LIGHT GRAY
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #DARK_GREY
+        [0xFF, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #RED
+        [COLOR_SET_1_RATIO, 0xFF, COLOR_SET_1_RATIO, 0xFF], #GREEN
+        [0xFF, 0xFF, COLOR_SET_1_RATIO, 0xFF], #YELLOW
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF, 0xFF], #BLUE
+        [0xFF, COLOR_SET_1_RATIO, 0xFF, 0xFF], #MAGENTA
+        [COLOR_SET_1_RATIO, 0xFF, 0xFF, 0xFF], #CYAN
+        [0xFF, 0xFF, 0xFF, 0xFF], #WHITE
         ]
 
     def init_color_table(self):
@@ -290,16 +293,16 @@ class TerminalKivy(Terminal):
                 r = i / 36
                 g = (i / 6) % 6
                 b = i % 6
-                TerminalKivy.COLOR_TABLE.append([float(r * 40 + 55) / 255 if r > 0 else 0,
-                                                 float(g * 40 + 55) / 255 if g > 0 else 0,
-                                                 float(b * 40 + 55) / 255 if b > 0 else 0,
-                                                 1])
+                TerminalKivy.COLOR_TABLE.append([r * 40 + 55 if r > 0 else 0,
+                                                 g * 40 + 55 if g > 0 else 0,
+                                                 b * 40 + 55 if b > 0 else 0,
+                                                 0xFF])
             else:
                 shade = (i - 216) * 10 + 8
-                TerminalKivy.COLOR_TABLE.append([float(shade) / 255,
-                                                 float(shade) / 255,
-                                                 float(shade) / 255,
-                                                 1])
+                TerminalKivy.COLOR_TABLE.append([shade,
+                                                 shade,
+                                                 shade,
+                                                 0xFF])
                 
     def get_color(self, mode, idx):
         if mode < 0:
@@ -324,18 +327,23 @@ class TerminalKivy(Terminal):
         if f_color_idx >= 0:
             print 'set fore color:', f_color_idx, ' at ', self.col, self.row
             fore_color = self.get_color(mode, f_color_idx)
-        else:
+        elif f_color_idx == -1:
             #reset fore color
             print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
-            fore_color = self.get_color(mode, 7)
+            fore_color = None
+        else:
+            #continue
+            fore_color = []
 
         if b_color_idx >= 0:
             print 'set back color:', b_color_idx, ' at ', self.col, self.row
             back_color = self.get_color(mode, b_color_idx)
-        else:
+        elif b_color_idx == -1:
             #reset back color
             print 'reset back color:', b_color_idx, ' at ', self.col, self.row
-            back_color = self.get_color(mode, 0)
+            back_color = None
+        else:
+            back_color = []
 
         self.save_line_option((fore_color, back_color))
         
@@ -396,3 +404,13 @@ class TerminalKivy(Terminal):
 
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
+
+    def parm_right_cursor(self, context):
+        for i in range(context.params[0]):
+            if self.row < len(self.lines):
+                self.lines = self.lines[:self.row] + self.lines[self.row + 1:]
+
+            if self.row < len(self.line_options):
+                self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1:]
+            
+        

@@ -30,7 +30,6 @@ from kivy.properties import StringProperty, OptionProperty, \
 
 from kivy.core.text import Label as CoreLabel
 from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
-from kivy.utils import get_hex_from_color
 
 class TerminalWidgetKivy(FocusBehavior, Widget):
     _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
@@ -123,12 +122,16 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         dy = self.line_height + self.line_spacing
         y = self.height
         x = 0
+
+        last_f_color = None
+        last_b_color = None
         
         for i in range(len(lines)):
             x = 0
+            b_x = 0
             label = self._line_labels[i]
             line = lines[i]
-            line_option = line_options[i]
+            line_option = line_options[i] if i < len(line_options) else []
 
             col = 0
             last_col = 0
@@ -140,25 +143,74 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
                 if last_col < col:
                     text += ''.join(line[last_col:col])
-                    text += '[/color]' if text.find('[color=') == 0 else ''
+                    if text.find('[color=') == 0:
+                        text += '[/color]'
 
                     text_parts.append(text)
+
+                    if last_b_color:
+                        b_x = self.add_background(''.join(line[last_col:col]), last_b_color, b_x, y - (i + 1) * dy)
+                    
                     text = ''
                     
                 last_col = col
-                text = ''.join(['[color=', get_hex_from_color(line_option[col][0]), ']'])
+                f_color, b_color = line_option[col]
+
+                # foreground
+                if f_color == [] and last_f_color:
+                    text = ''.join(['[color=', self.get_color_hex(last_f_color), ']'])
+                elif f_color and len(f_color) > 0:
+                    text = ''.join(['[color=', self.get_color_hex(f_color), ']'])
+                    last_f_color = f_color
+                else:
+                    text = ''
+                    last_f_color = None
+
+                # background
+                if b_color == []:
+                    pass
+                elif b_color and len(b_color) > 0:
+                    last_b_color = b_color
+                else:
+                    last_b_color = None
 
             if last_col < len(line):
-                text += ''.join(line[last_col:])
-                text += '[/color]' if text.find('[color=') == 0 else ''
+                text = ''.join(line[last_col:])
+                if text.find('[color=') == 0:
+                    text += '[/color]'
 
                 text_parts.append(text)
+
+                if last_b_color:
+                    b_x = self.add_background(''.join(line[last_col:]), last_b_color, b_x, y - (i + 1) * dy)
 
             try:
                 self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
             except:
                 print 'show text', ''.join(text_parts), x, y - (i + 1) * dy
-                
+
+    def get_color_hex(self, l_color):
+        return '#%02x%02x%02x%02x' % (l_color[0], l_color[1], l_color[2], l_color[3])
+
+    def add_background(self, text, color, x, y):
+        if not text or len(text) == 0:
+            return
+
+        return
+        from kivy.graphics import Color
+        from kivy.graphics.instructions import InstructionGroup
+
+        text = text.replace('\t', ' ' * self.tab_width)
+        size = self._label.get_extents(text)
+
+        g = InstructionGroup()
+        g.add(Color(float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255))
+        g.add(Rectangle(pos=(x , y), size=size))        
+        
+        self.canvas.add(g)
+
+        return x + size[0]
+    
     def add_text(self, label, text, x, y):
         if not text or len(text) == 0:
             return
