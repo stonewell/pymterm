@@ -42,6 +42,8 @@ class TermTextInput(TerminalWidgetKivy):
         self.visible_rows = 0
         self.visible_cols = 0
 
+        self.scroll_region = None
+
     def keyboard_on_textinput(self, window, text):
         self.channel.send(text)
         
@@ -145,7 +147,9 @@ class TerminalKivy(Terminal):
         if row >= len(self.lines):
             for i in range(len(self.lines), row + 1):
                 self.lines.append([])
-                
+
+        self.get_line_option(row)
+        
         return self.lines[row]
                 
     def get_cur_line(self):
@@ -425,15 +429,57 @@ class TerminalKivy(Terminal):
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
 
+    def delete_line(self, context):
+        self.parm_delete_line(context)
+        
     def parm_delete_line(self, context):
-        print 'delete line', context.params
-        for i in range(context.params[0]):
-            if self.row < len(self.lines):
-                self.lines = self.lines[:self.row] + self.lines[self.row + 1:]
+        begin, end = self.get_scroll_region()
+        print 'delete line', context.params, begin, end
 
-            if self.row < len(self.line_options):
-                self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1:]
+        c_to_delete = context.params[0] if len(context.params) > 0 else 1
+        
+        for i in range(c_to_delete):
+            if self.row <= end:
+                self.lines = self.lines[:self.row] + self.lines[self.row + 1: end + 1] + [[]] +self.lines[end + 1:]
 
+            if self.row <= end:
+                self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1: end + 1] + [[]] + self.line_options[end + 1:]
+
+    def get_scroll_region(self):
+        if self.scroll_region:
+            return self.scroll_region
+
+        self.set_scroll_region(0, self.get_rows() - 1)
+
+        return self.scroll_region
+
+    def set_scroll_region(self, begin, end):
+        if len(self.lines) > self.get_rows():
+            begin = begin + len(self.lines) - self.get_rows()
+            end = end + len(self.lines) - self.get_rows()
+
+        self.get_line(end)
+        self.get_line(begin)
+        
+        self.scroll_region = (begin, end)
+    
     def change_scroll_region(self, context):
         print 'change scroll region', context.params, self.get_rows()
+        self.set_scroll_region(context.params[0], context.params[1])
         
+        
+    def insert_line(self, context):
+        self.parm_insert_line(context)
+        
+    def parm_insert_line(self, context):
+        begin, end = self.get_scroll_region()
+        print 'insert line', context.params, begin, end
+
+        c_to_insert = context.params[0] if len(context.params) > 0 else 1
+        
+        for i in range(c_to_insert):
+            if self.row <= end:
+                self.lines = self.lines[:self.row] + [[]] + self.lines[self.row: end] +self.lines[end + 1:]
+
+            if self.row <= end:
+                self.line_options = self.line_options[:self.row] + [[]] + self.line_options[self.row: end] + self.line_options[end + 1:]
