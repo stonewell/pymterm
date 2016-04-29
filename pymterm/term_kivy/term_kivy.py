@@ -239,7 +239,7 @@ class TerminalKivy(Terminal):
     def clr_eol(self, context):
         line = self.get_cur_line()
         line_option = self.get_cur_line_option()
-        
+
         for i in range(self.col, len(line)):
             line[i] = ' '
 
@@ -367,6 +367,16 @@ class TerminalKivy(Terminal):
         if len(line_option) <= self.col:
             while len(line_option) <= self.col:
                 line_option.append(None)
+
+        if not clear and line_option[self.col]:
+            f, b = option
+
+            if f == []:
+                f = line_option[self.col][0]
+            if b == []:
+                b = line_option[self.col][1]
+
+            option = (f, b)
                 
         line_option[self.col] = option
 
@@ -415,12 +425,15 @@ class TerminalKivy(Terminal):
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
 
-    def parm_right_cursor(self, context):
+    def parm_delete_line(self, context):
+        print 'delete line', context.params
         for i in range(context.params[0]):
             if self.row < len(self.lines):
                 self.lines = self.lines[:self.row] + self.lines[self.row + 1:]
 
             if self.row < len(self.line_options):
                 self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1:]
-            
+
+    def change_scroll_region(self, context):
+        print 'change scroll region', context.params, self.get_rows()
         

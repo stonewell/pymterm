@@ -151,6 +151,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
                     if last_b_color:
                         b_x = self.add_background(''.join(line[last_col:col]), last_b_color, b_x, y - (i + 1) * dy)
+                    else:
+                        b_x += self._get_text_width(''.join(line[last_col:col]))
                     
                     text = ''
                     
