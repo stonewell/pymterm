@@ -201,16 +201,19 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         from kivy.graphics import Color
         from kivy.graphics.instructions import InstructionGroup
+        from kivy.graphics.texture import Texture
 
         text = text.replace('\t', ' ' * self.tab_width)
         size = self._label.get_extents(text)
 
-        g = InstructionGroup()
-        g.add(Color(float(color[0]) / 255, float(color[1]) / 255, float(color[2]) / 255, float(color[3]) / 255))
-        g.add(Rectangle(pos=(x , y), size=size))        
-        
-        self.canvas.add(g)
+        t = Texture.create(size=size)
 
+        buf = color[:3] * size[0] * size[1]
+        buf = b''.join(map(chr, buf))
+        t.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+        
+        self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size))        
+        
         return x + size[0]
     
     def add_text(self, label, text, x, y):
