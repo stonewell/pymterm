@@ -483,3 +483,13 @@ class TerminalKivy(Terminal):
 
             if self.row <= end:
                 self.line_options = self.line_options[:self.row] + [[]] + self.line_options[self.row: end] + self.line_options[end + 1:]
+
+    def get_attributes(self, context):
+        print 'get_attributes', context.params
+
+    def user9(self, context):
+        print 'terminal type', context.params, self.cap.cmds['user8'].cap_value
+        self.channel.send(self.cap.cmds['user8'].cap_value)
+
+    def enter_reverse_mode(self, context):
+        pass
