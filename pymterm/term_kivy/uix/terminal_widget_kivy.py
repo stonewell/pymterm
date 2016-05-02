@@ -32,6 +32,13 @@ from kivy.core.text import Label as CoreLabel
 from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
 from kivy.utils import escape_markup
 
+from collections import namedtuple
+
+TextAttribute = namedtuple('TextAttributes', ['f_color', 'b_color', 'mode'])
+class TextMode:
+    STDOUT = 0
+    REVERSE = 1 << 0
+
 class TerminalWidgetKivy(FocusBehavior, Widget):
     _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
                         'underline', 'strikethrough', 
@@ -157,7 +164,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     text = ''
                     
                 last_col = col
-                f_color, b_color = line_option[col]
+                f_color, b_color, mode = line_option[col]
 
                 # foreground
                 if f_color == [] and last_f_color:

@@ -26,7 +26,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 
 from term.terminal import Terminal
-from uix.terminal_widget_kivy import TerminalWidgetKivy
+from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -354,7 +354,7 @@ class TerminalKivy(Terminal):
         else:
             back_color = []
 
-        self.save_line_option((fore_color, back_color))
+        self.save_line_option(TextAttribute(fore_color, back_color, None))
         
     def get_line_option(self, row):
         if row >= len(self.line_options):
@@ -365,24 +365,35 @@ class TerminalKivy(Terminal):
                 
     def get_cur_line_option(self):
         return self.get_line_option(self.row)
-    
-    def save_line_option(self, option, clear = False):
-        line_option = self.get_cur_line_option()
-        if len(line_option) <= self.col:
-            while len(line_option) <= self.col:
+
+    def get_option_at(self, row, col):
+        line_option = self.get_line_option(row)
+        if len(line_option) <= col:
+            while len(line_option) <= col:
                 line_option.append(None)
 
-        if not clear and line_option[self.col]:
-            f, b = option
+        return line_option[col]
 
-            if f == []:
-                f = line_option[self.col][0]
-            if b == []:
-                b = line_option[self.col][1]
+    def get_cur_option(self):
+        return self.get_option_at(self.row, self.col)
+    
+    def save_line_option(self, option, clear = False):
+        cur_option = self.get_cur_option()
+        line_option = self.get_cur_line_option()
+        
+        if clear or cur_option is None:
+            line_option[self.col] = option
+        else:
+            f_color = option.f_color if option.f_color != [] else cur_option.f_color
+            b_color = option.b_color if option.b_color != [] else cur_option.b_color
+            if option.mode is None:
+                mode = cur_option.mode
+            elif option.mode == 0 or cur_option.mode is None:
+                mode = option.mode
+            else:
+                mode = cur_option.mode | option.mode
 
-            option = (f, b)
-                
-        line_option[self.col] = option
+            line_option[self.col] = TextAttribute(f_color, b_color, mode)
 
         if not clear:
             self.last_line_option_row = self.row
@@ -492,4 +503,11 @@ class TerminalKivy(Terminal):
         self.channel.send(self.cap.cmds['user8'].cap_value)
 
     def enter_reverse_mode(self, context):
-        pass
+        self.set_mode(TextMode.REVERSE)
+
+    def exit_standout_mode(self, context):
+        self.set_mode(TextMode.STDOUT)
+
+    def set_mode(self, mode):
+        self.save_line_option(TextAttribute([], [], mode))
+        
