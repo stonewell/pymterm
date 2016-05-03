@@ -145,6 +145,7 @@ class TerminalKivy(Terminal):
         self.init_color_table()
         self.last_line_option_row = -1
         self.last_line_option_col = -1
+        self.cur_line_option = None
 
     def get_line(self, row):
         if row >= len(self.lines):
@@ -167,7 +168,7 @@ class TerminalKivy(Terminal):
                 line.append(' ')
 
         if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
-            self.save_line_option(None, True)
+            self.save_line_option(self.cur_line_option, True)
 
         if insert:
             line.insert(self.col, c)
@@ -185,7 +186,7 @@ class TerminalKivy(Terminal):
     
     def get_text(self):
         if len(self.lines) <= self.get_rows():
-            return self.lines, self.line_options
+            return self.lines + [[]] * (self.get_rows() - len(self.lines)), self.line_options + [[]] * (self.get_rows() - len(self.lines))
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
             line_options = self.line_options[len(self.lines) - self.get_rows():]
@@ -277,7 +278,7 @@ class TerminalKivy(Terminal):
     def meta_on(self, context):
         print 'meta_on'
 
-    COLOR_SET_0_RATIO = 0xaa
+    COLOR_SET_0_RATIO = 0x44
     COLOR_SET_1_RATIO = 0xaa
 
     #ansi color
@@ -316,6 +317,12 @@ class TerminalKivy(Terminal):
                                                  shade,
                                                  shade,
                                                  0xFF])
+        #load config
+        if self.cfg.color_theme:
+            from colour.color_manager import get_color_theme
+            color_theme = get_color_theme(self.cfg.color_theme)
+            if color_theme:
+                color_theme.apply_color(self.cfg, TerminalKivy.COLOR_TABLE)
                 
     def get_color(self, mode, idx):
         if mode < 0:
@@ -402,6 +409,7 @@ class TerminalKivy(Terminal):
         if not clear:
             self.last_line_option_row = self.row
             self.last_line_option_col = self.col
+            self.cur_line_option = line_option[self.col]
 
     def cursor_address(self, context):
         self.set_cursor(context.params[1], context.params[0])

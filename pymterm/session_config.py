@@ -17,7 +17,9 @@ class SessionConfig:
         self.username = ''
         self.default_foreground_color = [0x00,0x00,0x00,0x88]
         self.default_background_color = [0xdd,0xdd,0xdd,0xFF]
-        
+        self.default_cursor_color = self.default_foreground_color
+        self.color_theme = args.color_theme
+
         if args.conn_str:
             parts = args.conn_str.split('@')
 

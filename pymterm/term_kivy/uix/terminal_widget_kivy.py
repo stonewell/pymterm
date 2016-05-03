@@ -172,9 +172,13 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
                 return self.add_background(t,
                                         cur_b_color, b_x, y - (i + 1) * dy)
-                
+
+            last_option = None                
             for col in range(len(line_option)):
                 if line_option[col] is None:
+                    continue
+
+                if last_option == line_option[col]:
                     continue
 
                 if last_col < col:
@@ -182,6 +186,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     
                 last_col = col
                 f_color, b_color, mode = line_option[col]
+                last_option = line_option[col]
 
                 # foreground
                 if f_color and len(f_color) > 0:
