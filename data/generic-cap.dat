@@ -1,7 +1,7 @@
 generic-cap|generic ansi escape:\
 	to_status_line=\E]0;:\
 	set_attributes=\E[%d\(;%d\)m:\
-	qet_attributes=\E]%d;?^G:\
+	request_background_color=\E]11;?^G:\
 	qet_attributes=\E]%d;?\234:\
 	orig_pair=\E[m:\
 	clr_eos=\E[%dJ:\

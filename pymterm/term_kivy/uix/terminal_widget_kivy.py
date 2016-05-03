@@ -131,8 +131,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         y = self.height
         x = 0
 
-        last_f_color = None
-        last_b_color = None
+        last_f_color = self.cfg.default_foreground_color
+        last_b_color = self.cfg.default_background_color
+        last_mode = 0
         
         for i in range(len(lines)):
             x = 0
@@ -145,55 +146,57 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             last_col = 0
             text = ''
             text_parts = []
+
+            def render_text(t, b_x):
+                cur_f_color, cur_b_color = last_f_color, last_b_color
+                    
+                if last_mode % TextMode.REVERSE:
+                    cur_f_color, cur_b_color = last_b_color, last_f_color
+                        
+                text = ''.join(['[color=',
+                                self.get_color_hex(cur_f_color),
+                                ']',
+                                escape_markup(t),
+                                '[/color]'])
+
+                text_parts.append(text)
+
+                return self.add_background(t,
+                                        cur_b_color, b_x, y - (i + 1) * dy)
+                
             for col in range(len(line_option)):
                 if line_option[col] is None:
                     continue
 
                 if last_col < col:
-                    text += escape_markup(''.join(line[last_col:col]))
-                    if text.find('[color=') == 0:
-                        text += '[/color]'
-
-                    text_parts.append(text)
-
-                    if last_b_color:
-                        b_x = self.add_background(''.join(line[last_col:col]), last_b_color, b_x, y - (i + 1) * dy)
-                    else:
-                        b_x += self._get_text_width(''.join(line[last_col:col]))
-                    
-                    text = ''
+                    b_x = render_text(''.join(line[last_col: col]), b_x)
                     
                 last_col = col
                 f_color, b_color, mode = line_option[col]
 
                 # foreground
-                if f_color == [] and last_f_color:
-                    text = ''.join(['[color=', self.get_color_hex(last_f_color), ']'])
-                elif f_color and len(f_color) > 0:
-                    text = ''.join(['[color=', self.get_color_hex(f_color), ']'])
+                if f_color and len(f_color) > 0:
                     last_f_color = f_color
-                else:
-                    text = ''
-                    last_f_color = None
+                elif f_color is None:
+                    last_f_color = self.cfg.default_foreground_color
 
                 # background
-                if b_color == []:
-                    pass
-                elif b_color and len(b_color) > 0:
+                if b_color and len(b_color) > 0:
                     last_b_color = b_color
-                else:
-                    last_b_color = None
+                elif b_color is None:
+                    last_b_color = self.cfg.default_background_color
+
+                #mode
+                if mode:
+                    last_mode = mode
 
             if last_col < len(line):
-                text += escape_markup(''.join(line[last_col:]))
-                if text.find('[color=') == 0:
-                    text += '[/color]'
+                b_x = render_text(''.join(line[last_col:]), b_x)
 
-                text_parts.append(text)
-
-                if last_b_color:
-                    b_x = self.add_background(''.join(line[last_col:]), last_b_color, b_x, y - (i + 1) * dy)
-
+            #add background to fill empty cols
+            if b_x < self.width:
+                render_text(' ' * self.visible_cols, b_x)
+                                
             try:
                 self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
             except:
@@ -212,6 +215,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         text = text.replace('\t', ' ' * self.tab_width)
         size = self._label.get_extents(text)
+        size = (size[0], size[1] + 1)
 
         t = Texture.create(size=size)
 

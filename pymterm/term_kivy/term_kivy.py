@@ -43,6 +43,7 @@ class TermTextInput(TerminalWidgetKivy):
         self.visible_cols = 0
 
         self.scroll_region = None
+        self.session = None
 
     def keyboard_on_textinput(self, window, text):
         self.channel.send(text)
@@ -100,10 +101,10 @@ class TerminalKivyApp(App):
         self.channel = None
         
     def build(self):
-        a = TermTextInput()
-        
         self.root_widget = RootWidget()
         self.root_widget.txtBuffer.focus = True
+        self.root_widget.txtBuffer.cfg = self.cfg
+
         return self.root_widget
 
     def terminal(self, cfg):
@@ -273,7 +274,7 @@ class TerminalKivy(Terminal):
     def meta_on(self, context):
         print 'meta_on'
 
-    COLOR_SET_0_RATIO = 0x44
+    COLOR_SET_0_RATIO = 0x88
     COLOR_SET_1_RATIO = 0xaa
 
     #ansi color
@@ -435,7 +436,8 @@ class TerminalKivy(Terminal):
             self.channel.send('\033[0n')
 
     def tab(self, context):
-        self.save_buffer('\t', False)
+        #self.save_buffer('\t', False)
+        pass
 
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
@@ -495,8 +497,11 @@ class TerminalKivy(Terminal):
             if self.row <= end:
                 self.line_options = self.line_options[:self.row] + [[]] + self.line_options[self.row: end] + self.line_options[end + 1:]
 
-    def get_attributes(self, context):
-        print 'get_attributes', context.params
+    def request_background_color(self, context):
+        rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
+
+        print "response background color request:", rbg_response.replace('\033', '\\E')
+        self.channel.send(rbg_response)
 
     def user9(self, context):
         print 'terminal type', context.params, self.cap.cmds['user8'].cap_value
