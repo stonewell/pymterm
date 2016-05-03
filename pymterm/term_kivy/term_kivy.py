@@ -115,6 +115,7 @@ class TerminalKivyApp(App):
         
     def on_start(self):
         self.session = session.Session(self.cfg, self.terminal(self.cfg))
+
         self.root_widget.txtBuffer.session = self.session
         self.root_widget.txtBuffer.tab_width = self.session.get_tab_width()
         
@@ -140,6 +141,7 @@ class TerminalKivy(Terminal):
         self.col = 0
         self.row = 0
         self.channel = None
+        self.session = None
         self.init_color_table()
         self.last_line_option_row = -1
         self.last_line_option_col = -1
@@ -216,7 +218,8 @@ class TerminalKivy(Terminal):
             self.row = row + len(self.lines) - self.get_rows()
         
     def cursor_right(self, context):
-        self.col += 1
+        if self.col < self.get_cols() - 1:
+            self.col += 1
 
     def cursor_left(self, context):
         if self.col > 0:
@@ -436,8 +439,10 @@ class TerminalKivy(Terminal):
             self.channel.send('\033[0n')
 
     def tab(self, context):
-        #self.save_buffer('\t', False)
-        pass
+        if self.col + self.session.get_tab_width() < self.get_cols() - 1:
+            self.col += self.session.get_tab_width()
+        else:
+            self.col = self.get_cols() - 1
 
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])

@@ -9,10 +9,10 @@ class Session:
     def __init__(self, cfg, terminal):
         self.cfg = cfg
         self.terminal = terminal
-        self.session = None
         self.sock = None
         self.writer = None
         self.chan = None
+        self.terminal.session = self
 
     def connect(self):
         username = self.cfg.username
