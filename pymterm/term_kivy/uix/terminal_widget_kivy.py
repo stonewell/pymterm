@@ -34,6 +34,15 @@ from kivy.utils import escape_markup
 
 from collections import namedtuple
 
+Cache_register = Cache.register
+Cache_append = Cache.append
+Cache_get = Cache.get
+Cache_remove = Cache.remove
+Cache_register('termwidget.label', timeout=60.)
+Cache_register('termwidget.width', timeout=60.)
+Cache_register('termwidget.b', timeout=60.)
+Cache_register('termwidget.b_size', timeout=60.)
+
 TextAttribute = namedtuple('TextAttributes', ['f_color', 'b_color', 'mode'])
 class TextMode:
     STDOUT = 0
@@ -123,7 +132,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         lines = self.lines[:]
         line_options = self.line_options[:]
         
-        self._create_line_labels(len(lines))
+        #self._create_line_labels(len(lines))
         
         self.canvas.clear()
 
@@ -138,7 +147,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         for i in range(len(lines)):
             x = 0
             b_x = 0
-            label = self._line_labels[i]
+            #label = self._line_labels[i]
             line = lines[i]
             line_option = line_options[i] if i < len(line_options) else []
 
@@ -198,7 +207,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 render_text(' ' * self.visible_cols, b_x)
                                 
             try:
-                self.add_text(label, ''.join(text_parts), x, y - (i + 1) * dy)
+                self.add_text(''.join(text_parts), x, y - (i + 1) * dy)
             except:
                 print 'show text', ''.join(text_parts), x, y - (i + 1) * dy
 
@@ -209,44 +218,77 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if not text or len(text) == 0:
             return
 
+        cid = '%s\0%02x%02x%02x%02x' % (text, color[0], color[1], color[2], color[3])
+
+        t = Cache_get('termwidget.b', cid)
+
+        if t is not None:
+            self.canvas.add(Rectangle(texture=t, pos=(x , y), size=t.size))        
+            return x + t.size[0]
+        
         from kivy.graphics import Color
         from kivy.graphics.instructions import InstructionGroup
         from kivy.graphics.texture import Texture
 
-        text = text.replace('\t', ' ' * self.tab_width)
-        size = self._label.get_extents(text)
-        size = (size[0], size[1] + 1)
+        size = Cache_get('termwidget.b_size', text)
+
+        if size is None:
+            text = text.replace('\t', ' ' * self.tab_width)
+            size = self._label.get_extents(text)
+            size = (size[0], size[1] + 1)
+            Cache_append('termwidget.b_size', text, size)
 
         t = Texture.create(size=size)
 
-        buf = color[:3] * size[0] * size[1]
+        buf = color * size[0] * size[1]
         buf = b''.join(map(chr, buf))
-        t.blit_buffer(buf, colorfmt='rgb', bufferfmt='ubyte')
+        t.blit_buffer(buf, colorfmt='rgba', bufferfmt='ubyte')
+
+        Cache_append('termwidget.b', cid, t)
         
         self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size))        
         
         return x + size[0]
     
-    def add_text(self, label, text, x, y):
+    def add_text(self, text, x, y):
         if not text or len(text) == 0:
             return
 
-        text = text.replace('\t', ' ' * self.tab_width)
-        label.text = text
-        label.refresh()
+        label = Cache_get('termwidget.label', text)
 
-        if label.texture:
-            label.texture.bind()
+        texture = None
+        
+        if label is None:
+            label = self._create_line_label()
+            text = text.replace('\t', ' ' * self.tab_width)
+            label.text = text
+            label.refresh()
 
-        r = Rectangle(size=label.texture.size, pos=(x, y))
-        r.texture = label.texture
-        self.canvas.add(r)
+            if label.texture:
+                label.texture.bind()
+
+            texture = label.texture
+
+            Cache_append('termwidget.label', text, label)
+        else:
+            texture = label.texture
+            
+        self.canvas.add(Rectangle(texture=texture, size=texture.size, pos=(x, y)))
 
     def _get_text_width(self, text):
+        width = Cache_get('termwidget.width', text)
+
+        if width is not None:
+            return width
+        
         txt = text.replace('\t', ' ' * self.tab_width)
         
-        return self._label.get_extents(txt)[0]
+        width = self._label.get_extents(txt)[0]
 
+        Cache_append('termwidget.width', text, width)
+
+        return width
+    
     def refresh(self):
         self._trigger_texture()
         

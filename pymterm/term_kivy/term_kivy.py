@@ -274,7 +274,7 @@ class TerminalKivy(Terminal):
     def meta_on(self, context):
         print 'meta_on'
 
-    COLOR_SET_0_RATIO = 0x88
+    COLOR_SET_0_RATIO = 0xaa
     COLOR_SET_1_RATIO = 0xaa
 
     #ansi color
@@ -335,22 +335,22 @@ class TerminalKivy(Terminal):
         back_color = None
         
         if f_color_idx >= 0:
-            print 'set fore color:', f_color_idx, ' at ', self.col, self.row
+            print 'set fore color:', f_color_idx, ' at ', self.get_cursor()
             fore_color = self.get_color(mode, f_color_idx)
         elif f_color_idx == -1:
             #reset fore color
-            print 'reset fore color:', f_color_idx, ' at ', self.col, self.row
+            print 'reset fore color:', f_color_idx, ' at ', self.get_cursor()
             fore_color = None
         else:
             #continue
             fore_color = []
 
         if b_color_idx >= 0:
-            print 'set back color:', b_color_idx, ' at ', self.col, self.row
+            print 'set back color:', b_color_idx, ' at ', self.get_cursor()
             back_color = self.get_color(mode, b_color_idx)
         elif b_color_idx == -1:
             #reset back color
-            print 'reset back color:', b_color_idx, ' at ', self.col, self.row
+            print 'reset back color:', b_color_idx, ' at ', self.get_cursor()
             back_color = None
         else:
             back_color = []

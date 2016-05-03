@@ -15,8 +15,8 @@ class SessionConfig:
         self.log_file_path = args.log
         self.hostname = ''
         self.username = ''
-        self.default_background_color = [0x00,0x00,0x00,0.5]
-        self.default_foreground_color = [0xdd,0xdd,0xdd,1]
+        self.default_foreground_color = [0x00,0x00,0x00,0x88]
+        self.default_background_color = [0xdd,0xdd,0xdd,0xFF]
         
         if args.conn_str:
             parts = args.conn_str.split('@')
