@@ -2,6 +2,8 @@
 
 import re
 import sys
+import logging
+
 from os import environ
 from weakref import ref
 
@@ -214,7 +216,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             try:
                 self.add_text(''.join(text_parts), x, y - (i + 1) * dy)
             except:
-                print 'show text', ''.join(text_parts), x, y - (i + 1) * dy
+                logging.exception('show text:{}', ''.join(text_parts), x, y - (i + 1) * dy)
 
     def get_color_hex(self, l_color):
         return '#%02x%02x%02x%02x' % (l_color[0], l_color[1], l_color[2], l_color[3])

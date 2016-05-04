@@ -8,6 +8,3 @@ def handle(term, context, cap_turple):
         for idx in range(len(context.params)):
             context.params[idx] -= 1
 
-
-    print context.params
-

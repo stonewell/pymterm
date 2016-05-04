@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 def handle(term, context, cap_turple):
     cap_name, increase_params = cap_turple
@@ -10,4 +11,4 @@ def handle(term, context, cap_turple):
                 context.params[idx] -= 1
         getattr(term, cap_name)(context)
     else:
-        print 'No module named', cap_name
+        logging.error('No module named:{}', cap_name)

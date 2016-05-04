@@ -29,6 +29,7 @@ import sys
 import time
 import traceback
 from paramiko.py3compat import input
+import logging
 
 import paramiko
 
@@ -44,13 +45,13 @@ def agent_auth(transport, username):
         return
         
     for key in agent_keys:
-        print('Trying ssh-agent key %s' % hexlify(key.get_fingerprint()))
+        logging.getLogger('ssh_client').debug('Trying ssh-agent key %s' % hexlify(key.get_fingerprint()))
         try:
             transport.auth_publickey(username, key)
-            print('... success!')
+            logging.getLogger('ssh_client').debug('... authentication success!')
             return
         except paramiko.SSHException:
-            print('... nope.')
+            logging.getLogger('ssh_client').debug('authentication fail.')
 
 
 def manual_auth(t, username, hostname):
@@ -87,10 +88,6 @@ def manual_auth(t, username, hostname):
 
 
 def start_client(session, cfg):
-    if cfg.is_logging:
-        # setup logging
-        paramiko.util.log_to_file(cfg.log_file_path)
-
     username = cfg.username
     hostname = cfg.hostname
     port = cfg.port
@@ -139,18 +136,16 @@ def start_client(session, cfg):
         if not t.is_authenticated():
             manual_auth(t, username, hostname)
         if not t.is_authenticated():
-            print('*** Authentication failed. :(')
+            logging.getLogger('ssh_client').debug('*** Authentication failed. :(')
             t.close()
             sys.exit(1)
 
         chan = t.open_session()
-        print('*** Here we go!\n')
         session.interactive_shell(chan)
 
         return (t, chan)
     except Exception as e:
-        print('*** Caught exception: ' + str(e.__class__) + ': ' + str(e))
-        traceback.print_exc()
+        logging.getLogger('ssh_client').exception('ssh client caught exception:')
         try:
             t.close()
         except:

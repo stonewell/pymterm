@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import logging
 
 class Cap:
     def __init__(self):
@@ -284,7 +285,7 @@ def build_parser_state_machine(cap_str_value, start_state):
 
             if cur_state != old_cur_state:
                 #merge the state
-                print 'should put generic pattern before special pattern'
+                logging.error('should put generic pattern before special pattern')
                 sys.exit(1)
             repeat_enter_state = None
 

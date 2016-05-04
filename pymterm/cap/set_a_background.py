@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 def handle(term, context, cap_turple):
     light = False
@@ -19,5 +20,5 @@ def handle(term, context, cap_turple):
     else:
         color_idx = context.params[0] - 40
 
-    print light, color_idx, context.params
+    logging.get_logger('set_a_background').debug('light={}, color_index={}, params={}', light, color_idx, context.params)
     term.set_background(light, color_idx)

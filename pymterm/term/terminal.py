@@ -4,6 +4,8 @@ import socket
 import sys
 import time
 import traceback
+import logging
+
 import read_termdata
 import parse_termdata
 import cap.cap_manager
@@ -38,7 +40,7 @@ class Terminal:
         cap_handler = cap.cap_manager.get_cap_handler(cap_name)
 
         if not cap_handler:
-            print 'no matched:', cap_turple, self.context.params
+            logging.getLogger('terminal').error('no matched:{}, params={}', cap_turple, self.context.params)
         elif cap_handler:
             cap_handler.handle(self, self.context, cap_turple)
 
@@ -58,14 +60,14 @@ class Terminal:
             self.context.params = []
             self.control_data = []
         elif check_unknown and len(self.control_data) > 0:
-            print 'current state:', self.state.cap_name, self.context.params
-            print "unknown control data:" + ''.join(self.control_data)
-            print 'data:' + data.replace('\x1B', '\\E')
+            logging.getLogger('terminal').error('current state:{}, params={}', self.state.cap_name, self.context.params)
+            logging.getLogger('terminal').error("unknown control data:" + ''.join(self.control_data))
+            logging.getLogger('terminal').error('data:' + data.replace('\x1B', '\\E'))
 
             sys.exit(1)
 
         if not check_unknown and not cap_turple and len(self.control_data) > 0:
-            print 'found unfinished data'
+            logging.getLogger('terminal').debug('found unfinished data')
 
         return cap_turple
 	    

@@ -1,10 +1,9 @@
 import os
 import sys
 import argparse
+import logging
 
 import session_config
-
-from term.terminal_console import TerminalConsoleApp
 
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
@@ -15,6 +14,7 @@ def args_parser():
     parser.add_argument('-l', '--log', type=str, help='logging file path', required = False)
     parser.add_argument('-t', '--term_name', type=str, help='the terminal type name', default='xterm-256color', required = False)
     parser.add_argument('--color_theme', type=str, help='the terminal color theme', default='tango', required = False)
+    parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument(metavar='user@host', type=str, help='', nargs='?', dest='conn_str')
 
     return parser
@@ -26,11 +26,19 @@ if __name__ == '__main__':
         sys.argv = sys.argv[:1]
         cfg = session_config.SessionConfig(args)
     except(ValueError) as e:
+        logging.exception('load configuration failed')
         args_parser().print_help()
         sys.exit(1)
 
     if cfg.console:
-	    TerminalConsoleApp(cfg).start()
+        from term.terminal_console import TerminalConsoleApp
+        TerminalConsoleApp(cfg).start()
     else:
+        os.environ['KIVY_NO_FILELOG'] = ''
+        os.environ['KIVY_NO_CONSOLELOG'] = ''
+
         from term_kivy.term_kivy import TerminalKivyApp
+        from kivy.logger import Logger
+        Logger.setLevel(logging.ERROR)
+        
         TerminalKivyApp(cfg).start()

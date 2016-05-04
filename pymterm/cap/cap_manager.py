@@ -2,9 +2,10 @@ import os
 import imp
 import sys
 import unknown_cap
+import logging
 
 def get_cap_handler(name):
-    print "cap:", name
+    logging.getLogger('cap_manager').debug("cap:%s", name)
     
     # Fast path: see if the module has already been imported.
     try:

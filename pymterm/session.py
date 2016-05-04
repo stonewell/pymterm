@@ -4,6 +4,7 @@ import socket
 import sys
 import time
 import traceback
+import logging
 
 class Session:
     def __init__(self, cfg, terminal):
@@ -26,14 +27,13 @@ class Session:
 
             return sock
         except Exception as e:
-            print('*** Connect failed: ' + str(e))
-            traceback.print_exc()
+            logging.getLogger('session').exception("connect to %s@%s:%d failed." % (username, hostname, port))
             self.report_error("connect to %s@%s:%d failed." % (username, hostname, port))
 
         return None
 
     def report_error(self, msg):
-        print('^^^^ ' + msg);
+        logging.getLogger('session').error(msg);
 
     def interactive_shell(self, chan):
         cols = self.terminal.get_cols()
@@ -52,16 +52,12 @@ class Session:
 	        while True:
 		        data = sock.recv(4096)
 		        if not data:
-			        sys.stdout.write('\r\n*** EOF ***\r\n\r\n')
-			        sys.stdout.flush()
+			        logging.getLogger('session').info("end of socket, quit")
 			        break
 		        self.terminal.on_data(data)
 
         self.writer = writer = threading.Thread(target=writeall, args=(chan,))
         writer.start()
-
-        chan.send('echo $TERM\x01abc\r\n')
-        chan.send('ls\r\n')
 
     def wait_for_quit(self):
         self.writer.join()
