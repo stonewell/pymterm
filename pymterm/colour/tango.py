@@ -1,7 +1,7 @@
 import os
 import sys
 
-TANGO_PALETE = [
+TANGO_PALLETE = [
     '2e2e34343636',
     'cccc00000000',
     '4e4e9a9a0606',
@@ -40,6 +40,6 @@ def apply_color(cfg, color_table):
     cfg.default_background_color = parse_tango_color('323232323232')
     cfg.default_cursor_color = cfg.default_foreground_color
 
-    for i in range(len(TANGO_PALETE)):
+    for i in range(len(TANGO_PALLETE)):
         if i < len(color_table):
-            color_table[i] = parse_tango_color(TANGO_PALETE[i])
+            color_table[i] = parse_tango_color(TANGO_PALLETE[i])
