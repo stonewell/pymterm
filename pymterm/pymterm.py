@@ -39,6 +39,6 @@ if __name__ == '__main__':
 
         from term_kivy.term_kivy import TerminalKivyApp
         from kivy.logger import Logger
-        Logger.setLevel(logging.ERROR)
+        #Logger.setLevel(logging.ERROR)
         
         TerminalKivyApp(cfg).start()

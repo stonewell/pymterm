@@ -11,4 +11,4 @@ def handle(term, context, cap_turple):
                 context.params[idx] -= 1
         getattr(term, cap_name)(context)
     else:
-        logging.error('No module named:{}', cap_name)
+        logging.error('No module named:{}'.format(cap_name))

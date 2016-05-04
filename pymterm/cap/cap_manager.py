@@ -5,7 +5,7 @@ import unknown_cap
 import logging
 
 def get_cap_handler(name):
-    logging.getLogger('cap_manager').debug("cap:%s", name)
+    logging.getLogger('cap_manager').debug("cap:{}".format(name))
     
     # Fast path: see if the module has already been imported.
     try:

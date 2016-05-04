@@ -20,5 +20,5 @@ def handle(term, context, cap_turple):
     else:
         color_idx = context.params[0] - 30
 
-    logging.get_logger('set_a_foreground').debug('light={}, color_index={}, params={}', light, color_idx, context.params)
+    logging.getLogger('set_a_foreground').debug('light={}, color_index={}, params={}'.format(light, color_idx, context.params))
     term.set_foreground(light, color_idx)

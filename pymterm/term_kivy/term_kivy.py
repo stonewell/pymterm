@@ -50,7 +50,7 @@ class TermTextInput(TerminalWidgetKivy):
         self.channel.send(text)
         
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
-        logging.getLogger('term_kivy').debug('The key {} {}', keycode, 'have been pressed')
+        logging.getLogger('term_kivy').debug('The key {} {}'.format(keycode, 'have been pressed'))
         logging.getLogger('term_kivy').debug(' - text is %r' % text)
         logging.getLogger('term_kivy').debug(' - modifiers are %r' % modifiers)
 
@@ -88,7 +88,7 @@ class TermTextInput(TerminalWidgetKivy):
         self.cal_visible_rows()
         self.cal_visible_cols()
 
-        logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={}', self.visible_cols, self.visible_rows, vw, vh, self.size)
+        logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size))
         
         self.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
 
@@ -338,7 +338,7 @@ class TerminalKivy(Terminal):
         elif idx < 256:
             return TerminalKivy.COLOR_TABLE[idx]
         else:
-            logging.getLogger('term_kivy').error('not implemented color', idx, mode)
+            logging.getLogger('term_kivy').error('not implemented color:{} mode={}'.format(idx, mode))
             sys.exit(1)
             
     def set_attributes(self, mode, f_color_idx, b_color_idx):
@@ -346,22 +346,22 @@ class TerminalKivy(Terminal):
         back_color = None
         
         if f_color_idx >= 0:
-            logging.getLogger('term_kivy').debug('set fore color:{} {} {}', f_color_idx, ' at ', self.get_cursor())
+            logging.getLogger('term_kivy').debug('set fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             fore_color = self.get_color(mode, f_color_idx)
         elif f_color_idx == -1:
             #reset fore color
-            logging.getLogger('term_kivy').debug('reset fore color:{} {} {}', f_color_idx, ' at ', self.get_cursor())
+            logging.getLogger('term_kivy').debug('reset fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             fore_color = None
         else:
             #continue
             fore_color = []
 
         if b_color_idx >= 0:
-            logging.getLogger('term_kivy').debug('set back color:{} {} {}', b_color_idx, ' at ', self.get_cursor())
+            logging.getLogger('term_kivy').debug('set back color:{} {} {}'.format(b_color_idx, ' at ', self.get_cursor()))
             back_color = self.get_color(mode, b_color_idx)
         elif b_color_idx == -1:
             #reset back color
-            logging.getLogger('term_kivy').debug('reset back color:{} {} {}', b_color_idx, ' at ', self.get_cursor())
+            logging.getLogger('term_kivy').debug('reset back color:{} {} {}'.format(b_color_idx, ' at ', self.get_cursor()))
             back_color = None
         else:
             back_color = []
@@ -413,6 +413,7 @@ class TerminalKivy(Terminal):
             self.cur_line_option = line_option[self.col]
 
     def cursor_address(self, context):
+        logging.getLogger('term_kivy').debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
         
     def cursor_home(self, context):
@@ -461,7 +462,7 @@ class TerminalKivy(Terminal):
         
     def parm_delete_line(self, context):
         begin, end = self.get_scroll_region()
-        logging.getLogger('term_kivy').debug('delete line:{} begin={} end={}', context.params, begin, end)
+        logging.getLogger('term_kivy').debug('delete line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_delete = context.params[0] if len(context.params) > 0 else 1
         
@@ -491,7 +492,7 @@ class TerminalKivy(Terminal):
         self.scroll_region = (begin, end)
     
     def change_scroll_region(self, context):
-        logging.getLogger('term_kivy').debug('change scroll region:{} rows={}', context.params, self.get_rows())
+        logging.getLogger('term_kivy').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], context.params[1])
         
         
@@ -500,7 +501,7 @@ class TerminalKivy(Terminal):
         
     def parm_insert_line(self, context):
         begin, end = self.get_scroll_region()
-        logging.getLogger('term_kivy').debug('insert line:{} begin={} end={}', context.params, begin, end)
+        logging.getLogger('term_kivy').debug('insert line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_insert = context.params[0] if len(context.params) > 0 else 1
         
@@ -514,11 +515,11 @@ class TerminalKivy(Terminal):
     def request_background_color(self, context):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
 
-        logging.getLogger('term_kivy').debug("response background color request:{}", rbg_response.replace('\033', '\\E'))
+        logging.getLogger('term_kivy').debug("response background color request:{}".format(rbg_response.replace('\033', '\\E')))
         self.channel.send(rbg_response)
 
     def user9(self, context):
-        logging.getLogger('term_kivy').debug('response terminal type:{} {}', context.params, self.cap.cmds['user8'].cap_value)
+        logging.getLogger('term_kivy').debug('response terminal type:{} {}'.format(context.params, self.cap.cmds['user8'].cap_value))
         self.channel.send(self.cap.cmds['user8'].cap_value)
 
     def enter_reverse_mode(self, context):

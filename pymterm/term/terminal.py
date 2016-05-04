@@ -40,7 +40,7 @@ class Terminal:
         cap_handler = cap.cap_manager.get_cap_handler(cap_name)
 
         if not cap_handler:
-            logging.getLogger('terminal').error('no matched:{}, params={}', cap_turple, self.context.params)
+            logging.getLogger('terminal').error('no matched:{}, params={}'.format(cap_turple, self.context.params))
         elif cap_handler:
             cap_handler.handle(self, self.context, cap_turple)
 
@@ -60,7 +60,7 @@ class Terminal:
             self.context.params = []
             self.control_data = []
         elif check_unknown and len(self.control_data) > 0:
-            logging.getLogger('terminal').error('current state:{}, params={}', self.state.cap_name, self.context.params)
+            logging.getLogger('terminal').error('current state:{}, params={}'.format(self.state.cap_name, self.context.params))
             logging.getLogger('terminal').error("unknown control data:" + ''.join(self.control_data))
             logging.getLogger('terminal').error('data:' + data.replace('\x1B', '\\E'))
 
