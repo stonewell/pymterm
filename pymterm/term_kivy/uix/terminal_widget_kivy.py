@@ -131,8 +131,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     def texture_update(self, *largs):
         self._update_line_options()
 
-        lines = self.lines[:]
-        line_options = self.line_options[:]
+        lines = [line[:] for line in self.lines]
+        line_options = [line_option[:] for line_option in self.line_options]
         
         #self._create_line_labels(len(lines))
         
@@ -268,7 +268,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if label is None:
             label = self._create_line_label()
             text = text.replace('\t', ' ' * self.tab_width)
-            label.text = text
+            label.text = text.decode('utf_8', 'ignore')
             label.refresh()
 
             if label.texture:
