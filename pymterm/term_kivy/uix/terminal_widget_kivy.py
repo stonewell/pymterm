@@ -230,6 +230,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         t = Cache_get('termwidget.b', cid)
 
         if t is not None:
+            logging.getLogger('term_widget').debug('reuse the background texture, pos={}, {}, size={}'.format(x, y, t.size))
             self.canvas.add(Rectangle(texture=t, pos=(x , y), size=t.size))        
             return x + t.size[0]
         
@@ -268,7 +269,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if label is None:
             label = self._create_line_label()
             text = text.replace('\t', ' ' * self.tab_width)
-            label.text = text.decode('utf_8', 'ignore')
+            label.text = text.decode('utf_8')
             label.refresh()
 
             if label.texture:
@@ -305,7 +306,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
     lines = ListProperty([])
     line_options = ListProperty([])
-    font_name = StringProperty('RobotoMono-Regular')
+    font_name = StringProperty('WenQuanYi')
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
     line_spacing = NumericProperty(1.0)

@@ -36,7 +36,15 @@ if __name__ == '__main__':
     else:
         os.environ['KIVY_NO_FILELOG'] = ''
         os.environ['KIVY_NO_CONSOLELOG'] = ''
+        from kivy.core.text import LabelBase
 
+        FONTS = {'WenQuanYi':'wqy-microhei-mono.ttf', 'YaHei Consolas':'YaHei Consolas Hybrid 1.12.ttf'}
+        for f_name in FONTS:
+            font_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'fonts', FONTS[f_name]) 
+            logging.getLogger('term_kivy_app').debug(font_path)
+        
+            LabelBase.register(f_name, font_path)
+        
         from term_kivy.term_kivy import TerminalKivyApp
         from kivy.logger import Logger
         #Logger.setLevel(logging.ERROR)
