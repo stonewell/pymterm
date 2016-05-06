@@ -137,7 +137,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         line_options = [line_option[:] for line_option in self.line_options]
         c_col, c_row = self.cursor
 
-        logging.error('cursor pos:{}'.format(self.cursor))
         self.canvas.clear()
 
         dy = self.line_height + self.line_spacing
@@ -301,7 +300,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if label is None:
             label = self._create_line_label()
             text = text.replace('\t', ' ' * self.tab_width)
-            label.text = text.decode('utf_8')
+            label.text = text.decode('utf_8', errors='ignore')
             label.refresh()
 
             if label.texture:

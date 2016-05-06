@@ -148,7 +148,9 @@ class TerminalKivy(Terminal):
         self.last_line_option_row = -1
         self.last_line_option_col = -1
         self.cur_line_option = None
-
+        self.saved_lines, self.saved_line_options, self.saved_cursor = [], [], (0, 0)
+        self.bold_mode = False
+        
     def get_line(self, row):
         if row >= len(self.lines):
             for i in range(len(self.lines), row + 1):
@@ -334,6 +336,9 @@ class TerminalKivy(Terminal):
             color_set = 0
         else:
             color_set = mode & 1
+
+        if self.bold_mode:
+            color_set = 1
 
         if idx < 8:
             return TerminalKivy.COLOR_TABLE[color_set * 8 + idx]
@@ -538,3 +543,15 @@ class TerminalKivy(Terminal):
     def set_mode(self, mode):
         self.save_line_option(TextAttribute([], [], mode))
         
+    def enter_ca_mode(self, context):
+        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_bold_mode = self.lines, self.line_options, self.get_cursor(), self.bold_mode
+        self.lines, self.line_options, self.col, self.row, self.bold_mode = [], [], 0, 0, False
+
+    def exit_ca_mode(self, context):
+        self.lines, self.line_options, self.col, self.row, self.bold_mode = self.saved_lines, self.saved_line_options, self.saved_cursor[0], self.saved_cursor[1], self.saved_bold_mode
+
+    def key_shome(self, context):
+        self.set_cursor(1, 0)
+
+    def enter_bold_mode(self, context):
+        self.bold_mode = True

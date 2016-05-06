@@ -1,6 +1,7 @@
 import os
 import imp
 import sys
+import logging
 
 def get_color_theme(name):
     # Fast path: see if the module has already been imported.
