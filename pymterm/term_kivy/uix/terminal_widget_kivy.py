@@ -76,6 +76,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._label = None
         self._create_label()
 
+        self.cursor = (0, 0)
+
         self._line_labels = []
         
         # force the texture creation
@@ -133,9 +135,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         lines = [line[:] for line in self.lines]
         line_options = [line_option[:] for line_option in self.line_options]
-        
-        #self._create_line_labels(len(lines))
-        
+        c_col, c_row = self.cursor
+
+        logging.error('cursor pos:{}'.format(self.cursor))
         self.canvas.clear()
 
         dy = self.line_height + self.line_spacing
@@ -158,10 +160,10 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             text = ''
             text_parts = []
 
-            def render_text(t, b_x):
+            def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
                     
-                if last_mode % TextMode.REVERSE:
+                if last_mode & TextMode.REVERSE:
                     cur_f_color, cur_b_color = last_b_color, last_f_color
                         
                 text = ''.join(['[color=',
@@ -173,7 +175,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 text_parts.append(text)
 
                 return self.add_background(t,
-                                        cur_b_color, b_x, y - (i + 1) * dy)
+                                        cur_b_color, xxxx, y - (i + 1) * dy)
 
             last_option = None                
             for col in range(len(line_option)):
@@ -207,14 +209,37 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     continue
                 
                 if last_col < col:
-                    b_x = render_text(''.join(line[last_col: col]), b_x)
+                    if i == c_row and last_col <= c_col and c_col < col:
+                        b_x = render_text(''.join(line[last_col: c_col]), b_x)
+
+                        tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                        b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
+                        last_mode = tmp_l_m
+                        
+                        b_x = render_text(''.join(line[c_col + 1: col]), b_x)
+                    else:
+                        b_x = render_text(''.join(line[last_col: col]), b_x)
                     
                 last_col = col
                 last_option = line_option[col]
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
-                b_x = render_text(''.join(line[last_col:]), b_x)
+                if i == c_row and last_col <= c_col and c_col < len(line):
+                    b_x = render_text(''.join(line[last_col: c_col]), b_x)
+
+                    tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                    b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
+                    last_mode = tmp_l_m
+                    
+                    b_x = render_text(''.join(line[c_col + 1:]), b_x)
+                else:
+                    b_x = render_text(''.join(line[last_col:]), b_x)
+
+            if i == c_row and c_col >= len(line):
+                tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                b_x = render_text(' ', b_x)
+                last_mode = tmp_l_m
 
             #add background to fill empty cols
             if b_x < self.width:
@@ -230,7 +255,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
     def add_background(self, text, color, x, y):
         if not text or len(text) == 0:
-            return
+            return x
 
         cid = '%s\0%02x%02x%02x%02x' % (text, color[0], color[1], color[2], color[3])
 

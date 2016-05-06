@@ -219,6 +219,8 @@ class TerminalKivy(Terminal):
             self.row = row
         else:
             self.row = row + len(self.lines) - self.get_rows()
+
+        logging.getLogger('term_kivy').debug('termianl cursor:{}, {}'.format(self.col, self.row));
         
     def cursor_right(self, context):
         if self.col < self.get_cols() - 1:
@@ -270,6 +272,7 @@ class TerminalKivy(Terminal):
         
         self.txt_buffer.lines = lines
         self.txt_buffer.line_options = line_options
+        self.txt_buffer.cursor = self.get_cursor()
         self.txt_buffer.refresh()
         
     def on_data(self, data):
@@ -450,10 +453,13 @@ class TerminalKivy(Terminal):
             self.channel.send('\033[0n')
 
     def tab(self, context):
-        if self.col + self.session.get_tab_width() < self.get_cols() - 1:
-            self.col += self.session.get_tab_width()
-        else:
-            self.col = self.get_cols() - 1
+        col = self.col / self.session.get_tab_width()
+        col = (col + 1) * self.session.get_tab_width();
+            
+        if col >= self.get_cols():
+            col = self.get_cols() - 1
+
+        self.col = col
 
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
