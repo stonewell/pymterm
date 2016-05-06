@@ -203,7 +203,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     last_b_color = self.cfg.default_background_color
 
                 #mode
-                if mode:
+                if mode is not None:
                     last_mode = mode
 
             if last_col < len(line):

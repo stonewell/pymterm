@@ -18,6 +18,7 @@ def get_color_theme(name):
 
         return imp.load_module(name, fp, pathname, description)
     except ImportError:
+        logging.exception('unable to load {}'.format(name))
         return None
     finally:
         # Since we may exit via an exception, close fp explicitly.
