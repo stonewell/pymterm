@@ -91,6 +91,7 @@ class TermTextInput(TerminalWidgetKivy):
         logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size))
         
         self.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
+        self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):
     def __init__(self, cfg):
