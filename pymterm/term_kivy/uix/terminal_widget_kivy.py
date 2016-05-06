@@ -183,28 +183,35 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 if last_option == line_option[col]:
                     continue
 
+                f_color, b_color, mode = line_option[col]
+
+                n_f_color, n_b_color, n_mode = last_f_color, last_b_color, last_mode
+                
+                # foreground
+                if f_color and len(f_color) > 0:
+                    n_f_color = f_color
+                elif f_color is None:
+                    n_f_color = self.cfg.default_foreground_color
+
+                # background
+                if b_color and len(b_color) > 0:
+                    n_b_color = b_color
+                elif b_color is None:
+                    n_b_color = self.cfg.default_background_color
+
+                #mode
+                if mode is not None:
+                    n_mode = mode
+
+                if (n_f_color, n_b_color, n_mode) == (last_f_color, last_b_color, last_mode):
+                    continue
+                
                 if last_col < col:
                     b_x = render_text(''.join(line[last_col: col]), b_x)
                     
                 last_col = col
-                f_color, b_color, mode = line_option[col]
                 last_option = line_option[col]
-
-                # foreground
-                if f_color and len(f_color) > 0:
-                    last_f_color = f_color
-                elif f_color is None:
-                    last_f_color = self.cfg.default_foreground_color
-
-                # background
-                if b_color and len(b_color) > 0:
-                    last_b_color = b_color
-                elif b_color is None:
-                    last_b_color = self.cfg.default_background_color
-
-                #mode
-                if mode is not None:
-                    last_mode = mode
+                last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
                 b_x = render_text(''.join(line[last_col:]), b_x)
