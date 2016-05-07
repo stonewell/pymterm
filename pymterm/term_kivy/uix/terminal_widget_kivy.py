@@ -340,7 +340,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
     lines = ListProperty([])
     line_options = ListProperty([])
-    font_name = StringProperty('WenQuanYi')
+    font_name = StringProperty('NotoSans')
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
     line_spacing = NumericProperty(1.0)
