@@ -30,10 +30,11 @@ def translate_key(term, keycode, text, modifiers):
 
     #arrow
     if key in ['up', 'left', 'right', 'down', 'home', 'end']:
-        cap_prefix = 'cursor_'
+        cap_prefix = 'key_'
         if term.keypad_transmit_mode:
             cap_prefix = 'key_'
         cap_name = cap_prefix + key
+
         result.append(term.cap.cmds[cap_name].cap_value)
         handled = True
     elif key in ['pageup', 'pagedown', 'insert', 'delete']:

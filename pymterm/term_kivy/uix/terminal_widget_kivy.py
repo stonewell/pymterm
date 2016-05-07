@@ -311,6 +311,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             Cache_append('termwidget.label', text, label)
         else:
             texture = label.texture
+            logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
             
         self.canvas.add(Rectangle(texture=texture, size=texture.size, pos=(x, y)))
 

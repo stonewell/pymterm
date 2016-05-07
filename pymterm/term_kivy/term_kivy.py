@@ -174,6 +174,7 @@ class TerminalKivy(Terminal):
         if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
             self.save_line_option(self.cur_line_option, True)
 
+        logging.getLogger('term_kivy').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
         if insert:
             line.insert(self.col, c)
         else:
@@ -234,6 +235,8 @@ class TerminalKivy(Terminal):
 
     def cursor_down(self, context):
         self.row += 1
+        self.get_cur_line()
+        self.get_cur_line_option()
 
     def cursor_up(self, context):
         if self.row > 0:
@@ -544,14 +547,24 @@ class TerminalKivy(Terminal):
         self.save_line_option(TextAttribute([], [], mode))
         
     def enter_ca_mode(self, context):
-        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_bold_mode = self.lines, self.line_options, self.get_cursor(), self.bold_mode
+        self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode = self.lines, self.line_options, self.col, self.row, self.bold_mode
         self.lines, self.line_options, self.col, self.row, self.bold_mode = [], [], 0, 0, False
 
     def exit_ca_mode(self, context):
-        self.lines, self.line_options, self.col, self.row, self.bold_mode = self.saved_lines, self.saved_line_options, self.saved_cursor[0], self.saved_cursor[1], self.saved_bold_mode
+        self.lines, self.line_options, self.col, self.row, self.bold_mode = \
+            self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode
 
     def key_shome(self, context):
         self.set_cursor(1, 0)
 
     def enter_bold_mode(self, context):
         self.bold_mode = True
+
+    def keypad_xmit(self, context):
+        logging.getLogger('term_kivy').debug('keypad transmit mode')
+        self.keypad_transmit_mode = True
+
+    def keypad_local(self, context):
+        logging.getLogger('term_kivy').debug('keypad local mode')
+        self.keypad_transmit_mode = False
+        
