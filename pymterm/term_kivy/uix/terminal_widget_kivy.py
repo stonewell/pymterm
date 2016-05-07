@@ -208,7 +208,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     continue
                 
                 if last_col < col:
-                    if i == c_row and last_col <= c_col and c_col < col:
+                    if self.cursor_visible and i == c_row and last_col <= c_col and c_col < col:
                         b_x = render_text(''.join(line[last_col: c_col]), b_x)
 
                         tmp_l_m, last_mode = last_mode, TextMode.REVERSE
@@ -224,7 +224,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
-                if i == c_row and last_col <= c_col and c_col < len(line):
+                if self.cursor_visible and i == c_row and last_col <= c_col and c_col < len(line):
                     b_x = render_text(''.join(line[last_col: c_col]), b_x)
 
                     tmp_l_m, last_mode = last_mode, TextMode.REVERSE
@@ -235,14 +235,16 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 else:
                     b_x = render_text(''.join(line[last_col:]), b_x)
 
-            if i == c_row and c_col >= len(line):
+            if self.cursor_visible and i == c_row and c_col >= len(line):
                 tmp_l_m, last_mode = last_mode, TextMode.REVERSE
                 b_x = render_text(' ', b_x)
                 last_mode = tmp_l_m
 
             #add background to fill empty cols
             if b_x < self.width:
+                tmp_b_c, last_b_color = last_b_color, self.cfg.default_background_color
                 render_text(' ' * self.visible_cols, b_x)
+                last_b_color = tmp_b_c
                                 
             try:
                 self.add_text(''.join(text_parts), x, y - (i + 1) * dy)
@@ -342,6 +344,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
     line_spacing = NumericProperty(1.0)
+    cursor_visible = BooleanProperty(True)
     bold = BooleanProperty(False)
     italic = BooleanProperty(False)
     underline = BooleanProperty(False)

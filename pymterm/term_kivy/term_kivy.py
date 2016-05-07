@@ -150,7 +150,8 @@ class TerminalKivy(Terminal):
         self.cur_line_option = None
         self.saved_lines, self.saved_line_options, self.saved_cursor = [], [], (0, 0)
         self.bold_mode = False
-        
+        self.scroll_region = None
+                
     def get_line(self, row):
         if row >= len(self.lines):
             for i in range(len(self.lines), row + 1):
@@ -234,13 +235,34 @@ class TerminalKivy(Terminal):
             self.col -= 1
 
     def cursor_down(self, context):
-        self.row += 1
+        begin, end = self.get_scroll_region()
+
+        self.get_cur_line()
+        self.get_cur_line_option()
+        
+        if self.row == end:
+            self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [[]] + self.lines[end + 1:]
+            self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
+        else:        
+            self.row += 1
+            
         self.get_cur_line()
         self.get_cur_line_option()
 
     def cursor_up(self, context):
-        if self.row > 0:
+        begin, end = self.get_scroll_region()
+
+        self.get_cur_line()
+        self.get_cur_line_option()
+        
+        if self.row == begin:
+            self.lines = self.lines[:begin] + [[]] + self.lines[begin:end] + self.lines[end + 1:]
+            self.line_options = self.line_options[:begin] + [[]] + self.line_options[begin:end] + self.lines[end + 1:]
+        else:
             self.row -= 1
+            
+        self.get_cur_line()
+        self.get_cur_line_option()
 
     def carriage_return(self, context):
         self.col = 0
@@ -567,4 +589,9 @@ class TerminalKivy(Terminal):
     def keypad_local(self, context):
         logging.getLogger('term_kivy').debug('keypad local mode')
         self.keypad_transmit_mode = False
-        
+
+    def cursor_invisible(self, context):
+        self.txt_buffer.cursor_visible = False
+
+    def cursor_normal(self, context):
+        self.txt_buffer.cursor_visible = True
