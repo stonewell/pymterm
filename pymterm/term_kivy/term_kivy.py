@@ -139,7 +139,7 @@ class TerminalKivyApp(App):
         term_widget.session = self.session
         term_widget.tab_width = self.session.get_tab_width()
         self.session.term_widget = term_widget
-        self.session.terminal.txt_buffer = term_widget
+        self.session.terminal.term_widget = term_widget
         
         ssh.client.start_client(self.session, self.cfg)
 
@@ -153,7 +153,7 @@ class TerminalKivy(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
         
-        self.txt_buffer = None
+        self.term_widget = None
         self.session = None
 
         self.lines = []
@@ -199,10 +199,10 @@ class TerminalKivy(Terminal):
             self.col += 1
 
     def get_rows(self):
-        return self.txt_buffer.visible_rows
+        return self.term_widget.visible_rows
 
     def get_cols(self):
-        cols = self.txt_buffer.visible_cols
+        cols = self.term_widget.visible_cols
 
         return cols
     
@@ -315,10 +315,10 @@ class TerminalKivy(Terminal):
     def refresh_display(self):
         lines, line_options = self.get_text()
         
-        self.txt_buffer.lines = lines
-        self.txt_buffer.line_options = line_options
-        self.txt_buffer.cursor = self.get_cursor()
-        self.txt_buffer.refresh()
+        self.term_widget.lines = lines
+        self.term_widget.line_options = line_options
+        self.term_widget.cursor = self.get_cursor()
+        self.term_widget.refresh()
         
     def on_data(self, data):
         Terminal.on_data(self, data)
@@ -563,7 +563,7 @@ class TerminalKivy(Terminal):
         self.keypad_transmit_mode = False
 
     def cursor_invisible(self, context):
-        self.txt_buffer.cursor_visible = False
+        self.term_widget.cursor_visible = False
 
     def cursor_normal(self, context):
-        self.txt_buffer.cursor_visible = True
+        self.term_widget.cursor_visible = True
