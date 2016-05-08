@@ -63,3 +63,55 @@ class SessionConfig:
                 file_handler.setFormatter(default_formatter)
                 file_handler.setLevel(logging.DEBUG if self.debug else logging.INFO)
                 root_logger.addHandler(file_handler)
+
+        #init color table
+        self.init_color_table()
+
+    COLOR_SET_0_RATIO = 0x44
+    COLOR_SET_1_RATIO = 0xaa
+
+    #ansi color
+    COLOR_TABLE = [
+        [0, 0, 0, 0xFF], #BLACK
+        [COLOR_SET_0_RATIO, 0, 0, 0xFF], #RED
+        [0, COLOR_SET_0_RATIO, 0, 0xFF], #GREEN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0, 0xFF], #BROWN
+        [0, 0, COLOR_SET_0_RATIO, 0xFF], #BLUE
+        [COLOR_SET_0_RATIO, 0, COLOR_SET_0_RATIO, 0xFF], #MAGENTA
+        [0, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #CYAN
+        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #LIGHT GRAY
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #DARK_GREY
+        [0xFF, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #RED
+        [COLOR_SET_1_RATIO, 0xFF, COLOR_SET_1_RATIO, 0xFF], #GREEN
+        [0xFF, 0xFF, COLOR_SET_1_RATIO, 0xFF], #YELLOW
+        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF, 0xFF], #BLUE
+        [0xFF, COLOR_SET_1_RATIO, 0xFF, 0xFF], #MAGENTA
+        [COLOR_SET_1_RATIO, 0xFF, 0xFF, 0xFF], #CYAN
+        [0xFF, 0xFF, 0xFF, 0xFF], #WHITE
+        ]
+
+    def init_color_table(self):
+        for i in range(240):
+            if i < 216:
+                r = i / 36
+                g = (i / 6) % 6
+                b = i % 6
+                SessionConfig.COLOR_TABLE.append([r * 40 + 55 if r > 0 else 0,
+                                                 g * 40 + 55 if g > 0 else 0,
+                                                 b * 40 + 55 if b > 0 else 0,
+                                                 0xFF])
+            else:
+                shade = (i - 216) * 10 + 8
+                SessionConfig.COLOR_TABLE.append([shade,
+                                                 shade,
+                                                 shade,
+                                                 0xFF])
+        #load config
+        if self.color_theme:
+            from colour.color_manager import get_color_theme
+            color_theme = get_color_theme(self.color_theme)
+            if color_theme:
+                color_theme.apply_color(self, SessionConfig.COLOR_TABLE)
+                
+    def get_color(self, idx):
+        return SessionConfig.COLOR_TABLE[idx]

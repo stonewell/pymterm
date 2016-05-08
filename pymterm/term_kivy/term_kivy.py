@@ -32,22 +32,22 @@ from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
 class RootWidget(FloatLayout):
-    txtBuffer = ObjectProperty(None)
+    term_panel = ObjectProperty(None)
     
     pass
 
 class TermTextInput(TerminalWidgetKivy):
     def __init__(self, **kwargs):
         super(TermTextInput, self).__init__(**kwargs)
-        self.channel = None
+        
         self.visible_rows = 0
         self.visible_cols = 0
-
         self.scroll_region = None
+        
         self.session = None
 
     def keyboard_on_textinput(self, window, text):
-        self.channel.send(text)
+        self.session.channel.send(text)
         
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
         logging.getLogger('term_kivy').debug('The key {} {}'.format(keycode, 'have been pressed'))
@@ -57,7 +57,7 @@ class TermTextInput(TerminalWidgetKivy):
         v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
 
         if len(v) > 0:
-            self.channel.send(v)
+            self.session.channel.send(v)
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
@@ -88,9 +88,10 @@ class TermTextInput(TerminalWidgetKivy):
         self.cal_visible_rows()
         self.cal_visible_cols()
 
-        logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size))
+        logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size, self.pos))
         
-        self.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
+        self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
+        self.session.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
         self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):
@@ -99,52 +100,67 @@ class TerminalKivyApp(App):
 
         self.cfg = cfg
         self.session = None
-        self.transport = None
-        self.channel = None
         
     def build(self):
         self.root_widget = RootWidget()
-        self.root_widget.txtBuffer.focus = True
-        self.root_widget.txtBuffer.cfg = self.cfg
 
         return self.root_widget
 
-    def terminal(self, cfg):
-        return TerminalKivy(cfg, self.root_widget.txtBuffer)
+    def create_terminal(self, cfg):
+        return TerminalKivy(cfg)
 
     def start(self):
         self.run()
         
     def on_start(self):
-        self.session = session.Session(self.cfg, self.terminal(self.cfg))
+        self.add_term_widget()
 
-        self.root_widget.txtBuffer.session = self.session
-        self.root_widget.txtBuffer.tab_width = self.session.get_tab_width()
+    def add_term_widget(self):
+        from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
         
-        self.transport, self.channel = ssh.client.start_client(self.session, self.cfg)
-        self.root_widget.txtBuffer.channel = self.channel
-        self.session.terminal.channel = self.channel
+        term_widget = TermTextInput()
+        term_widget.size_hint = (1, 1)
+        term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
+        from kivy.uix.boxlayout import BoxLayout
+
+        layout = BoxLayout()
+        layout.add_widget(term_widget)
+        
+        ti = TabbedPanelItem()
+        ti.text = ' '.join([str(len(self.root_widget.term_panel.tab_list) + 1), 'Terminal'])
+        ti.add_widget(layout)
+        ti.size_hint = (1,1)
+
+        self.root_widget.term_panel.add_widget(ti)
+        self.root_widget.term_panel.switch_to(ti)
+        
+        self.session = session.Session(self.cfg, self.create_terminal(self.cfg))
+        
+        term_widget.session = self.session
+        term_widget.tab_width = self.session.get_tab_width()
+        self.session.term_widget = term_widget
+        self.session.terminal.txt_buffer = term_widget
+        
+        ssh.client.start_client(self.session, self.cfg)
 
     def on_stop(self):
-        self.channel.close()
-        self.transport.close()
-        self.session.wait_for_quit()
+        self.session.stop()
 
     def close_settings(self, *largs):
         App.close_settings(self, *largs)
-        self.root_widget.txtBuffer.focus = True
 
 class TerminalKivy(Terminal):
-    def __init__(self, cfg, txtBuffer):
+    def __init__(self, cfg):
         Terminal.__init__(self, cfg)
-        self.txt_buffer = txtBuffer
+        
+        self.txt_buffer = None
+        self.session = None
+
         self.lines = []
         self.line_options = []
         self.col = 0
         self.row = 0
-        self.channel = None
-        self.session = None
-        self.init_color_table()
+
         self.last_line_option_row = -1
         self.last_line_option_col = -1
         self.cur_line_option = None
@@ -245,9 +261,11 @@ class TerminalKivy(Terminal):
             self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
         else:        
             self.row += 1
-            
+
         self.get_cur_line()
         self.get_cur_line_option()
+
+        logging.getLogger('term_kivy').debug('cursor_down:row={}, col={}, scroll_regin:{},{}'.format(self.row, self.col, begin, end))
 
     def cursor_up(self, context):
         begin, end = self.get_scroll_region()
@@ -309,52 +327,6 @@ class TerminalKivy(Terminal):
 
     def meta_on(self, context):
         logging.getLogger('term_kivy').debug('meta_on')
-
-    COLOR_SET_0_RATIO = 0x44
-    COLOR_SET_1_RATIO = 0xaa
-
-    #ansi color
-    COLOR_TABLE = [
-        [0, 0, 0, 0xFF], #BLACK
-        [COLOR_SET_0_RATIO, 0, 0, 0xFF], #RED
-        [0, COLOR_SET_0_RATIO, 0, 0xFF], #GREEN
-        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0, 0xFF], #BROWN
-        [0, 0, COLOR_SET_0_RATIO, 0xFF], #BLUE
-        [COLOR_SET_0_RATIO, 0, COLOR_SET_0_RATIO, 0xFF], #MAGENTA
-        [0, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #CYAN
-        [COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, COLOR_SET_0_RATIO, 0xFF], #LIGHT GRAY
-        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #DARK_GREY
-        [0xFF, COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF], #RED
-        [COLOR_SET_1_RATIO, 0xFF, COLOR_SET_1_RATIO, 0xFF], #GREEN
-        [0xFF, 0xFF, COLOR_SET_1_RATIO, 0xFF], #YELLOW
-        [COLOR_SET_1_RATIO, COLOR_SET_1_RATIO, 0xFF, 0xFF], #BLUE
-        [0xFF, COLOR_SET_1_RATIO, 0xFF, 0xFF], #MAGENTA
-        [COLOR_SET_1_RATIO, 0xFF, 0xFF, 0xFF], #CYAN
-        [0xFF, 0xFF, 0xFF, 0xFF], #WHITE
-        ]
-
-    def init_color_table(self):
-        for i in range(240):
-            if i < 216:
-                r = i / 36
-                g = (i / 6) % 6
-                b = i % 6
-                TerminalKivy.COLOR_TABLE.append([r * 40 + 55 if r > 0 else 0,
-                                                 g * 40 + 55 if g > 0 else 0,
-                                                 b * 40 + 55 if b > 0 else 0,
-                                                 0xFF])
-            else:
-                shade = (i - 216) * 10 + 8
-                TerminalKivy.COLOR_TABLE.append([shade,
-                                                 shade,
-                                                 shade,
-                                                 0xFF])
-        #load config
-        if self.cfg.color_theme:
-            from colour.color_manager import get_color_theme
-            color_theme = get_color_theme(self.cfg.color_theme)
-            if color_theme:
-                color_theme.apply_color(self.cfg, TerminalKivy.COLOR_TABLE)
                 
     def get_color(self, mode, idx):
         if mode < 0:
@@ -366,11 +338,11 @@ class TerminalKivy(Terminal):
             color_set = 1
 
         if idx < 8:
-            return TerminalKivy.COLOR_TABLE[color_set * 8 + idx]
+            return self.cfg.get_color(color_set * 8 + idx)
         elif idx < 16:
-            return TerminalKivy.COLOR_TABLE[idx]
+            return self.cfg.get_color(idx)
         elif idx < 256:
-            return TerminalKivy.COLOR_TABLE[idx]
+            return self.cfg.get_color(idx)
         else:
             logging.getLogger('term_kivy').error('not implemented color:{} mode={}'.format(idx, mode))
             sys.exit(1)
@@ -473,14 +445,14 @@ class TerminalKivy(Terminal):
         self.col += context.params[0]
 
     def client_report_version(self, context):
-        self.channel.send('\033[>0;136;0c')
+        self.session.channel.send('\033[>0;136;0c')
 
     def user7(self, context):
         if (context.params[0] == 6):
             col, row = self.get_cursor()
-            self.channel.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
+            self.session.channel.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
         elif context.params[0] == 5:
-            self.channel.send('\033[0n')
+            self.session.channel.send('\033[0n')
 
     def tab(self, context):
         col = self.col / self.session.get_tab_width()
@@ -553,11 +525,11 @@ class TerminalKivy(Terminal):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
 
         logging.getLogger('term_kivy').debug("response background color request:{}".format(rbg_response.replace('\033', '\\E')))
-        self.channel.send(rbg_response)
+        self.session.channel.send(rbg_response)
 
     def user9(self, context):
         logging.getLogger('term_kivy').debug('response terminal type:{} {}'.format(context.params, self.cap.cmds['user8'].cap_value))
-        self.channel.send(self.cap.cmds['user8'].cap_value)
+        self.session.channel.send(self.cap.cmds['user8'].cap_value)
 
     def enter_reverse_mode(self, context):
         self.set_mode(TextMode.REVERSE)

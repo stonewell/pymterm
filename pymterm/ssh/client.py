@@ -140,10 +140,7 @@ def start_client(session, cfg):
             t.close()
             sys.exit(1)
 
-        chan = t.open_session()
-        session.interactive_shell(chan)
-
-        return (t, chan)
+        session.interactive_shell(t)
     except Exception as e:
         logging.getLogger('ssh_client').exception('ssh client caught exception:')
         try:

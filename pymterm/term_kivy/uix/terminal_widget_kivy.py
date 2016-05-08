@@ -77,8 +77,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._create_label()
 
         self.cursor = (0, 0)
-
-        self._line_labels = []
         
         # force the texture creation
         self._trigger_texture()
@@ -120,16 +118,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         self._trigger_texture()
 
-    def _create_line_labels(self, c):
-        if len(self._line_labels) == c:
-            return
-
-        if len(self._line_labels) > c:
-            self._line_labels = self.line_labels[0:c]
-        else:
-            for i in range(len(self._line_labels), c):
-                self._line_labels.append(self._create_line_label())
-                 
     def texture_update(self, *largs):
         self._update_line_options()
 
@@ -143,14 +131,14 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         y = self.height
         x = 0
 
-        last_f_color = self.cfg.default_foreground_color
-        last_b_color = self.cfg.default_background_color
+        last_f_color = self.session.cfg.default_foreground_color
+        last_b_color = self.session.cfg.default_background_color
         last_mode = 0
         
         for i in range(len(lines)):
             x = 0
             b_x = 0
-            #label = self._line_labels[i]
+
             line = lines[i]
             line_option = line_options[i] if i < len(line_options) else []
 
@@ -192,13 +180,13 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 if f_color and len(f_color) > 0:
                     n_f_color = f_color
                 elif f_color is None:
-                    n_f_color = self.cfg.default_foreground_color
+                    n_f_color = self.session.cfg.default_foreground_color
 
                 # background
                 if b_color and len(b_color) > 0:
                     n_b_color = b_color
                 elif b_color is None:
-                    n_b_color = self.cfg.default_background_color
+                    n_b_color = self.session.cfg.default_background_color
 
                 #mode
                 if mode is not None:
@@ -242,8 +230,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
             #add background to fill empty cols
             if b_x < self.width:
-                tmp_b_c, last_b_color = last_b_color, self.cfg.default_background_color
-                render_text(' ' * self.visible_cols, b_x)
+                tmp_b_c, last_b_color = last_b_color, self.session.cfg.default_background_color
+                render_text(' ' * (self.visible_cols + 1), b_x)
                 last_b_color = tmp_b_c
                                 
             try:
@@ -311,6 +299,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             texture = label.texture
 
             Cache_append('termwidget.label', text, label)
+            logging.getLogger('term_widget').debug('cache the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
         else:
             texture = label.texture
             logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))

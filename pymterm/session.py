@@ -12,7 +12,8 @@ class Session:
         self.terminal = terminal
         self.sock = None
         self.writer = None
-        self.chan = None
+        self.channel = None
+        self.transport = None
         self.terminal.session = self
 
     def connect(self):
@@ -35,7 +36,10 @@ class Session:
     def report_error(self, msg):
         logging.getLogger('session').error(msg);
 
-    def interactive_shell(self, chan):
+    def interactive_shell(self, transport):
+        self.transport = transport
+        self.channel = chan = transport.open_session()
+
         cols = self.terminal.get_cols()
         rows = self.terminal.get_rows()
         
@@ -46,11 +50,9 @@ class Session:
     def windows_shell(self, chan):
         import threading
 
-        self.chan = chan
-	    
-        def writeall(sock):
+        def writeall(chan):
 	        while True:
-		        data = sock.recv(4096)
+		        data = chan.recv(4096)
 		        if not data:
 			        logging.getLogger('session').info("end of socket, quit")
 			        break
@@ -64,3 +66,12 @@ class Session:
 
     def get_tab_width(self):
         return self.terminal.get_tab_width()
+
+    def stop(self):
+        if self.channel:
+            self.channel.close()
+
+        if self.transport:
+            self.transport.close()
+
+        self.wait_for_quit()

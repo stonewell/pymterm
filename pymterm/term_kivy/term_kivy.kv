@@ -1,9 +1,19 @@
-<TermTextInput>:
-    size_hint_y: 1.0
-
 <RootWidget>:
-    txtBuffer: txtBuffer
-    ScrollView:
-        id: e_scroll
-        TermTextInput:
-            id: txtBuffer
+    term_panel: term_panel
+    BoxLayout:
+        orientation:'vertical'
+        ActionBar:
+            pos_hint: {'top':1}
+            ActionView:
+                use_separator: True
+                ActionPrevious:
+                    title: 'Action Bar'
+                    with_previous: False
+                ActionOverflow:
+                ActionButton:
+                    text: 'Btn0'
+        TabbedPanel:
+            size_hint: 1, 1
+            do_default_tab: False
+            id: term_panel
+        
