@@ -132,7 +132,7 @@ class TerminalKivyApp(App):
         ti.size_hint = (1,1)
 
         self.root_widget.term_panel.add_widget(ti)
-        self.root_widget.term_panel.switch_to(ti)
+        self.root_widget.term_panel.default_tab = ti
         
         self.session = session.Session(self.cfg, self.create_terminal(self.cfg))
         
@@ -142,6 +142,7 @@ class TerminalKivyApp(App):
         self.session.terminal.term_widget = term_widget
         
         ssh.client.start_client(self.session, self.cfg)
+
 
     def on_stop(self):
         self.session.stop()
