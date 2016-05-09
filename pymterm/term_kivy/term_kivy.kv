@@ -1,9 +1,19 @@
 <TermTabbedPanel>:
     size_hint_y: 1
     size_hint_x: 1
+
+<ActionTextInput>:
+    size_hint_y: 1
     
+<ActionLabel>:
+    size_hint_y: 1
+
 <RootWidget>:
     term_panel: term_panel
+    txt_host: txt_host
+    txt_port: txt_port
+    btn_connect: btn_connect
+    
     BoxLayout:
         orientation:'vertical'
         ActionBar:
@@ -11,11 +21,29 @@
             ActionView:
                 use_separator: True
                 ActionPrevious:
-                    title: 'Action Bar'
+                    title: 'Multi-Tab in Python'
                     with_previous: False
+                ActionLabel:
+                    text: 'Host:'
+                ActionTextInput:
+                    id: txt_host
+                    size_hint_x: 1
+                    size_hint_y: .70
+                    pos_hint: {'x': 0, 'center_y':.5}
+                    on_text_validate: btn_connect.trigger_action()
+                ActionLabel:
+                    text: 'Port:'
+                ActionTextInput:
+                    id: txt_port
+                    size_hint_x: 1
+                    size_hint_y: .70
+                    pos_hint: {'x': 0, 'center_y':.5}
+                    text: '22'
+                    on_text_validate: btn_connect.trigger_action()
                 ActionOverflow:
                 ActionButton:
-                    text: 'Btn0'
+                    id: btn_connect
+                    text: 'Connect'
         TermTabbedPanel:
             size_hint: 1, 1
             do_default_tab: False

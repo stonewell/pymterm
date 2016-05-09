@@ -26,6 +26,7 @@ from kivy.lang import Builder
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
+from kivy.uix.actionbar import ActionItem
 
 from term.terminal import Terminal
 from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
@@ -34,8 +35,18 @@ Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
 class RootWidget(FloatLayout):
     term_panel = ObjectProperty(None)
+    txt_host = ObjectProperty(None)
+    txt_port = ObjectProperty(None)
+    btn_connect = ObjectProperty(None)
     
-    pass
+class ActionTextInput(TextInput, ActionItem):
+    def __init__(self, *args, **kwargs):
+        super(ActionTextInput, self).__init__(*args, **kwargs)
+        self.hint_text='user@host'
+        
+class ActionLabel(Label, ActionItem):
+    def __init__(self, *args, **kwargs):
+        super(ActionLabel, self).__init__(*args, **kwargs)
 
 class TermTabbedPanel(TabbedPanel):
     def on_do_default_tab(self, instance, value):
@@ -116,9 +127,14 @@ class TerminalKivyApp(App):
         self.root_widget = RootWidget()
 
         self.root_widget.term_panel.do_default_tab = False
-        
+
+        self.root_widget.btn_connect.bind(on_press=self.on_connect)
         return self.root_widget
 
+    def on_connect(self, instance):
+        print 'connect to:', self.root_widget.txt_host.text, self.root_widget.txt_port.text
+        pass
+    
     def create_terminal(self, cfg):
         return TerminalKivy(cfg)
 
