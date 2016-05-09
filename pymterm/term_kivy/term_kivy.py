@@ -25,6 +25,7 @@ from kivy.core.window import Window
 from kivy.lang import Builder
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
 
 from term.terminal import Terminal
 from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
@@ -36,12 +37,17 @@ class RootWidget(FloatLayout):
     
     pass
 
+class TermTabbedPanel(TabbedPanel):
+    def on_do_default_tab(self, instance, value):
+        super(TermTabbedPanel, self).on_do_default_tab(instance, value)
+
+
 class TermTextInput(TerminalWidgetKivy):
     def __init__(self, **kwargs):
         super(TermTextInput, self).__init__(**kwargs)
         
-        self.visible_rows = 0
-        self.visible_cols = 0
+        self.visible_rows = 1
+        self.visible_cols = 1
         self.scroll_region = None
         
         self.session = None
@@ -71,6 +77,9 @@ class TermTextInput(TerminalWidgetKivy):
 
         self.visible_rows = int(float(vh) / float(dy))
 
+        if self.visible_rows == 0:
+            self.visible_rows = 1
+
     def cal_visible_cols(self):
         padding_left, padding_top, padding_right, padding_bottom = self.padding
         vw = self.width - padding_left - padding_right
@@ -79,6 +88,9 @@ class TermTextInput(TerminalWidgetKivy):
         tw = self._get_text_width(text)
 
         self.visible_cols = int(float(vw) / float(tw) * 26)
+
+        if self.visible_cols == 0:
+            self.visible_cols = 1
 
     def on_size(self, instance, value):
         padding_left, padding_top, padding_right, padding_bottom = self.padding
@@ -99,11 +111,12 @@ class TerminalKivyApp(App):
         App.__init__(self)
 
         self.cfg = cfg
-        self.session = None
         
     def build(self):
         self.root_widget = RootWidget()
 
+        self.root_widget.term_panel.do_default_tab = False
+        
         return self.root_widget
 
     def create_terminal(self, cfg):
@@ -114,10 +127,10 @@ class TerminalKivyApp(App):
         
     def on_start(self):
         self.add_term_widget()
+        self.add_term_widget()
+        self.add_term_widget()
 
     def add_term_widget(self):
-        from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelItem
-        
         term_widget = TermTextInput()
         term_widget.size_hint = (1, 1)
         term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
@@ -126,26 +139,40 @@ class TerminalKivyApp(App):
         layout = BoxLayout()
         layout.add_widget(term_widget)
         
-        ti = TabbedPanelItem()
+        ti = TabbedPanelHeader()
         ti.text = ' '.join([str(len(self.root_widget.term_panel.tab_list) + 1), 'Terminal'])
-        ti.add_widget(layout)
+        ti.content = layout
         ti.size_hint = (1,1)
 
         self.root_widget.term_panel.add_widget(ti)
-        self.root_widget.term_panel.default_tab = ti
-        
-        self.session = session.Session(self.cfg, self.create_terminal(self.cfg))
-        
-        term_widget.session = self.session
-        term_widget.tab_width = self.session.get_tab_width()
-        self.session.term_widget = term_widget
-        self.session.terminal.term_widget = term_widget
-        
-        ssh.client.start_client(self.session, self.cfg)
 
+
+        def on_current_tab(i, j):
+            pass
+
+        self.root_widget.term_panel.bind(current_tab=on_current_tab)
+        
+        ti.session = session.Session(self.cfg, self.create_terminal(self.cfg))
+        
+        term_widget.session = ti.session
+        term_widget.tab_width = ti.session.get_tab_width()
+        ti.session.term_widget = term_widget
+        ti.session.terminal.term_widget = term_widget
+
+        from kivy.clock import Clock
+
+        def start_term(dt):
+            ssh.client.start_client(ti.session, self.cfg)
+            self.root_widget.term_panel.switch_to(ti)
+            
+        from kivy.clock import Clock
+        Clock.unschedule(start_term)
+        Clock.unschedule(self.root_widget.term_panel._load_default_tab_content)
+        Clock.schedule_once(start_term)
 
     def on_stop(self):
-        self.session.stop()
+        for current_tab in self.root_widget.term_panel.tab_list:
+            current_tab.session.stop()
 
     def close_settings(self, *largs):
         App.close_settings(self, *largs)
@@ -379,7 +406,7 @@ class TerminalKivy(Terminal):
         if row >= len(self.line_options):
             for i in range(len(self.line_options), row + 1):
                 self.line_options.append([])
-                
+
         return self.line_options[row]
                 
     def get_cur_line_option(self):

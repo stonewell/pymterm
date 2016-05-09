@@ -27,6 +27,8 @@ class Terminal:
         self.in_status_line = False
         self.keypad_transmit_mode = False
 
+        logging.getLogger('terminal').debug('cap-str:{}, cap:{}, self={}'.format(self.cap_str, self.cap, self))
+
     def __load_cap_str__(self, term_name):
         term_path = os.path.dirname(os.path.realpath(__file__))
         term_path = os.path.join(term_path, '..', '..', 'data', term_name+'.dat')
@@ -50,7 +52,7 @@ class Terminal:
         else:
             self.output_normal_data(c)
 
-    def __handle_cap__(self, check_unknown = True, data = None):
+    def __handle_cap__(self, check_unknown = True, data = None, c = None):
         cap_turple = self.state.get_cap(self.context.params)
 
         if cap_turple:
@@ -60,11 +62,17 @@ class Terminal:
             self.context.params = []
             self.control_data = []
         elif check_unknown and len(self.control_data) > 0:
-            logging.getLogger('terminal').error('current state:{}, params={}'.format(self.state.cap_name, self.context.params))
-            logging.getLogger('terminal').error("unknown control data:" + ''.join(self.control_data))
-            logging.getLogger('terminal').error('data:' + data.replace('\x1B', '\\E'))
+            m1 = 'start state:{}, params={}, self={}, next_states={}'.format(self.cap.control_data_start_state.cap_name, self.context.params, self, self.cap.control_data_start_state.next_states)
+            m2 = 'current state:{}, params={}, next_states={}, {}, [{}]'.format(self.state.cap_name, self.context.params, self.state.next_states, self.state.digit_state, ord(c) if c else 'None')
+            m3 = "unknown control data:[[[" + ''.join(self.control_data) + ']]]'
+            m4 = 'data:[[[' + data.replace('\x1B', '\\E').replace('\r', '\r\n') + ']]]'
+            m5 = 'data:[[[' + ' '.join(map(str, map(ord, data))) + ']]]'
 
-            sys.exit(1)
+            logging.getLogger('terminal').error('\r\n'.join([m1, m2, m3, m4, m5, str(self.in_status_line)]))
+
+            self.state = self.cap.control_data_start_state
+            self.context.params = []
+            self.control_data = []
 
         if not check_unknown and not cap_turple and len(self.control_data) > 0:
             logging.getLogger('terminal').debug('found unfinished data')
@@ -78,7 +86,7 @@ class Terminal:
             next_state = self.state.handle(self.context, c)
 
             if not next_state or self.state.get_cap(self.context.params):
-                cap_turple = self.__handle_cap__(data=data)
+                cap_turple = self.__handle_cap__(data=data, c=c)
 
                 if cap_turple:
                     # retry last char

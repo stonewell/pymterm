@@ -1,3 +1,7 @@
+<TermTabbedPanel>:
+    size_hint_y: 1
+    size_hint_x: 1
+    
 <RootWidget>:
     term_panel: term_panel
     BoxLayout:
@@ -12,7 +16,7 @@
                 ActionOverflow:
                 ActionButton:
                     text: 'Btn0'
-        TabbedPanel:
+        TermTabbedPanel:
             size_hint: 1, 1
             do_default_tab: False
             id: term_panel
