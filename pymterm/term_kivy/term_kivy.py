@@ -279,21 +279,7 @@ class TerminalKivy(Terminal):
             self.col -= 1
 
     def cursor_down(self, context):
-        begin, end = self.get_scroll_region()
-
-        self.get_cur_line()
-        self.get_cur_line_option()
-        
-        if self.row == end:
-            self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [[]] + self.lines[end + 1:]
-            self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
-        else:        
-            self.row += 1
-
-        self.get_cur_line()
-        self.get_cur_line_option()
-
-        logging.getLogger('term_kivy').debug('cursor_down:row={}, col={}, scroll_regin:{},{}'.format(self.row, self.col, begin, end))
+        self.parm_down_cursor(context)
 
     def cursor_up(self, context):
         begin, end = self.get_scroll_region()
@@ -595,3 +581,22 @@ class TerminalKivy(Terminal):
 
     def cursor_normal(self, context):
         self.term_widget.cursor_visible = True
+
+    def parm_down_cursor(self, context):
+        begin, end = self.get_scroll_region()
+
+        count = context.params[0] if len(context.params) > 0 else 1
+
+        for i in range(count):
+            self.get_cur_line()
+            self.get_cur_line_option()
+        
+            if self.row == end:
+                self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [[]] + self.lines[end + 1:]
+                self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
+            else:        
+                self.row += 1
+
+            self.get_cur_line()
+            self.get_cur_line_option()
+
