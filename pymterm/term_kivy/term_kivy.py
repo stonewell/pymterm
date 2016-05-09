@@ -137,7 +137,10 @@ class TerminalKivyApp(App):
         App.__init__(self)
 
         self.cfg = cfg
-        
+
+    def get_application_name(self):
+        return  'Multi-Tab Terminal Emulator in Python & Kivy'
+
     def build(self):
         self.root_widget = RootWidget()
 
@@ -148,7 +151,6 @@ class TerminalKivyApp(App):
         return self.root_widget
 
     def on_connect(self, instance):
-        print 'connect to:', self.root_widget.txt_host.text, self.root_widget.txt_port.text
         cfg = self.cfg.clone()
         cfg.set_conn_str(self.root_widget.txt_host.text)
         cfg.port = int(self.root_widget.txt_port.text)
@@ -252,7 +254,7 @@ class TerminalKivy(Terminal):
         if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
             self.save_line_option(self.cur_line_option, True)
 
-        logging.getLogger('term_kivy').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
+        #logging.getLogger('term_kivy').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
         if insert:
             line.insert(self.col, c)
         else:
@@ -636,3 +638,5 @@ class TerminalKivy(Terminal):
             self.get_cur_line()
             self.get_cur_line_option()
 
+    def exit_alt_charset_mode(self, context):
+        self.exit_standout_mode(context)

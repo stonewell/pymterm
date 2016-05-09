@@ -71,6 +71,10 @@ class Session:
         return self.terminal.get_tab_width()
 
     def stop(self):
+        if self.stopped:
+            return
+
+        self.stopped = True
         if self.channel:
             self.channel.close()
             self.channel = None
@@ -84,7 +88,6 @@ class Session:
             self.sock = None
             
         self.wait_for_quit()
-        self.stopped = True
 
     def start(self):
         if self.channel:

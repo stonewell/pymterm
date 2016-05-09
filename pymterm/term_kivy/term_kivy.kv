@@ -21,7 +21,6 @@
             ActionView:
                 use_separator: True
                 ActionPrevious:
-                    title: 'Multi-Tab in Python'
                     with_previous: False
                 ActionLabel:
                     text: 'Host:'
@@ -35,10 +34,11 @@
                     text: 'Port:'
                 ActionTextInput:
                     id: txt_port
-                    size_hint_x: 1
+                    size_hint_x: None
                     size_hint_y: .70
                     pos_hint: {'x': 0, 'center_y':.5}
                     text: '22'
+                    width: 40
                     on_text_validate: btn_connect.trigger_action()
                 ActionOverflow:
                 ActionButton:
