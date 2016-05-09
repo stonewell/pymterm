@@ -52,6 +52,19 @@ class TermTabbedPanel(TabbedPanel):
     def on_do_default_tab(self, instance, value):
         super(TermTabbedPanel, self).on_do_default_tab(instance, value)
 
+from kivy.uix.boxlayout import BoxLayout
+class TermBoxLayout(BoxLayout):
+    def __init__(self, **kwargs):
+        super(TermBoxLayout, self).__init__(**kwargs)
+        self.term_widget = None
+        self.started = False
+
+    def do_layout(self, *largs):
+        super(TermBoxLayout, self).do_layout(*largs)
+        if not self.term_widget.session.channel and not self.started:
+            Clock.schedule_once(lambda ut:ssh.client.start_client(self.term_widget.session, self.term_widget.session.cfg))
+            self.started = True
+            self.term_widget.focus = True
 
 class TermTextInput(TerminalWidgetKivy):
     def __init__(self, **kwargs):
@@ -114,7 +127,9 @@ class TermTextInput(TerminalWidgetKivy):
         logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size, self.pos))
         
         self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
-        self.session.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
+
+        if self.session.channel:
+            self.session.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
         self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):
@@ -127,13 +142,14 @@ class TerminalKivyApp(App):
         self.root_widget = RootWidget()
 
         self.root_widget.term_panel.do_default_tab = False
+        self.root_widget.term_panel.bind(current_tab=self.on_current_tab)
 
         self.root_widget.btn_connect.bind(on_press=self.on_connect)
         return self.root_widget
 
     def on_connect(self, instance):
         print 'connect to:', self.root_widget.txt_host.text, self.root_widget.txt_port.text
-        pass
+        self.add_term_widget()
     
     def create_terminal(self, cfg):
         return TerminalKivy(cfg)
@@ -143,30 +159,31 @@ class TerminalKivyApp(App):
         
     def on_start(self):
         self.add_term_widget()
-        self.add_term_widget()
-        self.add_term_widget()
+
+    def on_current_tab(self, instance, value):
+        term_widget = self.root_widget.term_panel.current_tab.term_widget
+
+        if term_widget:
+            def update(ut):
+                term_widget.focus = True
+            Clock.schedule_once(update)
 
     def add_term_widget(self):
         term_widget = TermTextInput()
         term_widget.size_hint = (1, 1)
         term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
-        from kivy.uix.boxlayout import BoxLayout
 
-        layout = BoxLayout()
+        layout = TermBoxLayout()
         layout.add_widget(term_widget)
+        layout.term_widget = term_widget
         
         ti = TabbedPanelHeader()
         ti.text = ' '.join([str(len(self.root_widget.term_panel.tab_list) + 1), 'Terminal'])
         ti.content = layout
         ti.size_hint = (1,1)
+        ti.term_widget = term_widget
 
         self.root_widget.term_panel.add_widget(ti)
-
-
-        def on_current_tab(i, j):
-            pass
-
-        self.root_widget.term_panel.bind(current_tab=on_current_tab)
         
         ti.session = session.Session(self.cfg, self.create_terminal(self.cfg))
         
@@ -175,13 +192,9 @@ class TerminalKivyApp(App):
         ti.session.term_widget = term_widget
         ti.session.terminal.term_widget = term_widget
 
-        from kivy.clock import Clock
-
         def start_term(dt):
-            ssh.client.start_client(ti.session, self.cfg)
             self.root_widget.term_panel.switch_to(ti)
             
-        from kivy.clock import Clock
         Clock.unschedule(start_term)
         Clock.unschedule(self.root_widget.term_panel._load_default_tab_content)
         Clock.schedule_once(start_term)
