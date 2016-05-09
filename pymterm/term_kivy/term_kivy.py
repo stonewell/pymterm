@@ -43,6 +43,7 @@ class ActionTextInput(TextInput, ActionItem):
     def __init__(self, *args, **kwargs):
         super(ActionTextInput, self).__init__(*args, **kwargs)
         self.hint_text='user@host'
+        self.multiline=False
         
 class ActionLabel(Label, ActionItem):
     def __init__(self, *args, **kwargs):
@@ -61,8 +62,8 @@ class TermBoxLayout(BoxLayout):
 
     def do_layout(self, *largs):
         super(TermBoxLayout, self).do_layout(*largs)
-        if not self.term_widget.session.channel and not self.started:
-            Clock.schedule_once(lambda ut:ssh.client.start_client(self.term_widget.session, self.term_widget.session.cfg))
+        if not self.started:
+            Clock.schedule_once(lambda ut:self.term_widget.session.start())
             self.started = True
             self.term_widget.focus = True
 
@@ -77,7 +78,7 @@ class TermTextInput(TerminalWidgetKivy):
         self.session = None
 
     def keyboard_on_textinput(self, window, text):
-        self.session.channel.send(text)
+        self.session.send(text)
         
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
         logging.getLogger('term_kivy').debug('The key {} {}'.format(keycode, 'have been pressed'))
@@ -87,7 +88,7 @@ class TermTextInput(TerminalWidgetKivy):
         v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
 
         if len(v) > 0:
-            self.session.channel.send(v)
+            self.session.send(v)
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
@@ -128,8 +129,7 @@ class TermTextInput(TerminalWidgetKivy):
         
         self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
 
-        if self.session.channel:
-            self.session.channel.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
+        self.session.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
         self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):
@@ -149,7 +149,11 @@ class TerminalKivyApp(App):
 
     def on_connect(self, instance):
         print 'connect to:', self.root_widget.txt_host.text, self.root_widget.txt_port.text
-        self.add_term_widget()
+        cfg = self.cfg.clone()
+        cfg.set_conn_str(self.root_widget.txt_host.text)
+        cfg.port = int(self.root_widget.txt_port.text)
+        
+        self.add_term_widget(cfg)
     
     def create_terminal(self, cfg):
         return TerminalKivy(cfg)
@@ -158,7 +162,7 @@ class TerminalKivyApp(App):
         self.run()
         
     def on_start(self):
-        self.add_term_widget()
+        self.add_term_widget(self.cfg.clone())
 
     def on_current_tab(self, instance, value):
         term_widget = self.root_widget.term_panel.current_tab.term_widget
@@ -168,7 +172,7 @@ class TerminalKivyApp(App):
                 term_widget.focus = True
             Clock.schedule_once(update)
 
-    def add_term_widget(self):
+    def add_term_widget(self, cfg):
         term_widget = TermTextInput()
         term_widget.size_hint = (1, 1)
         term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
@@ -185,7 +189,7 @@ class TerminalKivyApp(App):
 
         self.root_widget.term_panel.add_widget(ti)
         
-        ti.session = session.Session(self.cfg, self.create_terminal(self.cfg))
+        ti.session = session.Session(cfg, self.create_terminal(cfg))
         
         term_widget.session = ti.session
         term_widget.tab_width = ti.session.get_tab_width()
@@ -488,14 +492,14 @@ class TerminalKivy(Terminal):
         self.col += context.params[0]
 
     def client_report_version(self, context):
-        self.session.channel.send('\033[>0;136;0c')
+        self.session.send('\033[>0;136;0c')
 
     def user7(self, context):
         if (context.params[0] == 6):
             col, row = self.get_cursor()
-            self.session.channel.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
+            self.session.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
         elif context.params[0] == 5:
-            self.session.channel.send('\033[0n')
+            self.session.send('\033[0n')
 
     def tab(self, context):
         col = self.col / self.session.get_tab_width()
@@ -568,11 +572,11 @@ class TerminalKivy(Terminal):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
 
         logging.getLogger('term_kivy').debug("response background color request:{}".format(rbg_response.replace('\033', '\\E')))
-        self.session.channel.send(rbg_response)
+        self.session.send(rbg_response)
 
     def user9(self, context):
         logging.getLogger('term_kivy').debug('response terminal type:{} {}'.format(context.params, self.cap.cmds['user8'].cap_value))
-        self.session.channel.send(self.cap.cmds['user8'].cap_value)
+        self.session.send(self.cap.cmds['user8'].cap_value)
 
     def enter_reverse_mode(self, context):
         self.set_mode(TextMode.REVERSE)
@@ -610,6 +614,9 @@ class TerminalKivy(Terminal):
 
     def cursor_normal(self, context):
         self.term_widget.cursor_visible = True
+
+    def cursor_visible(self, context):
+        self.cursor_normal(context)
 
     def parm_down_cursor(self, context):
         begin, end = self.get_scroll_region()

@@ -199,9 +199,10 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     if self.cursor_visible and i == c_row and last_col <= c_col and c_col < col:
                         b_x = render_text(''.join(line[last_col: c_col]), b_x)
 
-                        tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                        tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
                         b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
-                        last_mode = tmp_l_m
+                        last_f_color, last_b_color = tmp_l_f, tmp_l_b
                         
                         b_x = render_text(''.join(line[c_col + 1: col]), b_x)
                     else:
@@ -215,18 +216,20 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 if self.cursor_visible and i == c_row and last_col <= c_col and c_col < len(line):
                     b_x = render_text(''.join(line[last_col: c_col]), b_x)
 
-                    tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                    tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
                     b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
-                    last_mode = tmp_l_m
+                    last_f_color, last_b_color = tmp_l_f, tmp_l_b
                     
                     b_x = render_text(''.join(line[c_col + 1:]), b_x)
                 else:
                     b_x = render_text(''.join(line[last_col:]), b_x)
 
             if self.cursor_visible and i == c_row and c_col >= len(line):
-                tmp_l_m, last_mode = last_mode, TextMode.REVERSE
+                tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
                 b_x = render_text(' ', b_x)
-                last_mode = tmp_l_m
+                last_f_color, last_b_color = tmp_l_f, tmp_l_b
 
             #add background to fill empty cols
             if b_x < self.width:
