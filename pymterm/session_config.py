@@ -132,3 +132,5 @@ class SessionConfig:
             self.hostname = conn_str
             self.username = get_default_user()
             
+    def get_conn_str(self):
+        return ''.join([self.username, '@', self.hostname, ':', str(self.port)])

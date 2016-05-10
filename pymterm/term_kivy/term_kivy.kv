@@ -1,3 +1,20 @@
+#:import Factory kivy.factory.Factory
+
+<ActionSpinnerOptions@SpinnerOption>
+    background_color: .4, .4, .4, 1
+    press:app.on_conn_history
+
+<ActionSpinner@Spinner+ActionItem>
+    canvas.before:
+        Color:
+            rgba: 0.128, 0.128, 0.128, 1
+        Rectangle:
+            size: self.size
+            pos: self.pos
+    border: 27, 20, 12, 12
+    background_normal: 'atlas://data/images/defaulttheme/action_group'
+    option_cls: Factory.ActionSpinnerOptions
+
 <TermTabbedPanel>:
     size_hint_y: 1
     size_hint_x: 1
@@ -8,11 +25,16 @@
 <ActionLabel>:
     size_hint_y: 1
 
+<ConnHistorySpinner>:
+
+<ConnHistorySpinnerOption>:
+
 <RootWidget>:
     term_panel: term_panel
     txt_host: txt_host
     txt_port: txt_port
     btn_connect: btn_connect
+    spnr_conn_history: spnr_conn_history
     
     BoxLayout:
         orientation:'vertical'
@@ -22,6 +44,13 @@
                 use_separator: True
                 ActionPrevious:
                     with_previous: False
+                ActionSpinner:
+                    size_hint: 1, .70
+                    important: True
+                    pos_hint: {'x': 0, 'center_y':.5}
+                    id: spnr_conn_history
+                    text: 'Connection History'
+                    values: app.conn_history
                 ActionLabel:
                     text: 'Host:'
                 ActionTextInput:

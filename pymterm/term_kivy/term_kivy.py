@@ -18,7 +18,7 @@ import ssh.client
 
 from kivy.uix.floatlayout import FloatLayout
 from kivy.app import App
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
 from kivy.core.window import Window
 
@@ -27,6 +27,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
 from kivy.uix.actionbar import ActionItem
+from kivy.uix.spinner import Spinner, SpinnerOption
 
 from term.terminal import Terminal
 from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
@@ -38,6 +39,7 @@ class RootWidget(FloatLayout):
     txt_host = ObjectProperty(None)
     txt_port = ObjectProperty(None)
     btn_connect = ObjectProperty(None)
+    spnr_conn_history = ObjectProperty(None)
     
 class ActionTextInput(TextInput, ActionItem):
     def __init__(self, *args, **kwargs):
@@ -63,7 +65,7 @@ class TermBoxLayout(BoxLayout):
     def do_layout(self, *largs):
         super(TermBoxLayout, self).do_layout(*largs)
         if not self.started:
-            Clock.schedule_once(lambda ut:self.term_widget.session.start())
+            Clock.schedule_once(lambda ut:self.term_widget.session.start(), .5)
             self.started = True
             self.term_widget.focus = True
 
@@ -133,6 +135,8 @@ class TermTextInput(TerminalWidgetKivy):
         self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):
+    conn_history = ListProperty([])
+    
     def __init__(self, cfg):
         App.__init__(self)
 
@@ -148,8 +152,22 @@ class TerminalKivyApp(App):
         self.root_widget.term_panel.bind(current_tab=self.on_current_tab)
 
         self.root_widget.btn_connect.bind(on_press=self.on_connect)
+
+        self.root_widget.spnr_conn_history.bind(text=self.on_conn_history)
         return self.root_widget
 
+    def on_conn_history(self, instance, value):
+        print instance, value
+        if not isinstance(value, basestring):
+            return
+        parts = value.split(':')
+        
+        cfg = self.cfg.clone()
+        cfg.set_conn_str(parts[0])
+        cfg.port = int(parts[1])
+        
+        self.add_term_widget(cfg)
+        
     def on_connect(self, instance):
         cfg = self.cfg.clone()
         cfg.set_conn_str(self.root_widget.txt_host.text)
@@ -204,6 +222,13 @@ class TerminalKivyApp(App):
         Clock.unschedule(start_term)
         Clock.unschedule(self.root_widget.term_panel._load_default_tab_content)
         Clock.schedule_once(start_term)
+
+        conn_str = cfg.get_conn_str()
+
+        if conn_str in self.conn_history:
+            self.conn_history.remove(conn_str)
+
+        self.conn_history.insert(0, conn_str)
 
     def on_stop(self):
         for current_tab in self.root_widget.term_panel.tab_list:
