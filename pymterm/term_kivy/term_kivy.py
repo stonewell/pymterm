@@ -156,24 +156,29 @@ class TerminalKivyApp(App):
         self.root_widget.spnr_conn_history.bind(text=self.on_conn_history)
         return self.root_widget
 
+    def connect_to(self, conn_str, port):
+        cfg = self.cfg.clone()
+        cfg.set_conn_str(conn_str)
+        cfg.port = port
+
+        for current_tab in self.root_widget.term_panel.tab_list:
+            if current_tab.session.stopped:
+                current_tab.session.cfg = cfg
+                current_tab.session.start()
+                Clock.schedule_once(lambda ut:self.root_widget.term_panel.switch_to(current_tab))
+                return
+            
+        self.add_term_widget(cfg)
+                
     def on_conn_history(self, instance, value):
-        print instance, value
         if not isinstance(value, basestring):
             return
         parts = value.split(':')
-        
-        cfg = self.cfg.clone()
-        cfg.set_conn_str(parts[0])
-        cfg.port = int(parts[1])
-        
-        self.add_term_widget(cfg)
+
+        self.connect_to(parts[0], int(parts[1]))
         
     def on_connect(self, instance):
-        cfg = self.cfg.clone()
-        cfg.set_conn_str(self.root_widget.txt_host.text)
-        cfg.port = int(self.root_widget.txt_port.text)
-        
-        self.add_term_widget(cfg)
+        self.connect_to(self.root_widget.txt_host.text, int(self.root_widget.txt_port.text))
     
     def create_terminal(self, cfg):
         return TerminalKivy(cfg)
@@ -193,22 +198,23 @@ class TerminalKivyApp(App):
             Clock.schedule_once(update)
 
     def add_term_widget(self, cfg):
-        term_widget = TermTextInput()
-        term_widget.size_hint = (1, 1)
-        term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
-
         layout = TermBoxLayout()
-        layout.add_widget(term_widget)
-        layout.term_widget = term_widget
-        
+
         ti = TabbedPanelHeader()
         ti.text = ' '.join([str(len(self.root_widget.term_panel.tab_list) + 1), 'Terminal'])
         ti.content = layout
         ti.size_hint = (1,1)
-        ti.term_widget = term_widget
 
         self.root_widget.term_panel.add_widget(ti)
         
+        term_widget = TermTextInput()
+        term_widget.size_hint = (1, 1)
+        term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
+
+        layout.add_widget(term_widget)
+        layout.term_widget = term_widget
+        
+        ti.term_widget = term_widget
         ti.session = session.Session(cfg, self.create_terminal(cfg))
         
         term_widget.session = ti.session
