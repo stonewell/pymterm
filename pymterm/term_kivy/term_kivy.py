@@ -285,10 +285,15 @@ class TerminalKivy(Terminal):
         if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
             self.save_line_option(self.cur_line_option, True)
 
-        #logging.getLogger('term_kivy').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
+        logging.getLogger('term_kivy').debug('save buffer:{},{},{},{}'.format(self.col, self.row, c, ord(c)))
         if insert:
             line.insert(self.col, c)
         else:
+            if self.col == self.get_cols():
+                self.col = 0
+                self.cursor_down(None)
+                self.save_buffer(c, insert)
+                return
             line[self.col] = c
             self.col += 1
 
@@ -654,7 +659,7 @@ class TerminalKivy(Terminal):
     def parm_down_cursor(self, context):
         begin, end = self.get_scroll_region()
 
-        count = context.params[0] if len(context.params) > 0 else 1
+        count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
         for i in range(count):
             self.get_cur_line()
