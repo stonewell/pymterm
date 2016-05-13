@@ -19,6 +19,11 @@ generic-cap|generic ansi escape:\
 	key_up=\EOA:\
 	key_down=\EOB:\
 	key_left=\EOD:\
-	key_right=\EOC:
+	key_right=\EOC:\
+	reset_text_cursor_color=\E]112:\
+	enable_mode=\E[?%dh:\
+	disable_mode=\E[?%dl:\
+	enable_keypad_appkeys=\E=:\
+	disable_keypad_appkeys=\E>:
 
 	

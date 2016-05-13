@@ -254,7 +254,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         t = Cache_get('termwidget.b', cid)
 
         if t is not None:
-            logging.getLogger('term_widget').debug('reuse the background texture, pos={}, {}, size={}'.format(x, y, t.size))
+            if self.session.cfg.debug_more:
+                logging.getLogger('term_widget').debug('reuse the background texture, pos={}, {}, size={}'.format(x, y, t.size))
             self.canvas.add(Rectangle(texture=t, pos=(x , y), size=t.size))        
             return x + t.size[0]
         
@@ -265,7 +266,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         size = Cache_get('termwidget.b_size', text)
 
         if size is None:
-            text = text.replace('\t', ' ' * self.tab_width)
+            text = self.norm_text(text)
             size = self._label.get_extents(text)
             size = (size[0], size[1] + 1)
             Cache_append('termwidget.b_size', text, size)
@@ -292,8 +293,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         
         if label is None:
             label = self._create_line_label()
-            text = text.replace('\t', ' ' * self.tab_width)
-            label.text = text.decode('utf_8', errors='ignore')
+            text = self.norm_text(text)
+            label.text = text#.decode('utf_8', errors='ignore')
             label.refresh()
 
             if label.texture:
@@ -302,10 +303,12 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             texture = label.texture
 
             Cache_append('termwidget.label', text, label)
-            logging.getLogger('term_widget').debug('cache the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
+            if self.session.cfg.debug_more:
+                logging.getLogger('term_widget').debug('cache the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
         else:
             texture = label.texture
-            logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
+            if self.session.cfg.debug_more:
+                logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
             
         self.canvas.add(Rectangle(texture=texture, size=texture.size, pos=(x, y)))
 
@@ -315,7 +318,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if width is not None:
             return width
         
-        txt = text.replace('\t', ' ' * self.tab_width)
+        txt = self.norm_text(text)
         
         width = self._label.get_extents(txt)[0]
 
@@ -325,6 +328,13 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     
     def refresh(self):
         self._trigger_texture()
+
+    def norm_text(self, text):
+        text = text.replace('\t', ' ' * self.tab_width)
+        text = text.replace('\000', '')
+
+        return text
+        
         
     #
     # Properties
@@ -384,4 +394,3 @@ if __name__ == '__main__':
             return label
 
     TestApp().run()
-                    

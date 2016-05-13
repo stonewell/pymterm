@@ -22,6 +22,10 @@ class SessionConfig:
         self.default_cursor_color = self.default_foreground_color
         self.color_theme = args.color_theme
         self.debug = args.debug
+        self.debug_more = args.debug_more
+        if self.debug_more:
+            self.debug = True
+            
         self.color_table = []
 
         if args.conn_str:

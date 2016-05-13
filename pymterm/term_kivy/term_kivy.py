@@ -254,6 +254,7 @@ class TerminalKivy(Terminal):
         self.line_options = []
         self.col = 0
         self.row = 0
+        self.remain_buffer = []
 
         self.last_line_option_row = -1
         self.last_line_option_col = -1
@@ -272,9 +273,15 @@ class TerminalKivy(Terminal):
         return self.lines[row]
                 
     def get_cur_line(self):
-        return self.get_line(self.row)
+        line = self.get_line(self.row)
+
+        if len(line) <= self.col:
+            while len(line) <= self.col:
+                line.append(' ')
+
+        return line
     
-    def save_buffer(self, c, insert = False):
+    def save_buffer(self, c, insert = False, wrap = False):
         line = self.get_cur_line()
         self.get_cur_line_option()
         
@@ -285,17 +292,59 @@ class TerminalKivy(Terminal):
         if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
             self.save_line_option(self.cur_line_option, True)
 
-        logging.getLogger('term_kivy').debug('save buffer:{},{},{},{}'.format(self.col, self.row, c, ord(c)))
+        if self.cfg.debug_more:
+            logging.getLogger('term_kivy').debug('save buffer:{},{},{},{}'.format(self.col, self.row, c, ord(c)))
+
+        #take care utf_8
+        if not wrap:
+            self.remain_buffer.append(c)
+
+            c = ''.join(self.remain_buffer).decode('utf_8', errors='ignore')
+
+            if len(c) == 0:
+                logging.getLogger('term_kivy').debug('remain_buffer found:{}'.format(map(ord, self.remain_buffer)))
+                return
+
+            self.remain_buffer = []
+        
+            if len(c.encode('utf_8')) > 1:
+                c += '\000'
+        
+        def wrap_line():
+            self.col = 0
+            self.cursor_down(None)
+            self.save_buffer(c, insert, True)
+            
         if insert:
-            line.insert(self.col, c)
+            line.insert(self.col, c[0])
+            if len(c) > 1:
+                line.insert(self.col + 1, c[1])
+                
+            if len(line) > self.get_cols():
+                c = line[self.get_cols()]
+                two_bytes = 0
+                if c == '\000':
+                    c = line[self.get_cols() - 1]
+                    c += '\000'
+                    two_bytes = 1
+                    
+                line = line[:self.get_cols() - two_bytes]
+                wrap_line()
+                return
         else:
             if self.col == self.get_cols():
-                self.col = 0
-                self.cursor_down(None)
-                self.save_buffer(c, insert)
+                #wrap
+                #TODO: need to handle the double bytes
+                wrap_line()
                 return
-            line[self.col] = c
+            line[self.col] = c[0]
             self.col += 1
+            if len(c) > 1:
+                if self.col < len(line):
+                    line[self.col] = c[1]
+                else:
+                    line.append(c[1])
+                self.col += 1
 
     def get_rows(self):
         return self.term_widget.visible_rows
@@ -383,19 +432,32 @@ class TerminalKivy(Terminal):
         line = self.get_cur_line()
         line_option = self.get_cur_line_option()
 
-        for i in range(self.col, len(line)):
+        begin = self.col
+        if line[begin] == '\000':
+            begin -= 1
+            
+        for i in range(begin, len(line)):
             line[i] = ' '
 
-        for i in range(self.col, len(line_option)):
+        for i in range(begin, len(line_option)):
             line_option[i] = None
 
     def delete_chars(self, count):
         line = self.get_cur_line()
-        for i in range(self.col, len(line)):
+        begin = self.col
+
+        if line[begin] == '\000':
+            begin -= 1
+            
+        for i in range(begin, len(line)):
             if i + count < len(line):
                 line[i] = line[i + count]
             else:
                 line[i] = ' '
+
+        for i in range(begin, begin + count):
+            if i < len(line_option):
+                line_option[i] = None
 
     def refresh_display(self):
         lines, line_options = self.get_text()
@@ -642,7 +704,6 @@ class TerminalKivy(Terminal):
     def keypad_xmit(self, context):
         logging.getLogger('term_kivy').debug('keypad transmit mode')
         self.keypad_transmit_mode = True
-
     def keypad_local(self, context):
         logging.getLogger('term_kivy').debug('keypad local mode')
         self.keypad_transmit_mode = False
@@ -676,3 +737,20 @@ class TerminalKivy(Terminal):
 
     def exit_alt_charset_mode(self, context):
         self.exit_standout_mode(context)
+
+    def enable_mode(self, context):
+        logging.getLogger('term_kivy').error('enable mode:{}'.format(context.params))
+
+        mode = context.params[0]
+        
+        if mode == 25:
+            self.cursor_normal(context)
+
+    def disable_mode(self, context):
+        logging.getLogger('term_kivy').error('disable mode:{}'.format(context.params))
+
+        mode = context.params[0]
+        
+        if mode == 25:
+            self.cursor_invisible(context)
+            
