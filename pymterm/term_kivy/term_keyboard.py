@@ -4,12 +4,12 @@ import sys
 def translate_key(term, keycode, text, modifiers):
     result = []
     handled = False
+    code, key = keycode
+
     if 'alt' in modifiers and text:
         #alt + key, send \E and let system do the text stuff
         result.append('\x1B')
 
-    code, key = keycode
-    
     if ('ctrl' in modifiers) and text:
         #take care of the control sequence
         c = text[0]
@@ -41,7 +41,7 @@ def translate_key(term, keycode, text, modifiers):
         #pageup,page down, ins, del
         m = {'pageup':'ppage', 'pagedown':'npage', 'insert':'ic', 'delete':'dc'}
         cap_name = 'key_' + m[key]
-        result.append(term.cap.cmds[cap_name])
+        result.append(term.cap.cmds[cap_name].cap_value)
         handled = True
     elif key == 'enter':
         if 'carriage_return' in term.cap.cmds:
@@ -61,7 +61,7 @@ def translate_key(term, keycode, text, modifiers):
         if code < 256:
             result.append(chr(code))
             handled = True
-        
+
     return (''.join(result), handled)
             
         

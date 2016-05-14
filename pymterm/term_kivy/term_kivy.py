@@ -86,7 +86,10 @@ class TermTextInput(TerminalWidgetKivy):
         logging.getLogger('term_kivy').debug('The key {} {}'.format(keycode, 'have been pressed'))
         logging.getLogger('term_kivy').debug(' - text is %r' % text)
         logging.getLogger('term_kivy').debug(' - modifiers are %r' % modifiers)
-
+        
+        if self.session.terminal.process_key(keycode, text, modifiers):
+            return True
+    
         v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
 
         if len(v) > 0:
@@ -754,3 +757,18 @@ class TerminalKivy(Terminal):
         if mode == 25:
             self.cursor_invisible(context)
             
+    def process_key(self, keycode, text, modifiers):
+        handled = False
+        code, key = keycode
+
+        if 'shift' in modifiers and key == 'insert':
+            #paste
+            from kivy.core.clipboard import Clipboard
+            text = Clipboard.paste()
+            self.session.send(text)
+            handled = True
+        elif 'ctrl' in modifiers and key == 'insert':
+            #copy
+            pass
+
+        return handled
