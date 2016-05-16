@@ -64,7 +64,7 @@ class Session:
         writer.start()
 
     def wait_for_quit(self):
-        if threading.current_thread() != self.writer:
+        if self.writer and threading.current_thread() != self.writer:
             self.writer.join()
 
     def get_tab_width(self):

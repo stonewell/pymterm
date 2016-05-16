@@ -77,6 +77,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._create_label()
 
         self.cursor = (0, 0)
+        self.line_rects = {}
+        self._touch_count = 0
+        self.cancel_selection()
         
         # force the texture creation
         self._trigger_texture()
@@ -238,7 +241,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 last_b_color = tmp_b_c
                                 
             try:
-                self.add_text(''.join(text_parts), x, y - (i + 1) * dy)
+                self.add_text(i, ''.join(text_parts), x, y - (i + 1) * dy)
             except:
                 logging.exception('show text:{},x={},y={}'.format(''.join(text_parts), x, y - (i + 1) * dy))
 
@@ -283,7 +286,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         
         return x + size[0]
     
-    def add_text(self, text, x, y):
+    def add_text(self, line_num, text, x, y):
+        self.line_rects[line_num] = Rectangle(size=(0,0), pos=(x, y))
+        
         if not text or len(text) == 0:
             return
 
@@ -309,8 +314,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             texture = label.texture
             if self.session.cfg.debug_more:
                 logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
-            
-        self.canvas.add(Rectangle(texture=texture, size=texture.size, pos=(x, y)))
+
+        self.line_rects[line_num] = Rectangle(texture=texture, size=texture.size, pos=(x, y))
+        self.canvas.add(self.line_rects[line_num])
 
     def _get_text_width(self, text):
         width = Cache_get('termwidget.width', text)
@@ -335,11 +341,189 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
 
         return text
         
+    def on_touch_down(self, touch):
+        touch_pos = touch.pos
+        
+        if not self.collide_point(*touch_pos):
+            return super(TerminalWidgetKivy, self).on_touch_down(touch)
+
+        touch.grab(self)
+        self._touch_count += 1
+
+        cursor = self.get_cursor_from_xy(*touch_pos)
+        if not self._selection_touch:
+            self.cancel_selection()
+            self._selection_touch = touch
+            self._selection_from = self._selection_to = cursor
+            self._update_selection()
+
+        self.focus = True
+        return super(TerminalWidgetKivy, self).on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if touch.grab_current is not self:
+            return super(TerminalWidgetKivy, self).on_touch_move(touch)
+
+        if self._selection_touch is touch:
+            self._selection_to = self.get_cursor_from_xy(touch.x, touch.y)
+            self._update_selection()
+
+        return super(TerminalWidgetKivy, self).on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        if touch.grab_current is not self:
+            return super(TerminalWidgetKivy, self).on_touch_up(touch)
+
+        touch.ungrab(self)
+        self._touch_count -= 1
+
+        if self._selection_touch is touch:
+            self._selection_to = self.get_cursor_from_xy(touch.x, touch.y)
+            self._update_selection(True)
+
+        self.focus = True
+        return super(TerminalWidgetKivy, self).on_touch_up(touch)
+        
+    def get_cursor_from_xy(self, x, y):
+        '''Return the (row, col) of the cursor from an (x, y) position.
+        '''
+        padding_left = self.padding[0]
+        padding_top = self.padding[1]
+        l = self.lines
+        dy = self.line_height + self.line_spacing
+        cx = x - self.x
+        cy = (self.top - padding_top) - y
+        cy = int(boundary(round(cy / dy - 0.5), 0, len(l) - 1))
+        _get_text_width = self._get_text_width
+        for i in range(0, len(l[cy])):
+            if _get_text_width(''.join(l[cy][:i])) + \
+                  _get_text_width(l[cy][i]) * 0.6 + \
+                  padding_left > cx:
+                cx = i
+                break
+        return cx, cy
+
+    #
+    # Selection control
+    #
+    def cancel_selection(self):
+        '''Cancel current selection (if any).
+        '''
+        self._selection_from = self._selection_to = (0, 0)
+        self._selection = False
+        self._selection_finished = True
+        self._selection_touch = None
+
+    def _update_selection(self, finished=False):
+        self._selection_finished = finished
+
+        if not finished:
+            self._selection = True
+        else:
+            self._selection = True
+            self._selection_touch = None
+
+        self._update_graphics_selection()
+
+    def _update_graphics_selection(self):
+        if not self._selection:
+            return
+        self.canvas.remove_group('selection')
+        dy = self.line_height + self.line_spacing
+
+        padding_top = self.padding[1]
+        padding_bottom = self.padding[3]
+        _top = self.top
+        y = _top - padding_top
+        miny = self.y + padding_bottom
+        maxy = _top - padding_top
+        draw_selection = self._draw_selection
+
+        a, b = self.get_selection()
+        s1c, s1r = a
+        s2c, s2r = b
+        s2r += 1
+        # pass only the selection lines[]
+        # passing all the lines can get slow when dealing with a lot of text
+        y -= s1r * dy
+        _lines = self.lines
+        _get_text_width = self._get_text_width
+        width = self.width
+        padding_left = self.padding[0]
+        padding_right = self.padding[2]
+        x = self.x
+        canvas_add = self.canvas.add
+        selection_color = self.selection_color
+        for line_num, value in enumerate(_lines[s1r:s2r], start=s1r):
+            r = self.line_rects[line_num]
+            if miny <= y <= maxy + dy:
+                draw_selection(r.pos, r.size, line_num, (s1c, s1r),
+                               (s2c, s2r - 1), _lines, _get_text_width,
+                               width,
+                               padding_left, padding_right, x,
+                               canvas_add, selection_color)
+            y -= dy
+
+    def _draw_selection(self, *largs):
+        pos, size, line_num, (s1c, s1r), (s2c, s2r),\
+            _lines, _get_text_width, width,\
+            padding_left, padding_right, x, canvas_add, selection_color = largs
+        # Draw the current selection on the widget.
+        if line_num < s1r or line_num > s2r or line_num >= len(_lines):
+            return
+        x, y = pos
+        w, h = size
+        x1 = x
+        x2 = x + w
+        if line_num == s1r:
+            lines = _lines[line_num]
+            if not lines:
+                return
+            s1c = s1c if s1c <= len(lines) else len(lines)
+            x1 += _get_text_width(''.join(lines[:s1c]))
+        if line_num == s2r:
+            lines = _lines[line_num]
+            if not lines:
+                return
+            s2c = s2c if s2c <= len(lines) else len(lines)
+            x2 = x + _get_text_width(''.join(lines[:s2c]))
+        width_minus_padding = width - (padding_right + padding_left)
+        maxx = x + width_minus_padding
+        if x1 > maxx:
+            return
+        x1 = max(x1, x)
+        x2 = min(x2, x + width_minus_padding)
+        canvas_add(Color(*selection_color, group='selection'))
+        canvas_add(Rectangle(
+            pos=(x1, pos[1]), size=(x2 - x1, size[1]), group='selection'))
+
+
+    def get_selection(self):
+        def compare_cursor(a, b):
+            a_col, a_row = a
+            b_col, b_row = b
+
+            if a == b:
+                return False
+
+            if a_row > b_row:
+                return True
+
+            if a_row < b_row:
+                return False
+
+            return a_col > b_col
+        
+        a, b = self._selection_from, self._selection_to
+        if compare_cursor(a, b):
+            a, b = b, a
+        return (a, b)
         
     #
     # Properties
     #
 
+    selection_color = ListProperty([0.1843, 0.6549, 0.8313, .5])
     lines = ListProperty([])
     line_options = ListProperty([])
     font_name = StringProperty('NotoSans')

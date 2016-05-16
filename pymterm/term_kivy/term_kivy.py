@@ -198,6 +198,7 @@ class TerminalKivyApp(App):
         if term_widget:
             def update(ut):
                 term_widget.focus = True
+            Clock.unschedule(update)
             Clock.schedule_once(update)
 
     def add_term_widget(self, cfg):
@@ -761,14 +762,84 @@ class TerminalKivy(Terminal):
         handled = False
         code, key = keycode
 
-        if 'shift' in modifiers and key == 'insert':
+        if ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers )and key == 'insert':
             #paste
-            from kivy.core.clipboard import Clipboard
-            text = Clipboard.paste()
-            self.session.send(text)
+            self.paste_data()
             handled = True
-        elif 'ctrl' in modifiers and key == 'insert':
+        elif ('ctrl' in modifiers or 'ctrl_L' in modifiers or 'ctrl_R' in modifiers) and key == 'insert':
             #copy
-            pass
+            self.copy_data()
+            handled = True
 
         return handled
+
+    def paste_data(self):
+        data = ''
+        if self.has_selection():
+            data = self.get_selection_text()
+
+        if len(data) == 0:
+            from kivy.core.clipboard import Clipboard
+            data = Clipboard.paste()
+
+        if len(data) > 0:
+            self.session.send(data)
+        
+    def has_selection(self):
+        s_from, s_to = self.term_widget.get_selection()
+
+        return not (s_from == s_to)
+
+    def get_selection_text(self):
+        lines, line_options = self.get_text()
+        
+        s_from, s_to = self.term_widget.get_selection()
+
+        if s_from == s_to:
+            return ''
+
+        s_f_col, s_f_row = s_from
+        s_t_col, s_t_row = s_to
+
+        texts = []
+
+        if s_f_row == s_t_row:
+            line = lines[s_f_row]
+            if not line:
+                return ''
+            
+            if s_f_col >= len(line):
+                return ''
+
+            if s_t_col > len(line):
+                s_t_col = len(line)
+
+            return ''.join(line[s_f_col:s_t_col]).replace('\000', '')
+        
+        for line_num, value in enumerate(lines[s_f_row:s_t_row + 1], start=s_f_row):
+            line = lines[line_num]
+            if not line:
+                continue
+            if line_num == s_f_row:
+                if s_f_col < len(line):
+                    texts.append(''.join(line[s_f_col:]))
+            elif line_num == s_t_row:
+                if s_t_col < len(line):
+                    texts.append(''.join(line[:s_t_col]))
+            else:
+                texts.append(''.join(line))
+
+        data = '\r\n'.join(texts).replace('\000', '')
+
+        return data
+        
+    def copy_data(self):
+        data = self.get_selection_text()
+        
+        if len(data) == 0:
+            return
+        
+        from kivy.core.clipboard import Clipboard
+        Clipboard.copy(data)
+
+        self.term_widget.cancel_selection()
