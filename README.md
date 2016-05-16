@@ -9,8 +9,8 @@ ssh library https://github.com/paramiko/paramiko
 - [X] UTF-8 handling
 - [ ] Scroll history
 - [ ] Search in history
-- [ ] Selection
+- [X] Selection
 - [ ] Save sessions
 - [ ] whole application configuration
 - [ ] IME
-- [ ] Copy and Paste
+- [X] Copy and Paste
