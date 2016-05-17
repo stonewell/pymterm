@@ -95,10 +95,16 @@ class TermTextInput(TerminalWidgetKivy):
         if len(v) > 0:
             self.session.send(v)
 
+        logging.getLogger('term_kivy').debug(' - translated %r, %d' % (v, handled))
+        
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
         return handled
 
+    def keyboard_on_key_up(self, window, keycode):
+        #override to avoid escape lost focus
+        return False
+    
     def cal_visible_rows(self):
         lh = self.line_height
         dy = lh + self.line_spacing
