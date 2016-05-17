@@ -835,7 +835,12 @@ class TerminalKivy(Terminal):
             else:
                 texts.append(''.join(line))
 
-        data = '\r\n'.join(texts).replace('\000', '')
+        d = '\r\n'
+
+        if 'carriage_return' in self.cap.cmds:
+            d = self.cap.cmds['carriage_return'].cap_value
+            
+        data = d.join(texts).replace('\000', '')
 
         return data
         
