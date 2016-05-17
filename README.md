@@ -14,3 +14,4 @@ ssh library https://github.com/paramiko/paramiko
 - [ ] whole application configuration
 - [ ] IME
 - [X] Copy and Paste
+- [ ] local pty
