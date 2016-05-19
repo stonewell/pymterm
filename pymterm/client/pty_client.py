@@ -9,14 +9,8 @@ import time
 import traceback
 import logging
 
-import array
-import fcntl
 import pty
-import select
-import signal
-import termios
-import tty
-    
+
 def start_client(session, cfg):
     master_fd = None
     
