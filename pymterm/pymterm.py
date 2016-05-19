@@ -19,7 +19,9 @@ def args_parser():
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
 
     if not platform.is_windows():    
-        parser.add_argument('--session_type', choices=['ssh', 'local'], default='ssh')
+        parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
+    else:
+        parser.add_argument('--session_type', choices=['ssh', 'pipe'], default='ssh')
         
     parser.add_argument(metavar='user@host', type=str, help='', nargs='?', dest='conn_str')
 
@@ -28,9 +30,6 @@ def args_parser():
 if __name__ == '__main__':
     args = args_parser().parse_args()
     
-    if platform.is_windows():    
-        args.session_type = 'ssh'
-        
     try:
         sys.argv = sys.argv[:1]
         cfg = session_config.SessionConfig(args)
