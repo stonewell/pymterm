@@ -5,7 +5,6 @@ import sys
 import time
 import traceback
 import logging
-import ssh.client
 import threading
 
 class Session(object):

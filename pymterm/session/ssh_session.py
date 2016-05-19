@@ -7,13 +7,13 @@ import traceback
 import logging
 import threading
 
-import ssh.client
+import client.ssh_client
 
 from session import Session
 
 class SSHSession(Session):
     def __init__(self, cfg, terminal):
-        Session.__init__(self, cfg, terminal)
+        super(SSHSession, self).__init__(cfg, terminal)
         
         self.sock = None
         self.channel = None
@@ -69,12 +69,17 @@ class SSHSession(Session):
     def start(self):
         super(SSHSession, self).start()
         
-        ssh.client.start_client(self, self.cfg)
+        client.ssh_client.start_client(self, self.cfg)
 
     def send(self, data):
         if self.channel and not self.stopped:
             self.channel.send(data)
 
-    def resize_pty(self, col, row, w, h):
+    def resize_pty(self, col = None, row = None, w = 0, h = 0):
+        if not col:
+            col = self.terminal.get_cols()
+        if not row:
+            row = self.terminal.get_row()
+            
         if self.channel and not self.stopped:
             self.channel.resize_pty(col, row, w, h)

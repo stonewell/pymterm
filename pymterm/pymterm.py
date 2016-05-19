@@ -4,6 +4,7 @@ import argparse
 import logging
 
 import session_config
+import platform
 
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
@@ -16,14 +17,20 @@ def args_parser():
     parser.add_argument('--color_theme', type=str, help='the terminal color theme', default='tango', required = False)
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
-    parser.add_argument('-session_type', choices=['ssh', 'local'], default='ssh')
+
+    if not platform.is_windows():    
+        parser.add_argument('--session_type', choices=['ssh', 'local'], default='ssh')
+        
     parser.add_argument(metavar='user@host', type=str, help='', nargs='?', dest='conn_str')
 
     return parser
 
 if __name__ == '__main__':
     args = args_parser().parse_args()
-
+    
+    if platform.is_windows():    
+        args.session_type = 'ssh'
+        
     try:
         sys.argv = sys.argv[:1]
         cfg = session_config.SessionConfig(args)
