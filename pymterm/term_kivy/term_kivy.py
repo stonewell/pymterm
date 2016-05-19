@@ -455,6 +455,7 @@ class TerminalKivy(Terminal):
     def delete_chars(self, count):
         line = self.get_cur_line()
         begin = self.col
+        line_option = self.get_cur_line_option()
 
         if line[begin] == '\000':
             begin -= 1
