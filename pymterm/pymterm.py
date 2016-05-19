@@ -16,6 +16,7 @@ def args_parser():
     parser.add_argument('--color_theme', type=str, help='the terminal color theme', default='tango', required = False)
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
+    parser.add_argument('-session_type', choices=['ssh', 'local'], default='ssh')
     parser.add_argument(metavar='user@host', type=str, help='', nargs='?', dest='conn_str')
 
     return parser

@@ -13,8 +13,7 @@ import term.parse_termdata
 
 import term_keyboard
 
-import session
-import ssh.client
+from session import create_session
 
 from kivy.uix.floatlayout import FloatLayout
 from kivy.app import App
@@ -225,7 +224,7 @@ class TerminalKivyApp(App):
         layout.term_widget = term_widget
         
         ti.term_widget = term_widget
-        ti.session = session.Session(cfg, self.create_terminal(cfg))
+        ti.session = create_session(cfg, self.create_terminal(cfg))
         
         term_widget.session = ti.session
         term_widget.tab_width = ti.session.get_tab_width()

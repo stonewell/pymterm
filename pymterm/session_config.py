@@ -23,6 +23,8 @@ class SessionConfig:
         self.color_theme = args.color_theme
         self.debug = args.debug
         self.debug_more = args.debug_more
+        self.session_type = args.session_type
+        
         if self.debug_more:
             self.debug = True
             

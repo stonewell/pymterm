@@ -93,7 +93,7 @@ def start_client(session, cfg):
     port = cfg.port
 
     try:
-        sock = session.connect()
+        sock = session._connect()
 
         if not sock:
             return
@@ -122,8 +122,6 @@ def start_client(session, cfg):
             session.report_error('*** WARNING: Unknown host key!')
         elif keys[hostname][key.get_name()] != key:
             session.report_error('*** WARNING: Host key has changed!!!')
-        else:
-            session.report_error('*** Host key OK.')
 
         # get username
         if username == '':
@@ -136,16 +134,18 @@ def start_client(session, cfg):
         if not t.is_authenticated():
             manual_auth(t, username, hostname)
         if not t.is_authenticated():
-            logging.getLogger('ssh_client').debug('*** Authentication failed. :(')
+            session.report_error('*** Authentication failed. :(')
             t.close()
-            sys.exit(1)
+            return
 
         session.interactive_shell(t)
     except Exception as e:
         logging.getLogger('ssh_client').exception('ssh client caught exception:')
+
+        session.report_error(str(e))
+        
         try:
             t.close()
         except:
             pass
-        sys.exit(1)
 
