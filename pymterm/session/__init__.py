@@ -1,8 +1,11 @@
 #__init__
+import logging
 
 __all__ = ['create_session']
 
 def create_session(cfg, terminal):
+    logging.getLogger('create_session').error('session_type:{}'.format(cfg.session_type))
+    
     if cfg.session_type == 'pty':
         import pty_session
         return pty_session.PtySession(cfg, terminal)

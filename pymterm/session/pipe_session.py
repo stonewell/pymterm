@@ -7,8 +7,6 @@ import traceback
 import logging
 import threading
 
-import ptyprocess
-
 import client.pipe_client
 
 from session import Session
@@ -25,10 +23,7 @@ class PipeSession(Session):
         if not self.p:
             return None
 
-        print 'start read', self.p
         d = self.out_pipe.read(block_size)
-
-        print 'read', self.p, d
         return d
 
     def _stop_reader(self):
@@ -58,7 +53,7 @@ class PipeSession(Session):
             in_pipe = self.in_pipe
 
             while data != '':
-                n = self.in_pipe.write(data)
+                n = in_pipe.write(data)
                 data = data[n:]
 
     def resize_pty(self, col = None, row = None, w = 0, h = 0):

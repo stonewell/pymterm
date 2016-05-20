@@ -29,7 +29,6 @@ def args_parser():
 
 if __name__ == '__main__':
     args = args_parser().parse_args()
-    
     try:
         sys.argv = sys.argv[:1]
         cfg = session_config.SessionConfig(args)

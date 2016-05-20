@@ -38,7 +38,8 @@ class SessionConfig:
 
         #validate host and user
         if not self.session_name and (len(self.hostname) == 0 or len(self.username) == 0):
-            raise ValueError("no engouth connect information")
+            if self.session_type == 'ssh':
+                raise ValueError("no engouth connect information")
 
         default_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
                                     datefmt='%Y-%m-%d %H:%M:%S')
