@@ -23,7 +23,7 @@ class PipeSession(Session):
         if not self.p:
             return None
 
-        d = self.out_pipe.read(block_size)
+        d = self.out_pipe.read(1)
         return d
 
     def _stop_reader(self):
@@ -52,9 +52,7 @@ class PipeSession(Session):
         if self.p and not self.stopped:
             in_pipe = self.in_pipe
 
-            while data != '':
-                n = in_pipe.write(data)
-                data = data[n:]
+            in_pipe.write(data)
 
     def resize_pty(self, col = None, row = None, w = 0, h = 0):
         pass

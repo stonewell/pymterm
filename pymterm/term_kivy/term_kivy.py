@@ -471,12 +471,12 @@ class TerminalKivy(Terminal):
 
     def refresh_display(self):
         lines, line_options = self.get_text()
-        
+
         self.term_widget.lines = lines
         self.term_widget.line_options = line_options
         self.term_widget.cursor = self.get_cursor()
         self.term_widget.refresh()
-        
+
     def on_data(self, data):
         Terminal.on_data(self, data)
 
@@ -854,3 +854,7 @@ class TerminalKivy(Terminal):
         Clipboard.copy(data)
 
         self.term_widget.cancel_selection()
+
+    def column_address(self, context):
+        col, row = self.get_cursor()
+        self.set_cursor(context.params[0], row)

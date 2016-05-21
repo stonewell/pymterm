@@ -16,7 +16,10 @@ def start_client(session, cfg):
     p = None
     
     try:
-        p = Popen([r'C:\local\winpty\bin\console.exe', r'C:\local\mingw64\msys\1.0\bin\bash.exe'],
+        #cmd = [r'pythonw.exe', r'c:\local\winpty\run.py']
+        #cmd = [r'C:\local\winpty\bin\console.exe', r'C:\local\mingw64\msys\1.0\bin\bash.exe']
+        cmd = [r'C:\Users\stone\GitHub\winpty\build\winpty.exe', r'C:\local\mingw64\msys\1.0\bin\bash.exe']
+        p = Popen(cmd,
                   stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
         session.interactive_shell(p)
     except Exception as e:
