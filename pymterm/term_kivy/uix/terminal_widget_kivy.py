@@ -112,9 +112,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     def _trigger_texture_update(self, name=None, source=None, value=None):
         # check if the label core class need to be switch to a new one
         if source:
-            if name == 'lines':
-                pass
-            elif name == 'font_size':
+            if name == 'font_size':
                 self._label.options[name] = value
             else:
                 self._label.options[name] = value
