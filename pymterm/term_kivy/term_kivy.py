@@ -60,13 +60,17 @@ class TermBoxLayout(BoxLayout):
         super(TermBoxLayout, self).__init__(**kwargs)
         self.term_widget = None
         self.started = False
+        self.trigger_start_session = Clock.create_trigger(self.start_session, .5)
 
+    def start_session(self, *largs):
+        self.term_widget.session.start()
+        
     def do_layout(self, *largs):
         super(TermBoxLayout, self).do_layout(*largs)
         if not self.started:
-            Clock.schedule_once(lambda ut:self.term_widget.session.start(), .5)
             self.started = True
             self.term_widget.focus = True
+            self.trigger_start_session()
 
 class TermTextInput(TerminalWidgetKivy):
     def __init__(self, **kwargs):
@@ -162,8 +166,14 @@ class TerminalKivyApp(App):
         self.root_widget.btn_connect.bind(on_press=self.on_connect)
 
         self.root_widget.spnr_conn_history.bind(text=self.on_conn_history)
+
+        self.trigger_switch_to_tab = Clock.create_trigger(self.switch_to_tab)
+        
         return self.root_widget
 
+    def switch_to_tab(self, current_tab):
+        self.root_widget.term_panel.switch_to(current_tab)
+        
     def connect_to(self, conn_str, port):
         cfg = self.cfg.clone()
         cfg.set_conn_str(conn_str)
@@ -173,7 +183,7 @@ class TerminalKivyApp(App):
             if current_tab.session.stopped:
                 current_tab.session.cfg = cfg
                 current_tab.session.start()
-                Clock.schedule_once(lambda ut:self.root_widget.term_panel.switch_to(current_tab))
+                self.trigger_switch_to_tab(current_tab)
                 return
             
         self.add_term_widget(cfg)
