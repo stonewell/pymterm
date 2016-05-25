@@ -117,7 +117,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             else:
                 self._label.options[name] = value
 
-        self._trigger_texture()
+        if name != 'lines':
+            self._trigger_texture()
 
     def texture_update(self, *largs):
         self._update_line_options()

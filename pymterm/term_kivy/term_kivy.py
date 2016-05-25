@@ -868,3 +868,22 @@ class TerminalKivy(Terminal):
     def column_address(self, context):
         col, row = self.get_cursor()
         self.set_cursor(context.params[0], row)
+
+    def parm_up_cursor(self, context):
+        begin, end = self.get_scroll_region()
+
+        count = context.params[0] if context and context.params and len(context.params) > 0 else 1
+
+        for i in range(count):
+            self.get_cur_line()
+            self.get_cur_line_option()
+        
+            if self.row == begin:
+                self.lines = self.lines[:begin] + [[]] + self.lines[begin: end] + self.lines[end + 1:]
+                self.line_options = self.line_options[:begin] + [[]] + self.line_options[begin: end] + self.line_options[end + 1:]
+            else:        
+                self.row -= 1
+
+            self.get_cur_line()
+            self.get_cur_line_option()
+        

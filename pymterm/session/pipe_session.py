@@ -6,8 +6,13 @@ import time
 import traceback
 import logging
 import threading
-
 import client.pipe_client
+import msvcrt
+import win32file
+import winerror
+import win32event
+import pywintypes
+import win32pipe
 
 from session import Session
 
@@ -18,38 +23,49 @@ class PipeSession(Session):
         self.p = None
         self.in_pipe = None
         self.out_pipe = None
-        self.control_pipe_r = None
-        self.control_pipe_w = None
-        self._control_pipe_reader_thread = None
+        self.control_pipe = None
+        self.out_pipe_h = None
+
+        self._overlap_read = pywintypes.OVERLAPPED()
+        self._overlap_read.hEvent = win32event.CreateEvent(None, 0, 0, None)
         
     def _read_data(self, block_size = 4096):
         if not self.p:
             return None
 
-        d = self.out_pipe.read(1)
-        return d
+        try:
+            r, d = win32file.ReadFile(self.out_pipe_h, block_size, self._overlap_read)
+
+            while True:
+                rc = win32event.WaitForSingleObject(self._overlap_read.hEvent, 10)
+                if rc == win32event.WAIT_OBJECT_0:
+                    n = win32file.GetOverlappedResult(self.out_pipe_h, self._overlap_read, True)
+                    return d[:n]
+                else:
+                    #time out continue
+                    pass
+        except:
+            logging.getLogger('session').exception('read data fail')
+            return None
 
     def _stop_reader(self):
         if self.p:
             self.in_pipe.close()
-            self.out_pipe.close()
+            #will block, let system do it when subprocess quit
+            #self.out_pipe.close
             self.p.terminate()
             self.p.wait()
             self.p = None
-
-            if self._control_pipe_reader_thread and threading.current_thread() != self._control_pipe_reader_thread:
-                self._control_pipe_reader_thread.join()
 
     def interactive_shell(self, p):
         self.p = p
         self.in_pipe = p.stdin
         self.out_pipe = p.stdout
+        self.out_pipe_h = msvcrt.get_osfhandle(self.out_pipe.fileno())
 
         try:
-            self.control_pipe_r = self._open_control_pipe(p, True)
-            self.control_pipe_w = self._open_control_pipe(p, False)
-            logging.getLogger('session').error('get control pipe:{}, {}'.format(self.control_pipe_r, self.control_pipe_w))
-            self._start_control_pipe_reader()
+            self.control_pipe = self._open_control_pipe(p)
+            logging.getLogger('session').debug('get control pipe:{}'.format(self.control_pipe))
         except:
             logging.getLogger('session').exception('unable to open control pipe')
 
@@ -87,28 +103,21 @@ class PipeSession(Session):
                  0,#Int32
                  row)
 
-        if not self.control_pipe_r:
+        if not self.control_pipe:
             logging.getLogger('session').error("resize_ptry, invalid control pipe")
             return
 
-        logging.getLogger('session').error('{}'.format(map(ord, d)))
-        import win32pipe, win32file
-        import win32file
+        win32file.WriteFile(self.control_pipe, d)
+        d = win32file.ReadFile(self.control_pipe, 4)
 
-        logging.getLogger('session').error('write file:{}, {}'.format(len(d), self.control_pipe_r))
-        win32file.WriteFile(self.control_pipe_r, d)
-        logging.getLogger('session').error('write file:{} done'.format(d))
-
-    def _open_control_pipe(self, p, read):
-        import win32pipe, win32file
-        import win32file
+    def _open_control_pipe(self, p):
         import time
 
         count = 0
 
         while count < 10:
             try:
-                p = win32file.CreateFile(self._get_control_pipe_name(p, read),
+                p = win32file.CreateFile(self._get_control_pipe_name(p),
                                         win32file.GENERIC_READ | win32file.GENERIC_WRITE,
                                         0, None,
                                         win32file.OPEN_EXISTING,
@@ -123,27 +132,6 @@ class PipeSession(Session):
         logging.getLogger('session').exception('unable to get control pipe')
         return None
 
-    def _get_control_pipe_name(self, p, read):
-        name = ''.join(['\\\\.\\pipe\\winpty-', 'read' if read else 'write', '-', str(p.pid)])
-        print name
+    def _get_control_pipe_name(self, p):
+        name = ''.join(['\\\\.\\pipe\\winpty-', str(p.pid)])
         return name
-
-    def _start_control_pipe_reader(self):
-        if not self.control_pipe_w:
-            logging.getLogger('session').error("start control reader invalid control pipe")
-            return
-        
-        import win32pipe, win32file
-        import win32file
-
-        def read_term_data():
-            while True:
-                data = win32file.ReadFile(self.control_pipe_w, 1)
-                if not data or len(data) == 0:
-                    logging.getLogger('session').info("end of socket, quit")
-                    self.stop()
-                    break
-
-        self._control_pipe_reader_thread = reader_thread = threading.Thread(target=read_term_data)
-        reader_thread.start()
-    
