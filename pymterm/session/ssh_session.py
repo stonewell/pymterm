@@ -79,7 +79,7 @@ class SSHSession(Session):
         if not col:
             col = self.terminal.get_cols()
         if not row:
-            row = self.terminal.get_row()
+            row = self.terminal.get_rows()
             
         if self.channel and not self.stopped:
             self.channel.resize_pty(col, row, w, h)

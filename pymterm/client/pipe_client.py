@@ -22,7 +22,7 @@ def start_client(session, cfg):
                r'--pipe',
                r'C:\local\mingw64\msys\1.0\bin\bash.exe' , '--login']
         p = Popen(cmd,
-                  stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=True)
+                  stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=False)
         session.interactive_shell(p)
     except Exception as e:
         logging.getLogger('pipe_client').exception('pipe client caught exception:')

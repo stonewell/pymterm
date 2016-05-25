@@ -18,7 +18,10 @@ class PipeSession(Session):
         self.p = None
         self.in_pipe = None
         self.out_pipe = None
-
+        self.control_pipe_r = None
+        self.control_pipe_w = None
+        self._control_pipe_reader_thread = None
+        
     def _read_data(self, block_size = 4096):
         if not self.p:
             return None
@@ -42,13 +45,17 @@ class PipeSession(Session):
         self.in_pipe = p.stdin
         self.out_pipe = p.stdout
 
-        self.control_pipe = self.open_control_pipe(p)
+        try:
+            self.control_pipe_r = self._open_control_pipe(p, True)
+            self.control_pipe_w = self._open_control_pipe(p, False)
+            logging.getLogger('session').error('get control pipe:{}, {}'.format(self.control_pipe_r, self.control_pipe_w))
+            self._start_control_pipe_reader()
+        except:
+            logging.getLogger('session').exception('unable to open control pipe')
 
-        self._start_control_pipe_reader()
-
-        self.resize_pty()
-        
         self._start_reader()
+        
+        self.resize_pty()
         
     def start(self):
         super(PipeSession, self).start()
@@ -63,46 +70,66 @@ class PipeSession(Session):
 
     def resize_pty(self, col = None, row = None, w = 0, h = 0):
         from struct import pack
-        f = 'Qiii'
+        f = '=QBiBiBi'
 
         if not col:
             col = self.terminal.get_cols()
         if not row:
-            row = self.terminal.get_row()
+            row = self.terminal.get_rows()
             
-        size = 8 + 3 * 4
+        size = 8 + 3 * 4 + 3 * 1
         d = pack(f,
                  size, #Size
+                 0,#Int32
                  2, #SetSize Message
-                 col,
+                 0,#Int32
+                 col,#Int32
+                 0,#Int32
                  row)
 
-        if not self.control_pipe:
+        if not self.control_pipe_r:
             logging.getLogger('session').error("resize_ptry, invalid control pipe")
             return
 
+        logging.getLogger('session').error('{}'.format(map(ord, d)))
         import win32pipe, win32file
         import win32file
 
-        win32file.WriteFile(self.control_pipe, d)
+        logging.getLogger('session').error('write file:{}, {}'.format(len(d), self.control_pipe_r))
+        win32file.WriteFile(self.control_pipe_r, d)
+        logging.getLogger('session').error('write file:{} done'.format(d))
 
-    def _open_control_pipe(self, p):
+    def _open_control_pipe(self, p, read):
         import win32pipe, win32file
         import win32file
-        
-        return win32file.CreateFile(self._get_control_pipe_name(p),
-                                    win32file.GENERIC_READ | win32file.GENERIC_WRITE,
-                                    0, None,
-                                    win32file.OPEN_EXISTING,
-                                    0, None)        
+        import time
 
-    def _get_control_pipe_name(p):
-        return '\\\\.\\pipe\\winptry-' + str(p.pid)
+        count = 0
+
+        while count < 10:
+            try:
+                p = win32file.CreateFile(self._get_control_pipe_name(p, read),
+                                        win32file.GENERIC_READ | win32file.GENERIC_WRITE,
+                                        0, None,
+                                        win32file.OPEN_EXISTING,
+                                        0, None)
+
+                return p
+            except:
+                count += 1
+                time.sleep(1)
+                pass
+
+        logging.getLogger('session').exception('unable to get control pipe')
+        return None
+
+    def _get_control_pipe_name(self, p, read):
+        name = ''.join(['\\\\.\\pipe\\winpty-', 'read' if read else 'write', '-', str(p.pid)])
+        print name
+        return name
 
     def _start_control_pipe_reader(self):
-        self._control_pipe_reader_thread = None
-        
-        if not self.control_pipe:
+        if not self.control_pipe_w:
             logging.getLogger('session').error("start control reader invalid control pipe")
             return
         
@@ -111,7 +138,7 @@ class PipeSession(Session):
 
         def read_term_data():
             while True:
-                data = win32file.ReadFile(self.control_pipe, 1)
+                data = win32file.ReadFile(self.control_pipe_w, 1)
                 if not data or len(data) == 0:
                     logging.getLogger('session').info("end of socket, quit")
                     self.stop()
