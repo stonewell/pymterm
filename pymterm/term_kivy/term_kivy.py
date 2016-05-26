@@ -153,6 +153,7 @@ class TerminalKivyApp(App):
         App.__init__(self)
 
         self.cfg = cfg
+        self.current_tab = None
 
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & Kivy'
@@ -167,12 +168,18 @@ class TerminalKivyApp(App):
 
         self.root_widget.spnr_conn_history.bind(text=self.on_conn_history)
 
-        self.trigger_switch_to_tab = Clock.create_trigger(self.switch_to_tab)
+        self.trigger_switch_to_tab = Clock.create_trigger(self._switch_to_tab)
         
         return self.root_widget
 
+    def _switch_to_tab(self, *largs):
+        if not self.current_tab:
+            return
+        self.root_widget.term_panel.switch_to(self.current_tab)
+
     def switch_to_tab(self, current_tab):
-        self.root_widget.term_panel.switch_to(current_tab)
+        self.current_tab = current_tab
+        self.trigger_switch_to_tab()
         
     def connect_to(self, conn_str, port):
         cfg = self.cfg.clone()
@@ -183,7 +190,7 @@ class TerminalKivyApp(App):
             if current_tab.session.stopped:
                 current_tab.session.cfg = cfg
                 current_tab.session.start()
-                self.trigger_switch_to_tab(current_tab)
+                self.switch_to_tab(current_tab)
                 return
             
         self.add_term_widget(cfg)
@@ -241,12 +248,8 @@ class TerminalKivyApp(App):
         ti.session.term_widget = term_widget
         ti.session.terminal.term_widget = term_widget
 
-        def start_term(dt):
-            self.root_widget.term_panel.switch_to(ti)
-            
-        Clock.unschedule(start_term)
         Clock.unschedule(self.root_widget.term_panel._load_default_tab_content)
-        Clock.schedule_once(start_term)
+        self.switch_to_tab(ti)
 
         conn_str = cfg.get_conn_str()
 
