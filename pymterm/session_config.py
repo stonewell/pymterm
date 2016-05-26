@@ -57,7 +57,7 @@ class SessionConfig:
             self.set_conn_str(session['conn_str'])
 
         if self.session_type == 'pipe':
-            if cfg.config and 'pipe-config' in cfg.config and 'default-shell' in cfg.config['pipe-config']:
+            if self.config and 'pipe-config' in self.config and 'default-shell' in self.config['pipe-config']:
                 pass
             else:
                 raise ValueError('no default shell configured for pipe mode')

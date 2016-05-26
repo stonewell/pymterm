@@ -16,10 +16,10 @@ def start_client(session, cfg):
     
     try:
         if cfg.config and 'pipe-config' in cfg.config and 'default-shell' in cfg.config['pipe-config']:
-            cmd = cfg.config['pty-config']['default-shell']
+            cmd = cfg.config['pipe-config']['default-shell']
         else:
             raise ValueError('no default shell configed for pipe mode')
-        
+
         p = Popen(cmd,
                   stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=False)
         session.interactive_shell(p)
