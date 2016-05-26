@@ -24,6 +24,9 @@ class SessionConfig:
         self.debug = args.debug
         self.debug_more = args.debug_more
         self.session_type = args.session_type
+        self.config = args.config
+
+        self.load_config()
         
         if self.debug_more:
             self.debug = True
@@ -40,6 +43,24 @@ class SessionConfig:
         if not self.session_name and (len(self.hostname) == 0 or len(self.username) == 0):
             if self.session_type == 'ssh':
                 raise ValueError("no engouth connect information")
+
+        if not args.conn_str and self.session_name and self.session_type == 'ssh':
+            if not self.config or not 'sessions' in self.config or not self.session_name in self.config['sessions']:
+                raise ValueError("unable to find the session:{}".format(self.session_name))
+
+            #set session config
+            session = self.config['sessions'][self.session_name]
+
+            if not 'conn_str' in session:
+                raise ValueError("unable to find connection string for the session:{}".format(self.session_name))
+
+            self.set_conn_str(session['conn_str'])
+
+        if self.session_type == 'pipe':
+            if cfg.config and 'pipe-config' in cfg.config and 'default-shell' in cfg.config['pipe-config']:
+                pass
+            else:
+                raise ValueError('no default shell configured for pipe mode')
 
         default_formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(name)-15s %(message)s',
                                     datefmt='%Y-%m-%d %H:%M:%S')
@@ -141,3 +162,33 @@ class SessionConfig:
             
     def get_conn_str(self):
         return ''.join([self.username, '@', self.hostname, ':', str(self.port)])
+
+    def load_config(self):
+        config_path, need_find_config = (self.config, False) if self.config else ('pymterm.json', True)
+
+        if need_find_config:
+            config_path = self.find_config(config_path)
+
+        if not os.path.exists(config_path):
+            raise ValueError('unable to find the config file:{}'.format(config_path))
+
+        import json
+        with open(config_path) as f:
+            self.config = json.load(f)
+
+    def find_config(f, p):
+        if os.path.exists(p):
+            return p
+
+        import appdirs
+
+        dirs = [appdirs.user_config_dir('pymterm'),
+                os.path.dirname(__file__),
+                os.path.join(os.path.dirname(__file__), '..')]
+
+        for d in dirs:
+            pp = os.path.join(d, p)
+
+            if os.path.exists(pp):
+                return pp
+        return p

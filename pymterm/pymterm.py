@@ -17,6 +17,7 @@ def args_parser():
     parser.add_argument('--color_theme', type=str, help='the terminal color theme', default='tango', required = False)
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
+    parser.add_argument('--config', type=str, help='show more debug information in log file and console', required = False)
 
     if not platform.is_windows():    
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')

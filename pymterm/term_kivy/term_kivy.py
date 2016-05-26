@@ -185,6 +185,7 @@ class TerminalKivyApp(App):
         cfg = self.cfg.clone()
         cfg.set_conn_str(conn_str)
         cfg.port = port
+        cfg.session_type = 'ssh'
 
         for current_tab in self.root_widget.term_panel.tab_list:
             if current_tab.session.stopped:

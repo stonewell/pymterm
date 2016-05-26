@@ -10,17 +10,16 @@ import traceback
 import logging
 
 from subprocess import Popen, PIPE, STDOUT
-import subprocess
 
 def start_client(session, cfg):
     p = None
     
     try:
-        #cmd = [r'pythonw.exe', r'c:\local\winpty\run.py']
-        #cmd = [r'C:\local\winpty\bin\console.exe', r'C:\local\mingw64\msys\1.0\bin\bash.exe']
-        cmd = [r'C:\Users\stone\GitHub\winpty\build\winpty.exe',
-               r'--pipe',
-               r'C:\local\mingw64\msys\1.0\bin\bash.exe' , '--login']
+        if cfg.config and 'pipe-config' in cfg.config and 'default-shell' in cfg.config['pipe-config']:
+            cmd = cfg.config['pty-config']['default-shell']
+        else:
+            raise ValueError('no default shell configed for pipe mode')
+        
         p = Popen(cmd,
                   stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=False)
         session.interactive_shell(p)

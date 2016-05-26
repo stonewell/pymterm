@@ -1,0 +1,26 @@
+{
+    "sessions":{
+	"aspire":{
+	    "conn_str":"angelstone@angelstone-aspire-one-721.local"
+	},
+	
+	"pi":{
+	    "conn_str":"pi@angelstone-pi.local"
+	},
+	
+	"d-235027-b":{
+	    "conn_str":"stone@d-235027-b"
+	}
+    },
+
+    "pty-config":{
+	"default-shell":["/bin/bash", "-i", "-l"]
+    },
+
+    "pipe-config":{
+	"default-shell":["C:\\Users\\stone\\GitHub\\winpty\\build\\winpty.exe",
+			 "--pipe",
+			 "C:\\local\\mingw64\\msys\\1.0\\bin\\bash.exe" ,
+			 "--login"]
+    }
+}

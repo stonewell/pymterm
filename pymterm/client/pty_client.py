@@ -19,6 +19,9 @@ def start_client(session, cfg):
 
         if not shell:
             shell = ['/bin/bash', '-i', '-l']
+
+            if cfg.config and 'pty-config' in cfg.config and 'default-shell' in cfg.config['pty-config']:
+                shell = cfg.config['pty-config']['default-shell']
         else:
             shell = [shell]
 
