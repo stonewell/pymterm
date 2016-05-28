@@ -7,11 +7,11 @@ ssh library https://github.com/paramiko/paramiko
 
 ## TODO
 - [X] UTF-8 handling
-- [ ] Scroll history
+- [X] Scroll history
 - [ ] Search in history
 - [X] Selection
 - [ ] Save sessions
 - [ ] whole application configuration
 - [ ] IME
 - [X] Copy and Paste
-- [ ] local pty
+- [X] local pty (windows using pipe)
