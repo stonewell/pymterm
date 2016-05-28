@@ -285,6 +285,10 @@ class TerminalKivy(Terminal):
         self.saved_lines, self.saved_line_options, self.saved_cursor = [], [], (0, 0)
         self.bold_mode = False
         self.scroll_region = None
+
+        self.view_history_begin = None
+        self.history_lines = []
+        self.history_line_options = []
                 
     def get_line(self, row):
         if row >= len(self.lines):
@@ -376,8 +380,17 @@ class TerminalKivy(Terminal):
         cols = self.term_widget.visible_cols
 
         return cols
-    
+
+    def get_history_text(self):
+        return self.history_lines + self.lines, self.history_line_options + self.line_options
+        
     def get_text(self):
+        if self.view_history_begin:
+            l, o = self.get_history_text()
+            lines = l[self.view_history_begin: self.view_history_begin + self.get_rows()]
+            line_options = o[self.view_history_begin: self.view_history_begin + self.get_rows()]
+            return lines, line_options
+        
         if len(self.lines) <= self.get_rows():
             return self.lines + [[]] * (self.get_rows() - len(self.lines)), self.line_options + [[]] * (self.get_rows() - len(self.lines))
         else:
@@ -425,19 +438,7 @@ class TerminalKivy(Terminal):
         self.parm_down_cursor(context)
 
     def cursor_up(self, context):
-        begin, end = self.get_scroll_region()
-
-        self.get_cur_line()
-        self.get_cur_line_option()
-        
-        if self.row == begin:
-            self.lines = self.lines[:begin] + [[]] + self.lines[begin:end] + self.lines[end + 1:]
-            self.line_options = self.line_options[:begin] + [[]] + self.line_options[begin:end] + self.lines[end + 1:]
-        else:
-            self.row -= 1
-            
-        self.get_cur_line()
-        self.get_cur_line_option()
+        self.parm_up_cursor(context)
 
     def carriage_return(self, context):
         self.col = 0
@@ -489,6 +490,7 @@ class TerminalKivy(Terminal):
         self.term_widget.lines = lines
         self.term_widget.line_options = line_options
         self.term_widget.cursor = self.get_cursor()
+        self.term_widget.cursor_visible = not self.view_history_begin
         self.term_widget.refresh()
 
     def on_data(self, data):
@@ -751,6 +753,9 @@ class TerminalKivy(Terminal):
             self.get_cur_line_option()
         
             if self.row == end:
+                if begin == 0:
+                    self.history_lines.append(self.lines[begin])
+                    self.history_line_options.append(self.line_options[begin])
                 self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [[]] + self.lines[end + 1:]
                 self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
             else:        
@@ -781,8 +786,9 @@ class TerminalKivy(Terminal):
     def process_key(self, keycode, text, modifiers):
         handled = False
         code, key = keycode
-
-        if ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers )and key == 'insert':
+        view_history_key = False
+        
+        if ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and key == 'insert':
             #paste
             self.paste_data()
             handled = True
@@ -790,6 +796,14 @@ class TerminalKivy(Terminal):
             #copy
             self.copy_data()
             handled = True
+        elif ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and (key == 'pageup' or key == 'pagedown'):
+            self.view_history(key == 'pageup')
+            handled = True
+            view_history_key = True
+
+        if (not view_history_key and
+            not ((key == 'shift' or key == 'shift_L' or key == 'shift_R') and len(modifiers) == 0)):
+            self.view_history_begin = None
 
         return handled
 
@@ -891,3 +905,23 @@ class TerminalKivy(Terminal):
             self.get_cur_line()
             self.get_cur_line_option()
         
+    def view_history(self, pageup):
+        lines, line_options = self.get_history_text()
+        logging.getLogger('term_kivy').debug('view history:pageup={}, lines={}, rows={}, view_history_begin={}'.format(pageup, len(lines), self.get_rows(), self.view_history_begin))
+            
+        if len(lines) <=  self.get_rows():
+            return
+        
+        if self.view_history_begin:
+            self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
+        elif pageup:
+            self.view_history_begin = len(lines) - 2 * self.get_rows()
+        else:
+            return
+
+        if self.view_history_begin < 0:
+            self.view_history_begin = 0
+        if self.view_history_begin > len(lines):
+            self.view_history_begin = len(lines) - self.get_rows()
+
+        self.refresh_display()
