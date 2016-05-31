@@ -18,7 +18,7 @@
     },
 
     "pipe-config":{
-	"default-shell":["C:\\Users\\stone\\GitHub\\winpty\\build\\winpty.exe",
+	"default-shell":["C:\\local\\winpty\\bin\\winpty.exe",
 			 "--pipe",
 			 "C:\\local\\msys64\\usr\\bin\\bash.exe" ,
 			 "--login"]

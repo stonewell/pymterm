@@ -4,7 +4,7 @@ import argparse
 import logging
 
 import session_config
-import platform
+import cross_platform as platform
 
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
