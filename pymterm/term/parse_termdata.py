@@ -271,6 +271,7 @@ def build_parser_state_machine(cap_str_value, start_state):
                 params.append('*')
         elif c.isdigit():
             cur_state = cur_state.add_digit_state(DigitState())
+            cap_value.append(c)
         else:
             cur_state = cur_state.add_state(c, ControlDataState())
             cap_value.append(c)
