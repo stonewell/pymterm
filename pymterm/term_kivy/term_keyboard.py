@@ -47,6 +47,9 @@ def translate_key(term, keycode, text, modifiers):
         if 'carriage_return' in term.cap.cmds:
             result.append(term.cap.cmds['carriage_return'].cap_value)
             handled = True
+    elif key == 'backspace':
+            result.append('\x7f')
+            handled = True
     else:
         #numpad
         #function keys
