@@ -1,24 +1,3 @@
-#!/usr/bin/env python
-
-# Copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-#
-# This file is part of paramiko.
-#
-# Paramiko is free software; you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation; either version 2.1 of the License, or (at your option)
-# any later version.
-#
-# Paramiko is distributed in the hope that it will be useful, but WITHOUT ANY
-# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
-# A PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more
-# details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with Paramiko; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-
 import base64
 from binascii import hexlify
 import getpass
@@ -53,6 +32,36 @@ def agent_auth(transport, username):
         except paramiko.SSHException:
             logging.getLogger('ssh_client').debug('authentication fail.')
 
+def manual_key_auth(session, t, username):
+    key_files = ['id_rsa', 'id_dsa']
+
+    for key_file in key_files:
+        path = os.path.join(os.environ['HOME'], '.ssh', key_file)
+
+        if not os.path.exists(path):
+            continue
+
+        password = None
+        key = None
+        while True:
+            try:
+                if password:
+                    key = paramiko.RSAKey.from_private_key_file(path, password)
+                else:
+                    key = paramiko.RSAKey.from_private_key_file(path)
+
+                break
+            except paramiko.PasswordRequiredException:
+                cancel, password = session.prompt_password('Input key file:%s''s password: ' % path)
+                if cancel:
+                    break
+
+        if key:
+            try:
+                t.auth_publickey(username, key)
+                return
+            except paramiko.SSHException:
+                pass
 
 def manual_auth(t, username, hostname):
     default_auth = 'p'
@@ -131,6 +140,8 @@ def start_client(session, cfg):
                 username = default_username
 
         agent_auth(t, username)
+        if not t.is_authenticated():
+            manual_key_auth(session, t, username)
         if not t.is_authenticated():
             manual_auth(t, username, hostname)
         if not t.is_authenticated():
