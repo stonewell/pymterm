@@ -84,5 +84,11 @@ class SSHSession(Session):
         if self.channel and not self.stopped:
             self.channel.resize_pty(col, row, w, h)
 
-    def prompt_login(self, username):
-        self.terminal.prompt_login(username)
+    def prompt_login(self, t, username):
+        self.terminal.prompt_login(t, username)
+
+    def try_login(self, t, key_file, key_type, username, password):
+        client.ssh_client.try_login(self, t, key_file, key_type, username, password)
+
+        return t.is_authenticated()
+

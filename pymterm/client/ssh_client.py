@@ -32,36 +32,47 @@ def agent_auth(transport, username):
         except paramiko.SSHException:
             logging.getLogger('ssh_client').debug('authentication fail.')
 
-def manual_key_auth(session, t, username):
-    key_files = ['id_rsa', 'id_dsa']
+def default_key_files_auth(session, t, username):
+    key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
 
     for key_file in key_files:
         path = os.path.join(os.environ['HOME'], '.ssh', key_file)
 
-        if not os.path.exists(path):
-            continue
+        __key_file_auth(session, t, path, key_files[key_file], username)
+        
+        if t.is_authenticated():
+            break
 
-        password = None
-        key = None
-        while True:
-            try:
-                if password:
+def __key_file_auth(session, t, path, key_type, username):
+    if not os.path.exists(path):
+        return
+
+    password = None
+    key = None
+    while True:
+        try:
+            if password:
+                if key_type == 'RSA':
                     key = paramiko.RSAKey.from_private_key_file(path, password)
                 else:
+                    key = paramiko.DSSKey.from_private_key_file(path, password)
+            else:
+                if key_type == 'RSA':
                     key = paramiko.RSAKey.from_private_key_file(path)
+                else:
+                    key = paramiko.DSSKey.from_private_key_file(path)
 
-                break
-            except paramiko.PasswordRequiredException:
-                cancel, password = session.prompt_password('Input key file:%s''s password: ' % path)
-                if cancel:
-                    break
-
-        if key:
-            try:
-                t.auth_publickey(username, key)
+            break
+        except paramiko.PasswordRequiredException:
+            cancel, password = session.prompt_password('Input key file:%s''s password: ' % path)
+            if cancel:
                 return
-            except paramiko.SSHException:
-                pass
+
+    if key:
+        try:
+            t.auth_publickey(username, key)
+        except paramiko.SSHException:
+            pass
 
 def manual_auth(t, username, hostname):
     default_auth = 'p'
@@ -125,11 +136,11 @@ def start_client(session, cfg):
         # check server's host key -- this is important.
         key = t.get_remote_server_key()
         if hostname not in keys:
-            session.report_error('*** WARNING: Unknown host key!')
+            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key!')
         elif key.get_name() not in keys[hostname]:
-            session.report_error('*** WARNING: Unknown host key!')
+            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key!')
         elif keys[hostname][key.get_name()] != key:
-            session.report_error('*** WARNING: Host key has changed!!!')
+            logging.getLogger('ssh_client').warn('*** WARNING: Host key has changed!!!')
 
         # get username
         if username == '':
@@ -138,15 +149,14 @@ def start_client(session, cfg):
             if len(username) == 0:
                 username = default_username
 
-        agent_auth(t, username)
-#        if not t.is_authenticated():
-#            manual_key_auth(session, t, username)
+#        agent_auth(t, username)
         if not t.is_authenticated():
-            session.prompt_login(username)
+            default_key_files_auth(session, t, username)
+        if not t.is_authenticated():
+            session.prompt_login(t, username)
             return
-            manual_auth(t, username, hostname)
         if not t.is_authenticated():
-            session.report_error('*** Authentication failed. :(')
+            session.report_error('Authentication failed.')
             t.close()
             return
 
@@ -161,3 +171,9 @@ def start_client(session, cfg):
         except:
             pass
 
+def try_login(session, t, key_file, key_type, username, password):
+    __key_file_auth(session, t, key_file, key_type, username)
+    if not t.is_authenticated():
+        t.auth_password(username, password)
+    if t.is_authenticated():
+        session.interactive_shell(t)

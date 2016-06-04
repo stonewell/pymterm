@@ -7,24 +7,43 @@
 
         BoxLayout:
             orientation: 'vertical'
-            Label:
-                text: 'Key File'
-                halign: 'left'
-                font_size: 18
-                text_size: root.width-20, 20
-
             BoxLayout:
                 orientation: 'horizontal'
-		
+                Label:
+                    text: 'Key File'
+                    halign: 'left'
+                    font_size: 18
+                    text_size: root.width-220, 20
+                BoxLayout:
+                    orientation: 'horizontal'
+                    size_hint: (None, 1)
+                    size: (200, 100)
+                    ToggleButton:
+                        id: rsa		    
+                        text: 'RSA'
+                        group: 'key_type'
+                        state: 'down'
+    
+                    ToggleButton:
+                        text: 'DSS'
+                        group: 'key_type'
+            
+            BoxLayout:
+                orientation: 'horizontal'
+        
                 TextInput:
                     id: keyfile
                     multiline:False
-                    font_size: 28
-		   
+                    font_size: 18
+           
                 Button:
                     text: 'Browse'
-                    font_size: 24
-		    
+                    size_hint: (None, None)
+                    size: (160, 30)
+                    pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+                    font_size: 16
+                    on_press: root.do_key_file_select(keyfile.text)
+            
         BoxLayout:
             orientation: 'vertical'
 
@@ -37,7 +56,7 @@
             TextInput:
                 id: login
                 multiline:False
-                font_size: 28
+                font_size: 18
 
         BoxLayout:
             orientation: 'vertical'
@@ -51,10 +70,51 @@
                 id: password
                 multiline:False
                 password:True
-                font_size: 28
+                font_size: 18
 
         Button:
             text: 'Connect'
-            font_size: 24
+            font_size: 16
+            size_hint: (None, None)
+            size: (160, 30)
+            pos_hint: {'center_x': 0.5, 'center_y': 0.5}
+            on_press: root.do_login(keyfile.text, login.text, password.text)
 
-            on_press: root.do_login(login.text, password.text)
+<KeyFileChooser>:
+    size_hint:(1, 1)
+    
+<KeyFileChooserScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+        BoxLayout:
+            size_hint_y: None
+            height: '48dp'
+    
+            ToggleButton:
+                text: 'Icon'
+                state: 'down'
+                group: 'filechooser'
+                on_release: filechooser.view_mode = 'icon'
+    
+            ToggleButton:
+                text: 'List'
+                group: 'filechooser'
+                on_release: filechooser.view_mode = 'list'
+    
+        KeyFileChooser:
+            id: filechooser
+            show_hidden: True
+            on_submit:root.do_select(filechooser.path, filechooser.selection)
+            FileChooserIconLayout
+            FileChooserListLayout
+        BoxLayout:
+            size_hint_y: None
+            height: '48dp'
+    
+            Button:
+                text: 'Cancel'
+                on_release: root.do_cancel()
+		
+            Button:
+                text: 'Select'
+                on_release: root.do_select(filechooser.path, filechooser.selection)

@@ -493,6 +493,7 @@ class TerminalKivy(Terminal):
         self.term_widget.cursor = self.get_cursor()
         self.term_widget.cursor_visible = not self.view_history_begin
         self.term_widget.refresh()
+        self.term_widget.focus = True
 
     def on_data(self, data):
         Terminal.on_data(self, data)
@@ -927,5 +928,5 @@ class TerminalKivy(Terminal):
 
         self.refresh_display()
 
-    def prompt_login(self, username):
-        pl(username)
+    def prompt_login(self, t, username):
+        pl(self, t, username)

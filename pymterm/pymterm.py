@@ -42,6 +42,9 @@ if __name__ == '__main__':
         from term.terminal_console import TerminalConsoleApp
         TerminalConsoleApp(cfg).start()
     else:
+        from kivy.config import Config
+        Config.set('kivy', 'exit_on_escape', 0)
+        
         os.environ['KIVY_NO_FILELOG'] = ''
         os.environ['KIVY_NO_CONSOLELOG'] = ''
         from kivy.core.text import LabelBase
