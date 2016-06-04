@@ -32,80 +32,92 @@ def agent_auth(transport, username):
         except paramiko.SSHException:
             logging.getLogger('ssh_client').debug('authentication fail.')
 
-def default_key_files_auth(session, t, username):
-    key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
+class KeyAuthAction(object):
+    def __init__(self, session, transport, key_file, key_type, username, next_action = None, password = None):
+        self.session = session
+        self.transport = transport
+        self.key_file = key_file
+        self.key_type = key_type
+        self.username = username
+        self.next_action = next_action
+        self.password = password
 
+    def execute(self):
+        key = None
+        
+        try:
+            if self.password:
+                if self.key_type == 'RSA':
+                    key = paramiko.RSAKey.from_private_key_file(self.key_file, self.password)
+                else:
+                    key = paramiko.DSSKey.from_private_key_file(self.key_file, self.password)
+            else:
+                if self.key_type == 'RSA':
+                    key = paramiko.RSAKey.from_private_key_file(self.key_file)
+                else:
+                    key = paramiko.DSSKey.from_private_key_file(self.key_file)
+        except:
+            self.session.prompt_password(self)
+            return
+    
+        if key:
+            try:
+                self.transport.auth_publickey(self.username, key)
+            except paramiko.SSHException:
+                pass
+
+        self._post_execute()
+        
+    def _post_execute(self):
+        if self.transport.is_authenticated():
+            self.session.interactive_shell(self.transport)
+        elif self.next_action:
+            self.next_action.execute()
+        else:
+            session.report_error('Authentication failed.')
+            t.close()
+        
+    def get_pass_desc(self):
+        return "key file " + self.key_file + " 's password:"
+
+class PromptLoginAction(object):
+    def __init__(self, session, transport, username):
+        self.session = session
+        self.transport = transport
+        self.username = username
+
+    def execute(self):
+        self.session.prompt_login(self.transport, self.username)
+        
+def build_auth_actions(session, t, username):
+    key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
+    key_files = {}
+    root_action = None
+    cur_action = None
+    
     for key_file in key_files:
         path = os.path.join(os.environ['HOME'], '.ssh', key_file)
 
-        __key_file_auth(session, t, path, key_files[key_file], username)
+        if not os.path.exists(path):
+            continue
         
-        if t.is_authenticated():
-            break
+        action = KeyAuthAction(session, t, path, key_files[key_file], username)
 
-def __key_file_auth(session, t, path, key_type, username):
-    if not os.path.exists(path):
-        return
+        if cur_action:
+            cur_action.next_action = action
+        else:
+            root_action = cur_action = action
 
-    password = None
-    key = None
-    while True:
-        try:
-            if password:
-                if key_type == 'RSA':
-                    key = paramiko.RSAKey.from_private_key_file(path, password)
-                else:
-                    key = paramiko.DSSKey.from_private_key_file(path, password)
-            else:
-                if key_type == 'RSA':
-                    key = paramiko.RSAKey.from_private_key_file(path)
-                else:
-                    key = paramiko.DSSKey.from_private_key_file(path)
+        cur_action = action
 
-            break
-        except paramiko.PasswordRequiredException:
-            cancel, password = session.prompt_password('Input key file:%s''s password: ' % path)
-            if cancel:
-                return
-
-    if key:
-        try:
-            t.auth_publickey(username, key)
-        except paramiko.SSHException:
-            pass
-
-def manual_auth(t, username, hostname):
-    default_auth = 'p'
-    auth = input('Auth by (p)assword, (r)sa key, or (d)ss key? [%s] ' % default_auth)
-    if len(auth) == 0:
-        auth = default_auth
-
-    if auth == 'r':
-        default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_rsa')
-        path = input('RSA key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        try:
-            key = paramiko.RSAKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
-            password = getpass.getpass('RSA key password: ')
-            key = paramiko.RSAKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key)
-    elif auth == 'd':
-        default_path = os.path.join(os.environ['HOME'], '.ssh', 'id_dsa')
-        path = input('DSS key [%s]: ' % default_path)
-        if len(path) == 0:
-            path = default_path
-        try:
-            key = paramiko.DSSKey.from_private_key_file(path)
-        except paramiko.PasswordRequiredException:
-            password = getpass.getpass('DSS key password: ')
-            key = paramiko.DSSKey.from_private_key_file(path, password)
-        t.auth_publickey(username, key)
+    action = PromptLoginAction(session, t, username)
+    if cur_action:
+        cur_action.next_action = action
     else:
-        pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
-        t.auth_password(username, pw)
+        root_action = action
 
+    return root_action
+        
 def start_client(session, cfg):
     username = cfg.username
     hostname = cfg.hostname
@@ -151,10 +163,10 @@ def start_client(session, cfg):
 
 #        agent_auth(t, username)
         if not t.is_authenticated():
-            default_key_files_auth(session, t, username)
-        if not t.is_authenticated():
-            session.prompt_login(t, username)
+            action = build_auth_actions(session, t, username)
+            action.execute()
             return
+
         if not t.is_authenticated():
             session.report_error('Authentication failed.')
             t.close()
@@ -171,9 +183,36 @@ def start_client(session, cfg):
         except:
             pass
 
+class PassAuthAction(KeyAuthAction):
+    def __init__(self, session, transport, username, password):
+        super(PassAuthAction, self).__init__(session, transport, None, None, username, None, password)
+
+    def execute(self):
+        try:
+            self.transport.auth_password(self.username, self.password)
+        except paramiko.SSHException:
+            pass
+        
+        if not self.transport.is_authenticated():
+            self.session.prompt_password(self)
+            return
+
+        self._post_execute()
+
+    def get_pass_desc(self):
+        return self.username + " 's password:"
+        
 def try_login(session, t, key_file, key_type, username, password):
-    __key_file_auth(session, t, key_file, key_type, username)
-    if not t.is_authenticated():
-        t.auth_password(username, password)
-    if t.is_authenticated():
-        session.interactive_shell(t)
+    root_action = None
+    
+    if os.path.exists(key_file):
+        root_action = KeyAuthAction(session, t, key_file, key_type, username)
+
+    action = PassAuthAction(session, t, username, password)
+    if root_action:
+        root_action.next_action = action
+    else:
+        root_action = action
+
+    root_action.execute()
+        

@@ -92,3 +92,5 @@ class SSHSession(Session):
 
         return t.is_authenticated()
 
+    def prompt_password(self, action):
+        self.terminal.prompt_password(action)

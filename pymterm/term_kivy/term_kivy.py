@@ -31,6 +31,7 @@ from kivy.uix.spinner import Spinner, SpinnerOption
 from term.terminal import Terminal
 from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
 from uix.term_kivy_login import prompt_login as pl
+from uix.term_kivy_password import prompt_password as pp
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -930,3 +931,7 @@ class TerminalKivy(Terminal):
 
     def prompt_login(self, t, username):
         pl(self, t, username)
+
+    def prompt_password(self, action):
+        pp(action)
+        
