@@ -1,0 +1,60 @@
+<Login>:
+    BoxLayout
+        id: login_layout
+        orientation: 'vertical'
+        padding: [10,50,10,50]
+        spacing: 10
+
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'Key File'
+                halign: 'left'
+                font_size: 18
+                text_size: root.width-20, 20
+
+            BoxLayout:
+                orientation: 'horizontal'
+		
+                TextInput:
+                    id: keyfile
+                    multiline:False
+                    font_size: 28
+		   
+                Button:
+                    text: 'Browse'
+                    font_size: 24
+		    
+        BoxLayout:
+            orientation: 'vertical'
+
+            Label:
+                text: 'Login'
+                font_size: 18
+                halign: 'left'
+                text_size: root.width-20, 20
+
+            TextInput:
+                id: login
+                multiline:False
+                font_size: 28
+
+        BoxLayout:
+            orientation: 'vertical'
+            Label:
+                text: 'Password'
+                halign: 'left'
+                font_size: 18
+                text_size: root.width-20, 20
+
+            TextInput:
+                id: password
+                multiline:False
+                password:True
+                font_size: 28
+
+        Button:
+            text: 'Connect'
+            font_size: 24
+
+            on_press: root.do_login(login.text, password.text)

@@ -30,6 +30,7 @@ from kivy.uix.spinner import Spinner, SpinnerOption
 
 from term.terminal import Terminal
 from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
+from uix.term_kivy_login import prompt_login as pl
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -925,3 +926,6 @@ class TerminalKivy(Terminal):
             self.view_history_begin = len(lines) - self.get_rows()
 
         self.refresh_display()
+
+    def prompt_login(self, username):
+        pl(username)

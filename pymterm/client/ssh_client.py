@@ -95,7 +95,6 @@ def manual_auth(t, username, hostname):
         pw = getpass.getpass('Password for %s@%s: ' % (username, hostname))
         t.auth_password(username, pw)
 
-
 def start_client(session, cfg):
     username = cfg.username
     hostname = cfg.hostname
@@ -140,9 +139,11 @@ def start_client(session, cfg):
                 username = default_username
 
         agent_auth(t, username)
+#        if not t.is_authenticated():
+#            manual_key_auth(session, t, username)
         if not t.is_authenticated():
-            manual_key_auth(session, t, username)
-        if not t.is_authenticated():
+            session.prompt_login(username)
+            return
             manual_auth(t, username, hostname)
         if not t.is_authenticated():
             session.report_error('*** Authentication failed. :(')

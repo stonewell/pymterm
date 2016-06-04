@@ -83,3 +83,6 @@ class SSHSession(Session):
             
         if self.channel and not self.stopped:
             self.channel.resize_pty(col, row, w, h)
+
+    def prompt_login(self, username):
+        self.terminal.prompt_login(username)
