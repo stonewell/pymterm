@@ -161,7 +161,7 @@ def start_client(session, cfg):
             if len(username) == 0:
                 username = default_username
 
-#        agent_auth(t, username)
+        agent_auth(t, username)
         if not t.is_authenticated():
             action = build_auth_actions(session, t, username)
             action.execute()
