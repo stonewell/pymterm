@@ -91,7 +91,6 @@ class PromptLoginAction(object):
         
 def build_auth_actions(session, t, username):
     key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
-    key_files = {}
     root_action = None
     cur_action = None
     
