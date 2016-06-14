@@ -811,13 +811,16 @@ class TerminalKivy(Terminal):
         return handled
 
     def paste_data(self):
+        from kivy.core.clipboard import Clipboard
         data = ''
         if self.has_selection():
             data = self.get_selection_text()
+            self.term_widget.cancel_selection()
 
         if len(data) == 0:
-            from kivy.core.clipboard import Clipboard
             data = Clipboard.paste()
+        else:
+            Clipboard.copy(data)
 
         if len(data) > 0:
             self.session.send(data)
@@ -877,7 +880,7 @@ class TerminalKivy(Terminal):
         
     def copy_data(self):
         data = self.get_selection_text()
-        
+
         if len(data) == 0:
             return
         
