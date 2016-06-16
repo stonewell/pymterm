@@ -856,15 +856,14 @@ class TerminalKivy(Terminal):
 
             return ''.join(line[s_f_col:s_t_col]).replace('\000', '')
         
-        for line_num, value in enumerate(lines[s_f_row:s_t_row + 1], start=s_f_row):
-            line = lines[line_num]
+        for line_num, line in enumerate(lines[s_f_row:s_t_row + 1], start=s_f_row):
             if not line:
                 continue
             if line_num == s_f_row:
                 if s_f_col < len(line):
                     texts.append(''.join(line[s_f_col:]))
             elif line_num == s_t_row:
-                if s_t_col < len(line):
+                if s_t_col <= len(line):
                     texts.append(''.join(line[:s_t_col]))
             else:
                 texts.append(''.join(line))
@@ -883,7 +882,7 @@ class TerminalKivy(Terminal):
 
         if len(data) == 0:
             return
-        
+
         from kivy.core.clipboard import Clipboard
         Clipboard.copy(data)
 

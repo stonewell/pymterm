@@ -398,9 +398,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             if _get_text_width(''.join(l[cy][:i])) + \
                   _get_text_width(l[cy][i]) * 0.6 + \
                   padding_left > cx:
-                cx = i
-                break
-        return cx, cy
+                return i, cy
+
+        return len(l[cy]), cy
 
     #
     # Selection control
