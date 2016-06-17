@@ -280,8 +280,8 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         t.blit_buffer(buf, colorfmt='rgba', bufferfmt='ubyte')
 
         Cache_append('termwidget.b', cid, t)
-        
-        self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size))        
+
+        self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size, group='background'))        
         
         return x + size[0]
     
@@ -314,7 +314,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             if self.session.cfg.debug_more:
                 logging.getLogger('term_widget').debug('reuse the foreground texture, pos={}, {}, size={}'.format(x, y, texture.size))
 
-        self.line_rects[line_num] = Rectangle(texture=texture, size=texture.size, pos=(x, y))
+        self.line_rects[line_num] = Rectangle(texture=texture, size=texture.size, pos=(x, y), group='foreground')
         self.canvas.add(self.line_rects[line_num])
 
     def _get_text_width(self, text):
@@ -494,7 +494,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         x2 = min(x2, x + width_minus_padding)
         canvas_add(Color(*selection_color, group='selection'))
         canvas_add(Rectangle(
-            pos=(x1, pos[1]), size=(x2 - x1, size[1]), group='selection'))
+            pos=(x1, pos[1]), size=(x2 - x1, size[1] + 1), group='selection'))
 
 
     def get_selection(self):
