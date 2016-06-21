@@ -313,14 +313,15 @@ class TerminalKivy(Terminal):
     
     def save_buffer(self, c, insert = False, wrap = False):
         line = self.get_cur_line()
-        self.get_cur_line_option()
+        self.get_cur_option()
+        line_option = self.get_cur_line_option()
         
         if len(line) <= self.col:
             while len(line) <= self.col:
                 line.append(' ')
 
-        if self.last_line_option_row != self.row or self.last_line_option_col != self.col:
-            self.save_line_option(self.cur_line_option, True)
+        #update line option
+        line_option[self.col] = self.cur_line_option
 
         if self.cfg.debug_more:
             logging.getLogger('term_kivy').debug('save buffer:{},{},{},{}'.format(self.col, self.row, c, ord(c)))
@@ -572,13 +573,11 @@ class TerminalKivy(Terminal):
     def get_cur_option(self):
         return self.get_option_at(self.row, self.col)
     
-    def save_line_option(self, option, clear = False):
-        cur_option = self.get_cur_option()
-        line_option = self.get_cur_line_option()
-        
-        if clear or cur_option is None:
-            line_option[self.col] = option
+    def save_line_option(self, option):
+        if self.cur_line_option is None:
+            self.cur_line_option = option
         else:
+            cur_option = self.cur_line_option
             f_color = option.f_color if option.f_color != [] else cur_option.f_color
             b_color = option.b_color if option.b_color != [] else cur_option.b_color
             if option.mode is None:
@@ -588,12 +587,7 @@ class TerminalKivy(Terminal):
             else:
                 mode = cur_option.mode | option.mode
 
-            line_option[self.col] = TextAttribute(f_color, b_color, mode)
-
-        if not clear:
-            self.last_line_option_row = self.row
-            self.last_line_option_col = self.col
-            self.cur_line_option = line_option[self.col]
+            self.cur_line_option = TextAttribute(f_color, b_color, mode)
 
     def cursor_address(self, context):
         logging.getLogger('term_kivy').debug('cursor address:{}'.format(context.params))

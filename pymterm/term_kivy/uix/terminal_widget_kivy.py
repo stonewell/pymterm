@@ -1,5 +1,3 @@
-# -*- encoding: utf-8 -*-
-
 import re
 import sys
 import logging
@@ -123,6 +121,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     def texture_update(self, *largs):
         self._update_line_options()
 
+        logging.getLogger('term_widget').debug('texture update, cursor visible:{}'.format(self.cursor_visible))
         lines = [line[:] for line in self.lines]
         line_options = [line_option[:] for line_option in self.line_options]
         c_col, c_row = self.cursor

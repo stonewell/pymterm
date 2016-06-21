@@ -67,6 +67,10 @@ def translate_key(term, keycode, text, modifiers):
             result.append(chr(code))
             handled = True
 
+    #do not translate single Alt
+    if 'alt' in modifiers and text and len(result) == 1 and result[0] == '\x1b':
+        handled = False
+        
     return (''.join(result), handled)
             
         
