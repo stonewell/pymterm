@@ -9,6 +9,8 @@ def translate_key(term, keycode, text, modifiers):
     if 'alt' in modifiers and text:
         #alt + key, send \E and let system do the text stuff
         result.append('\x1B')
+        if len(text) > 0 and text == key:
+            result.append(text)
 
     if ('ctrl' in modifiers) and text:
         #take care of the control sequence

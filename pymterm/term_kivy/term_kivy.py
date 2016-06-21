@@ -85,6 +85,7 @@ class TermTextInput(TerminalWidgetKivy):
         self.session = None
 
     def keyboard_on_textinput(self, window, text):
+        logging.getLogger('term_kivy').debug('key board send text {}'.format(text))
         self.session.send(text)
         
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
