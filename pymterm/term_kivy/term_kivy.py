@@ -117,7 +117,7 @@ class TermTextInput(TerminalWidgetKivy):
         padding_left, padding_top, padding_right, padding_bottom = self.padding
         vh = self.height - padding_top - padding_bottom
 
-        self.visible_rows = int(float(vh) / float(dy))
+        self.visible_rows = int(float(vh) / float(dy) + 0.1)
 
         if self.visible_rows == 0:
             self.visible_rows = 1
@@ -396,7 +396,7 @@ class TerminalKivy(Terminal):
             return lines, line_options
         
         if len(self.lines) <= self.get_rows():
-            return self.lines + [[]] * (self.get_rows() - len(self.lines)), self.line_options + [[]] * (self.get_rows() - len(self.lines))
+            return self.lines + [self.create_new_line()] * (self.get_rows() - len(self.lines)), self.line_options + [self.create_new_line_option()] * (self.get_rows() - len(self.lines))
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
             line_options = self.line_options[len(self.lines) - self.get_rows():]
@@ -468,7 +468,7 @@ class TerminalKivy(Terminal):
             line[i] = ' '
 
         for i in range(begin, len(line_option)):
-            line_option[i] = None
+            line_option[i] = TextAttribute(None, None, None)
 
     def delete_chars(self, count):
         line = self.get_cur_line()
@@ -484,8 +484,10 @@ class TerminalKivy(Terminal):
             else:
                 line[i] = ' '
 
-        for i in range(begin, begin + count):
-            if i < len(line_option):
+        for i in range(begin, len(line_option)):
+            if i + count < len(line_option):
+                line_option[i] = line_option[i + count]
+            else:
                 line_option[i] = None
 
     def refresh_display(self):
@@ -588,6 +590,7 @@ class TerminalKivy(Terminal):
                 mode = cur_option.mode | option.mode
 
             self.cur_line_option = TextAttribute(f_color, b_color, mode)
+            logging.getLogger('term_kivy').debug('set line option:{} {} {}'.format(f_color, b_color, mode))
 
     def cursor_address(self, context):
         logging.getLogger('term_kivy').debug('cursor address:{}'.format(context.params))
@@ -610,7 +613,7 @@ class TerminalKivy(Terminal):
                 line[i] = ' '
 
             for i in range(len(line_option)):
-                line_option[i] = None
+                line_option[i] = TextAttributes(None, None, None)
 
     def parm_right_cursor(self, context):
         self.col += context.params[0]
@@ -648,10 +651,10 @@ class TerminalKivy(Terminal):
         
         for i in range(c_to_delete):
             if self.row <= end:
-                self.lines = self.lines[:self.row] + self.lines[self.row + 1: end + 1] + [[]] +self.lines[end + 1:]
+                self.lines = self.lines[:self.row] + self.lines[self.row + 1: end + 1] + [self.create_new_line()] +self.lines[end + 1:]
 
             if self.row <= end:
-                self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1: end + 1] + [[]] + self.line_options[end + 1:]
+                self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1: end + 1] + [self.create_new_line_option()] + self.line_options[end + 1:]
 
     def get_scroll_region(self):
         if self.scroll_region:
@@ -687,10 +690,10 @@ class TerminalKivy(Terminal):
         
         for i in range(c_to_insert):
             if self.row <= end:
-                self.lines = self.lines[:self.row] + [[]] + self.lines[self.row: end] +self.lines[end + 1:]
+                self.lines = self.lines[:self.row] + [self.create_new_line()] + self.lines[self.row: end] +self.lines[end + 1:]
 
             if self.row <= end:
-                self.line_options = self.line_options[:self.row] + [[]] + self.line_options[self.row: end] + self.line_options[end + 1:]
+                self.line_options = self.line_options[:self.row] + [self.create_new_line_option()] + self.line_options[self.row: end] + self.line_options[end + 1:]
 
     def request_background_color(self, context):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
@@ -746,6 +749,7 @@ class TerminalKivy(Terminal):
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
+        logging.getLogger('term_kivy').debug('before parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
         for i in range(count):
             self.get_cur_line()
             self.get_cur_line_option()
@@ -754,13 +758,14 @@ class TerminalKivy(Terminal):
                 if begin == 0:
                     self.history_lines.append(self.lines[begin])
                     self.history_line_options.append(self.line_options[begin])
-                self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [[]] + self.lines[end + 1:]
-                self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [[]] + self.line_options[end + 1:]
+                self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [self.create_new_line()] + self.lines[end + 1:]
+                self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [self.create_new_line_option()] + self.line_options[end + 1:]
             else:        
                 self.row += 1
 
             self.get_cur_line()
             self.get_cur_line_option()
+        logging.getLogger('term_kivy').debug('after parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
 
     def exit_alt_charset_mode(self, context):
         self.exit_standout_mode(context)
@@ -892,18 +897,20 @@ class TerminalKivy(Terminal):
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
+        logging.getLogger('term_kivy').debug('before parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
         for i in range(count):
             self.get_cur_line()
             self.get_cur_line_option()
         
             if self.row == begin:
-                self.lines = self.lines[:begin] + [[]] + self.lines[begin: end] + self.lines[end + 1:]
-                self.line_options = self.line_options[:begin] + [[]] + self.line_options[begin: end] + self.line_options[end + 1:]
+                self.lines = self.lines[:begin] + [self.create_new_line()] + self.lines[begin: end] + self.lines[end + 1:]
+                self.line_options = self.line_options[:begin] + [self.create_new_line_option()] + self.line_options[begin: end] + self.line_options[end + 1:]
             else:        
                 self.row -= 1
 
             self.get_cur_line()
             self.get_cur_line_option()
+        logging.getLogger('term_kivy').debug('after parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
         
     def view_history(self, pageup):
         lines, line_options = self.get_history_text()
@@ -932,3 +939,8 @@ class TerminalKivy(Terminal):
     def prompt_password(self, action):
         pp(action)
         
+    def create_new_line(self):
+        return []
+
+    def create_new_line_option(self):
+        return []
