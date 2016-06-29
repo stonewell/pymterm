@@ -613,7 +613,7 @@ class TerminalKivy(Terminal):
                 line[i] = ' '
 
             for i in range(len(line_option)):
-                line_option[i] = TextAttributes(None, None, None)
+                line_option[i] = TextAttribute(None, None, None)
 
     def parm_right_cursor(self, context):
         self.col += context.params[0]
