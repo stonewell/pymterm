@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 def translate_key(term, keycode, text, modifiers):
     result = []
@@ -11,6 +12,7 @@ def translate_key(term, keycode, text, modifiers):
         result.append('\x1B')
         if len(text) > 0 and text == key:
             result.append(text)
+            handled = True
 
     if ('ctrl' in modifiers) and text:
         #take care of the control sequence
@@ -52,6 +54,10 @@ def translate_key(term, keycode, text, modifiers):
     elif key == 'backspace':
             result.append('\x7f')
             handled = True
+    elif key == 'tab':
+        if 'tab' in term.cap.cmds:
+            result.append(term.cap.cmds['tab'].cap_value)
+            handled = True
     else:
         #numpad
         #function keys
@@ -69,6 +75,7 @@ def translate_key(term, keycode, text, modifiers):
 
     #do not translate single Alt
     if 'alt' in modifiers and text and len(result) == 1 and result[0] == '\x1b':
+        logging.getLogger('term_keyboard').debug('reset single alt key handled to False')
         handled = False
         
     return (''.join(result), handled)

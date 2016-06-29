@@ -83,10 +83,15 @@ class TermTextInput(TerminalWidgetKivy):
         self.scroll_region = None
         
         self.session = None
+        self.keyboard_handled = False
 
     def keyboard_on_textinput(self, window, text):
+        if self.keyboard_handled:
+            return True
+
         logging.getLogger('term_kivy').debug('key board send text {}'.format(text))
         self.session.send(text)
+        return True
         
     def keyboard_on_key_down(self, keyboard, keycode, text, modifiers):
         logging.getLogger('term_kivy').debug('The key {} {}'.format(keycode, 'have been pressed'))
@@ -94,6 +99,7 @@ class TermTextInput(TerminalWidgetKivy):
         logging.getLogger('term_kivy').debug(' - modifiers are %r' % modifiers)
         
         if self.session.terminal.process_key(keycode, text, modifiers):
+            self.keyboard_handled = True
             return True
     
         v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
@@ -105,12 +111,9 @@ class TermTextInput(TerminalWidgetKivy):
         
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
+        self.keyboard_handled = handled
         return handled
 
-    def keyboard_on_key_up(self, window, keycode):
-        #override to avoid escape lost focus
-        return False
-    
     def cal_visible_rows(self):
         lh = self.line_height
         dy = lh + self.line_spacing
@@ -324,7 +327,7 @@ class TerminalKivy(Terminal):
         line_option[self.col] = self.cur_line_option
 
         if self.cfg.debug_more:
-            logging.getLogger('term_kivy').debug('save buffer:{},{},{},{}'.format(self.col, self.row, c, ord(c)))
+            logging.getLogger('term_kivy').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
 
         #take care utf_8
         if not wrap:
@@ -435,6 +438,7 @@ class TerminalKivy(Terminal):
             self.col += 1
 
     def cursor_left(self, context):
+        logging.getLogger('term_kivy').debug('cursor left:{}, {}'.format(self.col, self.row));
         if self.col > 0:
             self.col -= 1
 
