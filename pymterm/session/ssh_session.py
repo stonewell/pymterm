@@ -40,7 +40,13 @@ class SSHSession(Session):
         if not self.channel:
             return None
 
-        return self.channel.recv(block_size)
+        data = []
+
+        data.append(self.channel.recv(block_size))
+        while self.channel.recv_ready():
+            data.append(self.channel.recv(block_size))
+
+        return ''.join(data)
 
     def _stop_reader(self):
         if self.channel:
@@ -73,7 +79,7 @@ class SSHSession(Session):
 
     def send(self, data):
         if self.channel and not self.stopped:
-            self.channel.send(data)
+            self.channel.sendall(data)
 
     def resize_pty(self, col = None, row = None, w = 0, h = 0):
         if not col:
