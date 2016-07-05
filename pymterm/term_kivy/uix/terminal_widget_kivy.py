@@ -390,11 +390,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
     # Selection control
     #
     def cancel_selection(self):
-        '''Cancel current selection (if any).
-        '''
-        self._selection_from = self._selection_to = (0, 0)
-        self._selection = False
-        self._selection_finished = True
+        super(TerminalWidgetKivy, self).cancel_selection()
         self._selection_touch = None
 
     def _update_selection(self, finished=False):
@@ -480,6 +476,15 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         canvas_add(Rectangle(
             pos=(x1, pos[1]), size=(x2 - x1, size[1] + 1), group='selection'))
 
+    def copy_to_clipboard(self, data):
+        from kivy.core.clipboard import Clipboard
+        Clipboard.copy(data)
+
+    def paste_from_clipboard(self):
+        from kivy.core.clipboard import Clipboard
+
+        return Clipboard.paste()
+    
     #
     # Properties
     #

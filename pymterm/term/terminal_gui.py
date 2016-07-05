@@ -662,3 +662,28 @@ class TerminalGUI(Terminal):
 
     def create_new_line_option(self):
         return []
+
+    def paste_data(self):
+        data = ''
+        if self.has_selection():
+            data = self.get_selection_text()
+            self.term_widget.cancel_selection()
+
+        if len(data) == 0:
+            data = self.term_widget.paste_from_clipboard()
+        else:
+            self.term_widget.copy_to_clipboard(data)
+            
+        if len(data) > 0:
+            self.session.send(data)
+        
+    def copy_data(self):
+        data = self.get_selection_text()
+
+        if len(data) == 0:
+            return
+
+        self.term_widget.copy_to_clipboard(data)
+
+        self.term_widget.cancel_selection()
+    

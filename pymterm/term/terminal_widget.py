@@ -10,6 +10,7 @@ class TerminalWidget(object):
         self.cursor_visible = True
         self._selection_from = self._selection_to = self.cursor
         self._selection = False
+        self._selection_finished = True
         
     def refresh(self):
         logging.getLogger('term_widget').debug('default refresh do nothing')
@@ -20,6 +21,13 @@ class TerminalWidget(object):
         text = text.replace('\000', '')
 
         return text
+
+    def cancel_selection(self):
+        '''Cancel current selection (if any).
+        '''
+        self._selection_from = self._selection_to = (0, 0)
+        self._selection = False
+        self._selection_finished = True
 
     def get_selection(self):
         def compare_cursor(a, b):
@@ -41,3 +49,9 @@ class TerminalWidget(object):
         if compare_cursor(a, b):
             a, b = b, a
         return (a, b)
+
+    def copy_to_clipboard(self, data):
+        pass
+
+    def paste_from_clipboard(self):
+        pass

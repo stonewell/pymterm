@@ -269,32 +269,6 @@ class TerminalKivy(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalKivy, self).__init__(cfg)
         
-    def paste_data(self):
-        from kivy.core.clipboard import Clipboard
-        data = ''
-        if self.has_selection():
-            data = self.get_selection_text()
-            self.term_widget.cancel_selection()
-
-        if len(data) == 0:
-            data = Clipboard.paste()
-        else:
-            Clipboard.copy(data)
-
-        if len(data) > 0:
-            self.session.send(data)
-        
-    def copy_data(self):
-        data = self.get_selection_text()
-
-        if len(data) == 0:
-            return
-
-        from kivy.core.clipboard import Clipboard
-        Clipboard.copy(data)
-
-        self.term_widget.cancel_selection()
-
     def prompt_login(self, t, username):
         pl(self, t, username)
 
