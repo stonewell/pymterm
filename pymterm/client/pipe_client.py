@@ -1,15 +1,15 @@
 import base64
 from binascii import hexlify
 import getpass
+import logging
 import os
 import select
 import socket
+from subprocess import Popen, PIPE, STDOUT
 import sys
 import time
 import traceback
-import logging
 
-from subprocess import Popen, PIPE, STDOUT
 
 def start_client(session, cfg):
     p = None

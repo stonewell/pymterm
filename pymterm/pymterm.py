@@ -1,10 +1,11 @@
-import os
-import sys
 import argparse
 import logging
+import os
+import sys
 
-import session_config
 import cross_platform as platform
+import session_config
+
 
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',

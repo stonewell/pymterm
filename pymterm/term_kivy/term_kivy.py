@@ -1,37 +1,34 @@
+import logging
 import os
 import select
 import socket
 import sys
 import time
 import traceback
-import logging
 
-import cap.cap_manager
-
-import term.read_termdata
-import term.parse_termdata
-
-import term_keyboard
-
-from session import create_session
-
-from kivy.uix.floatlayout import FloatLayout
 from kivy.app import App
-from kivy.properties import ObjectProperty, ListProperty
 from kivy.clock import Clock
 from kivy.core.window import Window
-
 from kivy.lang import Builder
-from kivy.uix.textinput import TextInput
-from kivy.uix.label import Label
-from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
+from kivy.properties import ObjectProperty, ListProperty
 from kivy.uix.actionbar import ActionItem
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.label import Label
 from kivy.uix.spinner import Spinner, SpinnerOption
+from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
+from kivy.uix.textinput import TextInput
 
+import cap.cap_manager
+from session import create_session
+import term.parse_termdata
+import term.read_termdata
 from term.terminal import Terminal
-from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
+import term_keyboard
 from uix.term_kivy_login import prompt_login as pl
 from uix.term_kivy_password import prompt_password as pp
+from uix.terminal_widget_kivy import TerminalWidgetKivy, TextAttribute, TextMode
+
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 
@@ -56,7 +53,6 @@ class TermTabbedPanel(TabbedPanel):
     def on_do_default_tab(self, instance, value):
         super(TermTabbedPanel, self).on_do_default_tab(instance, value)
 
-from kivy.uix.boxlayout import BoxLayout
 class TermBoxLayout(BoxLayout):
     def __init__(self, **kwargs):
         super(TermBoxLayout, self).__init__(**kwargs)

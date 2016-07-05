@@ -1,7 +1,8 @@
-import os
-import sys
-import re
 import logging
+import os
+import re
+import sys
+
 
 class Cap:
     def __init__(self):

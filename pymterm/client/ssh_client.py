@@ -1,16 +1,17 @@
 import base64
 from binascii import hexlify
 import getpass
+import logging
 import os
 import select
 import socket
 import sys
 import time
 import traceback
-from paramiko.py3compat import input
-import logging
 
 import paramiko
+from paramiko.py3compat import input
+
 
 def agent_auth(transport, username):
     """

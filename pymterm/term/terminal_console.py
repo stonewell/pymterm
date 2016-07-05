@@ -4,14 +4,14 @@ import socket
 import sys
 import time
 import traceback
-import read_termdata
-import parse_termdata
+
 import cap.cap_manager
-
-import ssh.client
+import parse_termdata
+import read_termdata
 import session
-
+import ssh.client
 from terminal import Terminal
+
 
 class TerminalConsole(Terminal):
     def __init__(self, cfg):

@@ -1,8 +1,8 @@
+from collections import namedtuple
+import logging
+from os import environ
 import re
 import sys
-import logging
-
-from os import environ
 from weakref import ref
 
 from kivy.animation import Animation
@@ -10,29 +10,24 @@ from kivy.base import EventLoop
 from kivy.cache import Cache
 from kivy.clock import Clock
 from kivy.config import Config
-from kivy.metrics import inch
-from kivy.utils import boundary, platform
-from kivy.uix.behaviors import FocusBehavior
-
+from kivy.core.text import Label as CoreLabel
+from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
 from kivy.graphics import Color, Rectangle, PushMatrix, PopMatrix, Callback
 from kivy.graphics.context_instructions import Transform
 from kivy.graphics.texture import Texture
-
-from kivy.uix.widget import Widget
-from kivy.uix.bubble import Bubble
-from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.image import Image
-from kivy.uix.label import Label
-
+from kivy.metrics import inch
 from kivy.properties import StringProperty, OptionProperty, \
     NumericProperty, BooleanProperty, ReferenceListProperty, \
     ListProperty, ObjectProperty, DictProperty
-
-from kivy.core.text import Label as CoreLabel
-from kivy.core.text.markup import MarkupLabel as CoreMarkupLabel
+from kivy.uix.behaviors import ButtonBehavior
+from kivy.uix.behaviors import FocusBehavior
+from kivy.uix.bubble import Bubble
+from kivy.uix.image import Image
+from kivy.uix.label import Label
+from kivy.uix.widget import Widget
+from kivy.utils import boundary, platform
 from kivy.utils import escape_markup
 
-from collections import namedtuple
 
 Cache_register = Cache.register
 Cache_append = Cache.append

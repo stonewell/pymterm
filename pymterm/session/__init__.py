@@ -1,6 +1,7 @@
 #__init__
 import logging
 
+
 __all__ = ['create_session']
 
 def create_session(cfg, terminal):

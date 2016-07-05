@@ -1,20 +1,22 @@
+import logging
+import msvcrt
 import os
 import select
 import socket
 import sys
+import threading
 import time
 import traceback
-import logging
-import threading
-import client.pipe_client
-import msvcrt
-import win32file
-import winerror
-import win32event
-import pywintypes
-import win32pipe
 
+import pywintypes
+import win32event
+import win32file
+import win32pipe
+import winerror
+
+import client.pipe_client
 from session import Session
+
 
 class PipeSession(Session):
     def __init__(self, cfg, terminal):

@@ -1,14 +1,15 @@
+import logging
 import os
 import select
 import socket
 import sys
 import time
 import traceback
-import logging
 
-import read_termdata
-import parse_termdata
 import cap.cap_manager
+import parse_termdata
+import read_termdata
+
 
 class Terminal:
     def __init__(self, cfg):

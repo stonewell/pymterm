@@ -1,15 +1,15 @@
 import base64
 from binascii import hexlify
 import getpass
+import logging
 import os
+import pty
 import select
 import socket
 import sys
 import time
 import traceback
-import logging
 
-import pty
 
 def start_client(session, cfg):
     master_fd = None

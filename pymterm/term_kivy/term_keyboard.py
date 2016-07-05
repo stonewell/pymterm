@@ -1,6 +1,7 @@
+import logging
 import os
 import sys
-import logging
+
 
 def translate_key(term, keycode, text, modifiers):
     result = []

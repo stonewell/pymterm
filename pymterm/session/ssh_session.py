@@ -1,15 +1,15 @@
+import logging
 import os
 import select
 import socket
 import sys
+import threading
 import time
 import traceback
-import logging
-import threading
 
 import client.ssh_client
-
 from session import Session
+
 
 class SSHSession(Session):
     def __init__(self, cfg, terminal):

@@ -1,19 +1,19 @@
+import array
+import logging
 import os
+import pty
 import select
 import socket
 import sys
+import threading
 import time
 import traceback
-import logging
-import threading
-import pty
-import fcntl
-import termios
-import array
 
 import client.pty_client
-
+import fcntl
 from session import Session
+import termios
+
 
 class PtySession(Session):
     def __init__(self, cfg, terminal):

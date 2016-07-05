@@ -1,8 +1,9 @@
-import os
-import sys
 import getpass
 import logging
 import logging.config
+import os
+import sys
+
 
 def get_default_user():
 	return getpass.getuser()

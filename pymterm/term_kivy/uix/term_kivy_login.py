@@ -1,15 +1,16 @@
 import os
 from os.path import sep, expanduser, isdir, dirname
 
-from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.lang import Builder
-from kivy.uix.popup import Popup
-from kivy.uix.filechooser import FileChooser, FileChooserIconLayout, FileChooserListLayout
 from kivy.properties import StringProperty, OptionProperty, \
     NumericProperty, BooleanProperty, ReferenceListProperty, \
     ListProperty, ObjectProperty, DictProperty
+from kivy.uix.filechooser import FileChooser, FileChooserIconLayout, FileChooserListLayout
+from kivy.uix.popup import Popup
+from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 
 import cross_platform
+
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy_login.kv'))
 
