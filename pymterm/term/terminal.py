@@ -11,7 +11,7 @@ import parse_termdata
 import read_termdata
 
 
-class Terminal:
+class Terminal(object):
     def __init__(self, cfg):
         self.cfg = cfg
 

@@ -28,6 +28,8 @@ from kivy.uix.widget import Widget
 from kivy.utils import boundary, platform
 from kivy.utils import escape_markup
 
+from term import TextAttribute, TextMode
+from term.terminal_widget import TerminalWidget
 
 Cache_register = Cache.register
 Cache_append = Cache.append
@@ -38,12 +40,7 @@ Cache_register('termwidget.width', timeout=60.)
 Cache_register('termwidget.b', timeout=60.)
 Cache_register('termwidget.b_size', timeout=60.)
 
-TextAttribute = namedtuple('TextAttributes', ['f_color', 'b_color', 'mode'])
-class TextMode:
-    STDOUT = 0
-    REVERSE = 1 << 0
-
-class TerminalWidgetKivy(FocusBehavior, Widget):
+class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
     _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
                         'underline', 'strikethrough', 
                         'halign', 'valign', 'padding_left', 'padding_top',
@@ -54,7 +51,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                         'font_hinting', 'font_kerning', 'font_blended')
         
     def __init__(self, **kwargs):
-        self._trigger_texture = Clock.create_trigger(self.texture_update, -1)
+        self._trigger_texture = Clock.create_trigger(self._texture_update, -1)
 
         super(TerminalWidgetKivy, self).__init__(**kwargs)
         
@@ -69,7 +66,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._label = None
         self._create_label()
 
-        self.cursor = (0, 0)
         self.line_rects = {}
         self._touch_count = 0
         self.cancel_selection()
@@ -113,7 +109,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         if name != 'lines':
             self._trigger_texture()
 
-    def texture_update(self, *largs):
+    def _texture_update(self, *largs):
         self._update_line_options()
 
         logging.getLogger('term_widget').debug('texture update, cursor visible:{}'.format(self.cursor_visible))
@@ -150,14 +146,14 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                     cur_f_color, cur_b_color = last_b_color, last_f_color
                         
                 text = ''.join(['[color=',
-                                self.get_color_hex(cur_f_color),
+                                self._get_color_hex(cur_f_color),
                                 ']',
                                 escape_markup(t),
                                 '[/color]'])
 
                 text_parts.append(text)
 
-                return self.add_background(t,
+                return self._add_background(t,
                                         cur_b_color, xxxx, y - (i + 1) * dy)
 
             last_option = None                
@@ -234,14 +230,14 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
                 last_b_color = tmp_b_c
                                 
             try:
-                self.add_text(i, ''.join(text_parts), x, y - (i + 1) * dy)
+                self._add_text(i, ''.join(text_parts), x, y - (i + 1) * dy)
             except:
                 logging.exception('show text:{},x={},y={}'.format(''.join(text_parts), x, y - (i + 1) * dy))
 
-    def get_color_hex(self, l_color):
+    def _get_color_hex(self, l_color):
         return '#%02x%02x%02x%02x' % (l_color[0], l_color[1], l_color[2], l_color[3])
 
-    def add_background(self, text, color, x, y):
+    def _add_background(self, text, color, x, y):
         if not text or len(text) == 0:
             return x
 
@@ -279,7 +275,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         
         return x + size[0]
     
-    def add_text(self, line_num, text, x, y):
+    def _add_text(self, line_num, text, x, y):
         self.line_rects[line_num] = Rectangle(size=(0,0), pos=(x, y))
         
         if not text or len(text) == 0:
@@ -328,12 +324,6 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
     def refresh(self):
         self._trigger_texture()
 
-    def norm_text(self, text):
-        text = text.replace('\t', ' ' * self.tab_width)
-        text = text.replace('\000', '')
-
-        return text
-        
     def on_touch_down(self, touch):
         touch_pos = touch.pos
         
@@ -343,7 +333,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         touch.grab(self)
         self._touch_count += 1
 
-        cursor = self.get_cursor_from_xy(*touch_pos)
+        cursor = self._get_cursor_from_xy(*touch_pos)
         if not self._selection_touch:
             self.cancel_selection()
             self._selection_touch = touch
@@ -358,7 +348,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
             return super(TerminalWidgetKivy, self).on_touch_move(touch)
 
         if self._selection_touch is touch:
-            self._selection_to = self.get_cursor_from_xy(touch.x, touch.y)
+            self._selection_to = self._get_cursor_from_xy(touch.x, touch.y)
             self._update_selection()
 
         return super(TerminalWidgetKivy, self).on_touch_move(touch)
@@ -371,13 +361,13 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         self._touch_count -= 1
 
         if self._selection_touch is touch:
-            self._selection_to = self.get_cursor_from_xy(touch.x, touch.y)
+            self._selection_to = self._get_cursor_from_xy(touch.x, touch.y)
             self._update_selection(True)
 
         self.focus = True
         return super(TerminalWidgetKivy, self).on_touch_up(touch)
         
-    def get_cursor_from_xy(self, x, y):
+    def _get_cursor_from_xy(self, x, y):
         '''Return the (row, col) of the cursor from an (x, y) position.
         '''
         padding_left = self.padding[0]
@@ -490,40 +480,15 @@ class TerminalWidgetKivy(FocusBehavior, Widget):
         canvas_add(Rectangle(
             pos=(x1, pos[1]), size=(x2 - x1, size[1] + 1), group='selection'))
 
-
-    def get_selection(self):
-        def compare_cursor(a, b):
-            a_col, a_row = a
-            b_col, b_row = b
-
-            if a == b:
-                return False
-
-            if a_row > b_row:
-                return True
-
-            if a_row < b_row:
-                return False
-
-            return a_col > b_col
-        
-        a, b = self._selection_from, self._selection_to
-        if compare_cursor(a, b):
-            a, b = b, a
-        return (a, b)
-        
     #
     # Properties
     #
 
     selection_color = ListProperty([0.1843, 0.6549, 0.8313, .5])
-    lines = ListProperty([])
-    line_options = ListProperty([])
     font_name = StringProperty('NotoSans')
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
     line_spacing = NumericProperty(1.0)
-    cursor_visible = BooleanProperty(True)
     bold = BooleanProperty(False)
     italic = BooleanProperty(False)
     underline = BooleanProperty(False)
