@@ -19,6 +19,8 @@ def args_parser():
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
     parser.add_argument('--config', type=str, help='show more debug information in log file and console', required = False)
+    parser.add_argument('--kivy', action="store_true", help='Use kivy as gui system', required = False)
+    parser.add_argument('--pygui', action="store_true", help='Use pyGUI as gui system', required = False, default=True)
 
     if not platform.is_windows():    
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
@@ -42,7 +44,7 @@ if __name__ == '__main__':
     if cfg.console:
         from term.terminal_console import TerminalConsoleApp
         TerminalConsoleApp(cfg).start()
-    else:
+    elif cfg.kivy:
         from kivy.config import Config
         Config.set('kivy', 'exit_on_escape', 0)
         Config.set('graphics', 'height', '660')
@@ -64,3 +66,6 @@ if __name__ == '__main__':
         #Logger.setLevel(logging.ERROR)
         
         TerminalKivyApp(cfg).start()
+    else:
+        from term_pygui.term_pygui import TerminalPyGUIApp
+        TerminalPyGUIApp(cfg).start()

@@ -26,6 +26,8 @@ class SessionConfig:
         self.debug_more = args.debug_more
         self.session_type = args.session_type
         self.config = args.config
+        self.kivy = args.kivy
+        self.pygui = args.pygui
 
         self.load_config()
         

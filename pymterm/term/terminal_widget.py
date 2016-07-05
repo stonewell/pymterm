@@ -2,6 +2,8 @@ import logging
 
 class TerminalWidget(object):
     def __init__(self, **kwargs):
+        super(TerminalWidget, self).__init__()
+        
         self.visible_rows = 25
         self.visible_cols = 80
         self.lines = []
