@@ -16,7 +16,7 @@ import cap.cap_manager
 from session import create_session
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-
+import term.term_keyboard
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -68,9 +68,11 @@ class TerminalPyGUIApp(Application):
         view.tab_width = session.get_tab_width()
         
         win.place(view, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
-        
+
         session.start()
         win.show()
+
+        view.become_target()
         
     def make_document(self, fileref):
         doc = TerminalPyGUIDoc()
@@ -79,9 +81,6 @@ class TerminalPyGUIApp(Application):
 
         return doc
     
-    def key_down(self, e):
-        print 'key_down', e
-        
 class TerminalPyGUIDoc(Document):
     def new_contents(self):
         pass
@@ -121,9 +120,50 @@ class TerminalPyGUIView(ScrollableView, TerminalWidget):
         canvas.pencolor = black
 
         canvas.set_font(application_font.but(size=17.5))
-        
+
     def key_down(self, e):
-        print 'key_down', e
+        key = e.key
+
+        if key == 'return':
+            key = 'enter'
+            
+        keycode = (e.char, e.key)
+        text = e.char if len(e.char) > 0 else None
+        modifiers = []
+        
+        if e.option:
+            modifiers.append('alt')
+        if e.control:
+            modifiers.append('ctrl')
+        if e.shift:
+            modifiers.append('shift')
+        
+        logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
+        logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
+        if self.session.terminal.process_key(keycode,
+                                             text,
+                                             modifiers):
+            return
+    
+        v, handled = term.term_keyboard.translate_key(self.session.terminal,
+                                                 keycode,
+                                                 text,
+                                                 modifiers)
+
+        if len(v) > 0:
+            self.session.send(v)
+        elif text:
+            self.session.send(text)
+
+        logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
+        
+        # Return True to accept the key. Otherwise, it will be used by
+        # the system.
+        return
+
+    def destroy(self):
+        self.session.stop()
+        super(TerminalPyGUIView, self).destroy()
         
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):

@@ -22,7 +22,8 @@ from kivy.uix.textinput import TextInput
 import cap.cap_manager
 from session import create_session
 from term.terminal_gui import TerminalGUI
-import term_keyboard
+import term.term_keyboard
+
 from uix.term_kivy_login import prompt_login as pl
 from uix.term_kivy_password import prompt_password as pp
 from uix.terminal_widget_kivy import TerminalWidgetKivy
@@ -95,7 +96,7 @@ class TermTextInput(TerminalWidgetKivy):
             self.keyboard_handled = True
             return True
     
-        v, handled = term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
+        v, handled = term.term_keyboard.translate_key(self.session.terminal, keycode, text, modifiers)
 
         if len(v) > 0:
             self.session.send(v)
