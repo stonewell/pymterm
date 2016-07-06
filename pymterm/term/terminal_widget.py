@@ -8,9 +8,9 @@ class TerminalWidget(object):
         self.visible_cols = 80
         self.lines = []
         self.line_options = []
-        self.cursor = (0, 0)
+        self.term_cursor = (0, 0)
         self.cursor_visible = True
-        self._selection_from = self._selection_to = self.cursor
+        self._selection_from = self._selection_to = self.term_cursor
         self._selection = False
         self._selection_finished = True
         

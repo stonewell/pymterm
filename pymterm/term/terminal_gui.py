@@ -230,7 +230,7 @@ class TerminalGUI(Terminal):
 
         self.term_widget.lines = lines
         self.term_widget.line_options = line_options
-        self.term_widget.cursor = self.get_cursor()
+        self.term_widget.term_cursor = self.get_cursor()
         self.term_widget.cursor_visible = not self.view_history_begin
         self.term_widget.refresh()
         self.term_widget.focus = True

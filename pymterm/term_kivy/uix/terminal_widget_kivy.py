@@ -115,7 +115,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         logging.getLogger('term_widget').debug('texture update, cursor visible:{}'.format(self.cursor_visible))
         lines = [line[:] for line in self.lines]
         line_options = [line_option[:] for line_option in self.line_options]
-        c_col, c_row = self.cursor
+        c_col, c_row = self.term_cursor
 
         self.canvas.clear()
 
