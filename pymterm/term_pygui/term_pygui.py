@@ -10,11 +10,13 @@ from GUI import Application, ScrollableView, Document, Window, Cursor, rgb
 from GUI.Files import FileType
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
+from GUI.StdFonts import application_font
 
 import cap.cap_manager
 from session import create_session
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
+
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -77,6 +79,9 @@ class TerminalPyGUIApp(Application):
 
         return doc
     
+    def key_down(self, e):
+        print 'key_down', e
+        
 class TerminalPyGUIDoc(Document):
     def new_contents(self):
         pass
@@ -94,9 +99,8 @@ class TerminalPyGUIView(ScrollableView, TerminalWidget):
         
     def draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
-        
-        canvas.fillcolor = red
-        canvas.pencolor = black
+
+        self._setup_canvas(canvas)        
 
         y = 0
 
@@ -111,6 +115,15 @@ class TerminalPyGUIView(ScrollableView, TerminalWidget):
     def refresh(self):
         self.invalidate()
         self.update()
+
+    def _setup_canvas(self, canvas):
+        canvas.fillcolor = red
+        canvas.pencolor = black
+
+        canvas.set_font(application_font.but(size=17.5))
+        
+    def key_down(self, e):
+        print 'key_down', e
         
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):

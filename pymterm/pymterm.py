@@ -31,7 +31,7 @@ def args_parser():
 
     return parser
 
-if __name__ == '__main__':
+def pymterm_main():
     args = args_parser().parse_args()
     try:
         sys.argv = sys.argv[:1]
@@ -69,3 +69,6 @@ if __name__ == '__main__':
     else:
         from term_pygui.term_pygui import TerminalPyGUIApp
         TerminalPyGUIApp(cfg).start()
+    
+if __name__ == '__main__':
+    pymterm_main()
