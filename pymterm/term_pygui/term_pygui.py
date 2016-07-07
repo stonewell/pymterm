@@ -142,6 +142,7 @@ class TerminalPyGUIView(View, TerminalWidget):
             
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
+                t = self.norm_text(t)
                     
                 if last_mode & TextMode.REVERSE:
                     cur_f_color, cur_b_color = last_b_color, last_f_color
