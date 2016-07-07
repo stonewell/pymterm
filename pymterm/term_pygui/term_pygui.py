@@ -12,6 +12,7 @@ from GUI.Files import FileType
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
+from GUI.Colors import rgb
 
 import cap.cap_manager
 from session import create_session
@@ -19,6 +20,7 @@ from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
 import term.term_keyboard
 import term_pygui_key_translate
+from term import TextAttribute, TextMode
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -102,20 +104,124 @@ class TerminalPyGUIView(View, TerminalWidget):
         self.padding_x = 5
         self.padding_y = 5
         self.session = None
+
+    def _get_color(self, color_spec):
+        c = map(lambda x: x / 255, map(float, color_spec))
+
+        return rgb(*c)
         
     def draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
 
         self._setup_canvas(canvas)        
 
-        y = 25 + self.padding_y
+        x = self.padding_x
+        b_x = self.padding_x
+        y = self.padding_y
 
         lines = [line[:] for line in self.lines]
-        for line in lines:
-            canvas.moveto(self.padding_x, y)
-            canvas.set_textcolor(black)
-            canvas.show_text(''.join(line))
+        line_options = [line_option[:] for line_option in self.line_options]
+        c_col, c_row = self.term_cursor
+        
+        last_f_color = self.session.cfg.default_foreground_color
+        last_b_color = self.session.cfg.default_background_color
+        last_mode = 0
 
+        canvas.fillcolor = self._get_color(self.session.cfg.default_background_color)
+        canvas.fill_frame_rect(update_rect)
+        
+        for i in range(len(lines)):
+            x = b_x = self.padding_x
+            line = lines[i]
+            line_option = line_options[i] if i < len(line_options) else []
+
+            col = 0
+            last_col = 0
+            text = ''
+            last_option = None
+            
+            def render_text(t, xxxx):
+                cur_f_color, cur_b_color = last_f_color, last_b_color
+                    
+                if last_mode & TextMode.REVERSE:
+                    cur_f_color, cur_b_color = last_b_color, last_f_color
+
+                canvas.textcolor = self._get_color(cur_f_color)
+                canvas.backcolor = canvas.fillcolor= self._get_color(cur_b_color)
+
+                right = xxxx + canvas.font.width(t)
+                canvas.erase_rect((xxxx, y, right, y + canvas.font.line_height))
+                canvas.moveto(xxxx, y + canvas.font.ascent)
+                canvas.show_text(t)
+
+                return right
+            
+            for col in range(len(line_option)):
+                if line_option[col] is None:
+                    continue
+
+                if last_option == line_option[col]:
+                    continue
+
+                f_color, b_color, mode = line_option[col]
+
+                n_f_color, n_b_color, n_mode = last_f_color, last_b_color, last_mode
+                
+                # foreground
+                if f_color and len(f_color) > 0:
+                    n_f_color = f_color
+                elif f_color is None:
+                    n_f_color = self.session.cfg.default_foreground_color
+
+                # background
+                if b_color and len(b_color) > 0:
+                    n_b_color = b_color
+                elif b_color is None:
+                    n_b_color = self.session.cfg.default_background_color
+
+                #mode
+                if mode is not None:
+                    n_mode = mode
+
+                if (n_f_color, n_b_color, n_mode) == (last_f_color, last_b_color, last_mode):
+                    continue
+                
+                if last_col < col:
+                    if self.cursor_visible and i == c_row and last_col <= c_col and c_col < col:
+                        b_x = render_text(''.join(line[last_col: c_col]), b_x)
+
+                        tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
+                        b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
+                        last_f_color, last_b_color = tmp_l_f, tmp_l_b
+                        
+                        b_x = render_text(''.join(line[c_col + 1: col]), b_x)
+                    else:
+                        b_x = render_text(''.join(line[last_col: col]), b_x)
+                    
+                last_col = col
+                last_option = line_option[col]
+                last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
+            
+            if last_col < len(line):
+                if self.cursor_visible and i == c_row and last_col <= c_col and c_col < len(line):
+                    b_x = render_text(''.join(line[last_col: c_col]), b_x)
+
+                    tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
+                    b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
+                    last_f_color, last_b_color = tmp_l_f, tmp_l_b
+                    
+                    b_x = render_text(''.join(line[c_col + 1:]), b_x)
+                else:
+                    b_x = render_text(''.join(line[last_col:]), b_x)
+                    
+            if self.cursor_visible and i == c_row and c_col >= len(line):
+                tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
+                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
+                b_x = render_text(' ', b_x)
+                last_f_color, last_b_color = tmp_l_f, tmp_l_b
+                
             y += canvas.font.line_height
 
     def __refresh(self):
