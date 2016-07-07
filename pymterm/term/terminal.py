@@ -100,12 +100,12 @@ class Terminal(object):
                         self.output_data(c)
                 else:
                     self.output_data(c)
-                
+
                 continue
 
             self.state = next_state
             self.control_data.append(c if not c == '\x1B' else '\\E')
-	
+
         if self.state:
 	        self.__handle_cap__(False)
 	        

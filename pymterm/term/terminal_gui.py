@@ -140,7 +140,7 @@ class TerminalGUI(Terminal):
         if c == '\x1b':
             logging.getLogger('term_gui').error('normal data has escape char')
             sys.exit(1)
-                        
+
         self.save_buffer(c, insert)
 
     def output_status_line_data(self, c):

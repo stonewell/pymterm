@@ -6,7 +6,8 @@ import sys
 import time
 import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb
+from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View
+from GUI import application
 from GUI.Files import FileType
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
@@ -17,6 +18,7 @@ from session import create_session
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
 import term.term_keyboard
+import term_pygui_key_translate
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -55,11 +57,13 @@ class TerminalPyGUIApp(Application):
         self.connect_to()
     
     def make_window(self, document):
-        win = Window(size = (400, 400), document = document)
-        view = TerminalPyGUIView(model=document,
-                                     extent = (1000, 1000),
-                                    scrolling = 'hv')
+        view = TerminalPyGUIView(model=document)
+        w, h = view.get_prefered_size()
 
+        view.size = (w, h)
+        
+        win = Window(size = (w, h), document = document)
+        
         cfg = document.cfg
         session = create_session(cfg, self.create_terminal(cfg))
         session.term_widget = view
@@ -91,43 +95,57 @@ class TerminalPyGUIDoc(Document):
     def write_contents(self, file):
         pass
         
-class TerminalPyGUIView(ScrollableView, TerminalWidget):
+class TerminalPyGUIView(View, TerminalWidget):
     def __init__(self, **kwargs):
-        ScrollableView.__init__(self, **kwargs)
+        View.__init__(self, **kwargs)
         TerminalWidget.__init__(self, **kwargs)
+
+        self.font_size = 17.5
+        self.padding_x = 5
+        self.padding_y = 5
         
     def draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
 
         self._setup_canvas(canvas)        
 
-        y = 0
+        y = self.padding_y
 
         lines = [line[:] for line in self.lines]
         for line in lines:
-            canvas.moveto(0, y)
+            canvas.moveto(self.padding_x, y)
             canvas.set_textcolor(black)
             canvas.show_text(''.join(line))
 
             y += canvas.font.line_height
 
-    def refresh(self):
+    def __refresh(self):
         self.invalidate()
         self.update()
+
+    def refresh(self):
+        application().schedule_idle(self.__refresh)
 
     def _setup_canvas(self, canvas):
         canvas.fillcolor = red
         canvas.pencolor = black
 
-        canvas.set_font(application_font.but(size=17.5))
+        canvas.set_font(self._get_font())
 
+    def _get_font(self):
+        return application_font.but(size=self.font_size)
+    
+    def get_prefered_size(self):
+        f = self._get_font()
+        w = int(f.width('ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
+        h = int(f.line_height * self.visible_rows + self.padding_y * 2 + 0.5)
+
+        return (w, h)
+    
     def key_down(self, e):
-        key = e.key
-
-        if key == 'return':
-            key = 'enter'
+        key = term_pygui_key_translate.translate_key(e)
             
-        keycode = (e.char, e.key)
+        keycode = (e.char, key)
         text = e.char if len(e.char) > 0 else None
         modifiers = []
         
