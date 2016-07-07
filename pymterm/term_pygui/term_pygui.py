@@ -60,9 +60,7 @@ class TerminalPyGUIApp(Application):
         view = TerminalPyGUIView(model=document)
         w, h = view.get_prefered_size()
 
-        view.size = (w, h)
-        
-        win = Window(size = (w, h), document = document)
+        win = Window(size = (w + 10, h + 50), document = document)
         
         cfg = document.cfg
         session = create_session(cfg, self.create_terminal(cfg))
@@ -103,13 +101,14 @@ class TerminalPyGUIView(View, TerminalWidget):
         self.font_size = 17.5
         self.padding_x = 5
         self.padding_y = 5
+        self.session = None
         
     def draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
 
         self._setup_canvas(canvas)        
 
-        y = self.padding_y
+        y = 25 + self.padding_y
 
         lines = [line[:] for line in self.lines]
         for line in lines:
@@ -133,7 +132,8 @@ class TerminalPyGUIView(View, TerminalWidget):
         canvas.set_font(self._get_font())
 
     def _get_font(self):
-        return application_font.but(size=self.font_size)
+        return application_font.but(family='Noto Sans Mono CJK SC Regular',
+                                        size=self.font_size)
     
     def get_prefered_size(self):
         f = self._get_font()
@@ -183,6 +183,38 @@ class TerminalPyGUIView(View, TerminalWidget):
         self.session.stop()
         super(TerminalPyGUIView, self).destroy()
         
+    def resized(self, delta):
+        super(TerminalPyGUIView, self).resized(delta)
+
+        w, h = self.size
+
+        if w <= 0 or h <=0:
+            return
+        
+        w -= self.padding_x * 2
+        h -= self.padding_y * 2
+        
+        self._calculate_visible_rows(h)
+        self._calculate_visible_cols(w)
+
+        logging.getLogger('term_pygui').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
+        if self.session:
+            self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
+            self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
+
+    def _calculate_visible_rows(self, h):
+        f = self._get_font()
+        self.visible_rows = int(h / f.line_height)
+        if self.visible_rows == 0:
+            self.visible_rows = 1
+
+    def _calculate_visible_cols(self, w):
+        f = self._get_font()
+        self.visible_cols = int(w / f.width('ABCDabcd') * 8)
+
+        if self.visible_cols == 0:
+            self.visible_cols = 1
+
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyGUI, self).__init__(cfg)
