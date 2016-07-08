@@ -156,10 +156,13 @@ class TerminalPyGUIView(View, TerminalWidget):
 
                 canvas.textcolor = self._get_color(cur_f_color)
                 canvas.backcolor = canvas.fillcolor= self._get_color(cur_b_color)
+                canvas.pencolor = red
 
                 right = xxxx + canvas.font.width(t)
-                canvas.erase_rect((xxxx, y, right, y + canvas.font.line_height))
-                canvas.moveto(xxxx, y + canvas.font.ascent)
+                if True or cur_b_color != self.session.cfg.default_background_color:
+                    canvas.fill_frame_rect((xxxx, y, right, y + canvas.font.line_height))
+
+                canvas.moveto(xxxx, y + canvas.font.ascent - canvas.font.descent)
                 canvas.show_text(t)
 
                 return right
