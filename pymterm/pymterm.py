@@ -72,3 +72,4 @@ def pymterm_main():
     
 if __name__ == '__main__':
     pymterm_main()
+    os._exit(0)
