@@ -18,9 +18,11 @@ def get_cap_handler(name):
     fp = None
 
     try:
-        fp, pathname, description = imp.find_module(name, [os.path.dirname(__file__)])
+        #fp, pathname, description = imp.find_module(name, [os.path.dirname(__file__)])
+        #return imp.load_module(name, fp, pathname, description)
+        __import__('cap.' + name)
 
-        return imp.load_module(name, fp, pathname, description)
+        return sys.modules['cap.' + name]
     except ImportError:
         return unknown_cap
     finally:

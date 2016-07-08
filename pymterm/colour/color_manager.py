@@ -16,9 +16,11 @@ def get_color_theme(name):
     fp = None
 
     try:
-        fp, pathname, description = imp.find_module(name, [os.path.dirname(__file__)])
+        #fp, pathname, description = imp.find_module(name, [os.path.dirname(__file__)])
 
-        return imp.load_module(name, fp, pathname, description)
+        #return imp.load_module(name, fp, pathname, description)
+        __import__('colour.' + name)
+        return sys.modules['colour.' + name]
     except ImportError:
         logging.exception('unable to load {}'.format(name))
         return None

@@ -1,4 +1,6 @@
 {
+    "termcap_dir":"/Users/stone/Work/GitHub/pymterm/data",
+    
     "sessions":{
 	"aspire":{
 	    "conn_str":"angelstone@angelstone-aspire-one-721.local"

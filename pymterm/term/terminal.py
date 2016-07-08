@@ -31,8 +31,15 @@ class Terminal(object):
         logging.getLogger('terminal').debug('cap-str:{}, cap:{}, self={}'.format(self.cap_str, self.cap, self))
 
     def __load_cap_str__(self, term_name):
-        term_path = os.path.dirname(os.path.realpath(__file__))
-        term_path = os.path.join(term_path, '..', '..', 'data', term_name+'.dat')
+        if 'termcap_dir' in self.cfg.config:
+            term_path = os.path.join(self.cfg.config['termcap_dir'], term_name+'.dat')
+            
+        if not os.path.exists(term_path):
+            term_path = os.path.dirname(os.path.realpath(__file__))
+            term_path = os.path.join(term_path, '..', '..', 'data', term_name+'.dat')
+
+        logging.getLogger('terminal').info('load term cap data file:{}'.format(term_path))
+        
         return read_termdata.get_entry(term_path, term_name)
 
     def on_data(self, data):
