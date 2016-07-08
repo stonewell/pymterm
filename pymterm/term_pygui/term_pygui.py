@@ -15,8 +15,6 @@ from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
 from GUI.Colors import rgb
 
-import pywintypes
-
 import cap.cap_manager
 from session import create_session
 from term.terminal_gui import TerminalGUI
