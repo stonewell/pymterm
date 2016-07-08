@@ -1,3 +1,4 @@
+#coding=utf-8
 import logging
 import os
 import select
@@ -13,6 +14,8 @@ from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
 from GUI.Colors import rgb
+
+import pywintypes
 
 import cap.cap_manager
 from session import create_session
@@ -156,13 +159,13 @@ class TerminalPyGUIView(View, TerminalWidget):
 
                 canvas.textcolor = self._get_color(cur_f_color)
                 canvas.backcolor = canvas.fillcolor= self._get_color(cur_b_color)
-                #canvas.pencolor = red
+                canvas.pencolor = canvas.backcolor
 
                 right = xxxx + canvas.font.width(t)
                 if cur_b_color != self.session.cfg.default_background_color:
                     canvas.fill_frame_rect((xxxx, y, right, y + canvas.font.line_height))
 
-                canvas.moveto(xxxx, y + canvas.font.leading + canvas.font.ascent - canvas.font.descent)
+                canvas.moveto(xxxx, y + canvas.font.ascent)# + canvas.font.leading + canvas.font.ascent - canvas.font.descent)
                 canvas.show_text(t)
 
                 return right
