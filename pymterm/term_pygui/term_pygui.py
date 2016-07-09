@@ -240,7 +240,7 @@ class TerminalPyGUIView(View, TerminalWidget):
     def __refresh(self):
         self.invalidate()
         self.update()
-
+        
     def refresh(self):
         application().schedule_idle(self.__refresh)
 
@@ -334,6 +334,12 @@ class TerminalPyGUIView(View, TerminalWidget):
         if self.visible_cols == 0:
             self.visible_cols = 1
 
+    def copy_to_clipboard(self, data):
+        application().set_clipboard(data)
+
+    def paste_from_clipboard(self):
+        return application().get_clipboard()
+    
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyGUI, self).__init__(cfg)
