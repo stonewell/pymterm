@@ -6,6 +6,7 @@ import socket
 import sys
 import time
 import traceback
+import string
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View
 from GUI import application
@@ -264,7 +265,7 @@ class TerminalPyGUIView(View, TerminalWidget):
         key = term_pygui_key_translate.translate_key(e)
             
         keycode = (e.char, key)
-        text = e.char if len(e.char) > 0 else None
+        text = key if len(key) == 1 and key[0] in string.printable else e.char if len(e.char) > 0 else None
         modifiers = []
         
         if e.option:

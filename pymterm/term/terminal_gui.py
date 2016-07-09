@@ -123,7 +123,7 @@ class TerminalGUI(Terminal):
         return self.history_lines + self.lines, self.history_line_options + self.line_options
         
     def get_text(self):
-        if self.view_history_begin:
+        if self.view_history_begin is not None:
             l, o = self.get_history_text()
             lines = l[self.view_history_begin: self.view_history_begin + self.get_rows()]
             line_options = o[self.view_history_begin: self.view_history_begin + self.get_rows()]
@@ -231,7 +231,7 @@ class TerminalGUI(Terminal):
         self.term_widget.lines = lines
         self.term_widget.line_options = line_options
         self.term_widget.term_cursor = self.get_cursor()
-        self.term_widget.cursor_visible = not self.view_history_begin
+        self.term_widget.cursor_visible = self.view_history_begin is None
         self.term_widget.refresh()
         self.term_widget.focus = True
 
@@ -635,7 +635,7 @@ class TerminalGUI(Terminal):
         if len(lines) <=  self.get_rows():
             return
         
-        if self.view_history_begin:
+        if self.view_history_begin is not None:
             self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
         elif pageup:
             self.view_history_begin = len(lines) - 2 * self.get_rows()
