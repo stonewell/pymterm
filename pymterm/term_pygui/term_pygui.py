@@ -151,7 +151,12 @@ class TerminalPyGUIView(View, TerminalWidget):
             line = lines[i]
             line_option = line_options[i] if i < len(line_options) else []
 
-            if i == c_row and c_col < len(lines):
+            last_mode &= ~TextMode.CURSOR
+            last_mode &= ~TextMode.SELECTION
+
+            # temprary add cusor and selection mode
+            if self.cursor_visible and i == c_row and c_col < len(line):
+                print c_row, c_col, i, len(line), last_mode
                 reserve(line_option, c_col + 1, TextAttribute(None, None, None))
                 line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
 
