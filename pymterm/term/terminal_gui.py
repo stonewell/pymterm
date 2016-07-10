@@ -1,12 +1,12 @@
 import logging
 
 from terminal import Terminal
-from term import TextAttribute, TextMode
+from term import TextAttribute, TextMode, reserve
 
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
-        
+
         self.term_widget = None
         self.session = None
 
@@ -18,7 +18,7 @@ class TerminalGUI(Terminal):
 
         self.last_line_option_row = -1
         self.last_line_option_col = -1
-        self.cur_line_option = None
+        self.cur_line_option = TextAttribute(None, None, None)
         self.saved_lines, self.saved_line_options, self.saved_cursor = [], [], (0, 0)
         self.bold_mode = False
         self.scroll_region = None
@@ -26,33 +26,29 @@ class TerminalGUI(Terminal):
         self.view_history_begin = None
         self.history_lines = []
         self.history_line_options = []
-                
+
     def get_line(self, row):
         if row >= len(self.lines):
             for i in range(len(self.lines), row + 1):
                 self.lines.append([])
 
         self.get_line_option(row)
-        
+
         return self.lines[row]
-                
+
     def get_cur_line(self):
         line = self.get_line(self.row)
 
-        if len(line) <= self.col:
-            while len(line) <= self.col:
-                line.append(' ')
+        reserve(line, self.col + 1, ' ')
 
         return line
-    
+
     def save_buffer(self, c, insert = False, wrap = False):
         line = self.get_cur_line()
         self.get_cur_option()
         line_option = self.get_cur_line_option()
-        
-        if len(line) <= self.col:
-            while len(line) <= self.col:
-                line.append(' ')
+
+        reserve(line, self.col + 1, ' ')
 
         #update line option
         line_option[self.col] = self.cur_line_option
@@ -71,20 +67,20 @@ class TerminalGUI(Terminal):
                 return
 
             self.remain_buffer = []
-        
+
             if len(c.encode('utf_8')) > 1:
                 c += '\000'
-        
+
         def wrap_line():
             self.col = 0
             self.cursor_down(None)
             self.save_buffer(c, insert, True)
-            
+
         if insert:
             line.insert(self.col, c[0])
             if len(c) > 1:
                 line.insert(self.col + 1, c[1])
-                
+
             if len(line) > self.get_cols():
                 c = line[self.get_cols()]
                 two_bytes = 0
@@ -92,7 +88,7 @@ class TerminalGUI(Terminal):
                     c = line[self.get_cols() - 1]
                     c += '\000'
                     two_bytes = 1
-                    
+
                 line = line[:self.get_cols() - two_bytes]
                 wrap_line()
                 return
@@ -121,21 +117,21 @@ class TerminalGUI(Terminal):
 
     def get_history_text(self):
         return self.history_lines + self.lines, self.history_line_options + self.line_options
-        
+
     def get_text(self):
         if self.view_history_begin is not None:
             l, o = self.get_history_text()
             lines = l[self.view_history_begin: self.view_history_begin + self.get_rows()]
             line_options = o[self.view_history_begin: self.view_history_begin + self.get_rows()]
             return lines, line_options
-        
+
         if len(self.lines) <= self.get_rows():
             return self.lines + [self.create_new_line()] * (self.get_rows() - len(self.lines)), self.line_options + [self.create_new_line_option()] * (self.get_rows() - len(self.lines))
         else:
             lines = self.lines[len(self.lines) - self.get_rows():]
             line_options = self.line_options[len(self.lines) - self.get_rows():]
             return lines, line_options
-        
+
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
             logging.getLogger('term_gui').error('normal data has escape char')
@@ -163,7 +159,7 @@ class TerminalGUI(Terminal):
             self.row = row + len(self.lines) - self.get_rows()
 
         logging.getLogger('term_gui').debug('termianl cursor:{}, {}'.format(self.col, self.row));
-        
+
     def cursor_right(self, context):
         if self.col < self.get_cols() - 1:
             self.col += 1
@@ -181,13 +177,13 @@ class TerminalGUI(Terminal):
 
     def carriage_return(self, context):
         self.col = 0
-        
+
     def set_foreground(self, light, color_idx):
         self.set_attributes(1 if light else 0, color_idx, -2)
-        
+
     def set_background(self, light, color_idx):
         self.set_attributes(1 if light else 0, -2, color_idx)
-    
+
     def origin_pair(self):
         self.set_attributes(-1, -1, -1)
 
@@ -198,7 +194,7 @@ class TerminalGUI(Terminal):
         begin = self.col
         if line[begin] == '\000':
             begin -= 1
-            
+
         for i in range(begin, len(line)):
             line[i] = ' '
 
@@ -212,7 +208,7 @@ class TerminalGUI(Terminal):
 
         if line[begin] == '\000':
             begin -= 1
-            
+
         for i in range(begin, len(line)):
             if i + count < len(line):
                 line[i] = line[i + count]
@@ -223,7 +219,7 @@ class TerminalGUI(Terminal):
             if i + count < len(line_option):
                 line_option[i] = line_option[i + count]
             else:
-                line_option[i] = None
+                line_option[i] = TextAttribute(None, None, None)
 
     def refresh_display(self):
         lines, line_options = self.get_text()
@@ -242,7 +238,7 @@ class TerminalGUI(Terminal):
 
     def meta_on(self, context):
         logging.getLogger('term_gui').debug('meta_on')
-                
+
     def get_color(self, mode, idx):
         if mode < 0:
             color_set = 0
@@ -261,11 +257,11 @@ class TerminalGUI(Terminal):
         else:
             logging.getLogger('term_gui').error('not implemented color:{} mode={}'.format(idx, mode))
             sys.exit(1)
-            
+
     def set_attributes(self, mode, f_color_idx, b_color_idx):
         fore_color = None
         back_color = None
-        
+
         if f_color_idx >= 0:
             logging.getLogger('term_gui').debug('set fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             fore_color = self.get_color(mode, f_color_idx)
@@ -288,28 +284,24 @@ class TerminalGUI(Terminal):
             back_color = []
 
         self.save_line_option(TextAttribute(fore_color, back_color, None))
-        
+
     def get_line_option(self, row):
-        if row >= len(self.line_options):
-            for i in range(len(self.line_options), row + 1):
-                self.line_options.append([])
+        reserve(self.line_options, row + 1, [])
 
         return self.line_options[row]
-                
+
     def get_cur_line_option(self):
         return self.get_line_option(self.row)
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
-        if len(line_option) <= col:
-            while len(line_option) <= col:
-                line_option.append(None)
+        reserve(line_option, col + 1, TextAttribute(None, None, None))
 
         return line_option[col]
 
     def get_cur_option(self):
         return self.get_option_at(self.row, self.col)
-    
+
     def save_line_option(self, option):
         if self.cur_line_option is None:
             self.cur_line_option = option
@@ -330,7 +322,7 @@ class TerminalGUI(Terminal):
     def cursor_address(self, context):
         logging.getLogger('term_gui').debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
-        
+
     def cursor_home(self, context):
         self.set_cursor(0, 0)
 
@@ -343,7 +335,7 @@ class TerminalGUI(Terminal):
         for row in range(self.row + 1, len(self.lines)):
             line = self.get_line(row)
             line_option = self.get_line_option(row)
-            
+
             for i in range(len(line)):
                 line[i] = ' '
 
@@ -366,7 +358,7 @@ class TerminalGUI(Terminal):
     def tab(self, context):
         col = self.col / self.session.get_tab_width()
         col = (col + 1) * self.session.get_tab_width();
-            
+
         if col >= self.get_cols():
             col = self.get_cols() - 1
 
@@ -377,13 +369,13 @@ class TerminalGUI(Terminal):
 
     def delete_line(self, context):
         self.parm_delete_line(context)
-        
+
     def parm_delete_line(self, context):
         begin, end = self.get_scroll_region()
         logging.getLogger('term_gui').debug('delete line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_delete = context.params[0] if len(context.params) > 0 else 1
-        
+
         for i in range(c_to_delete):
             if self.row <= end:
                 self.lines = self.lines[:self.row] + self.lines[self.row + 1: end + 1] + [self.create_new_line()] +self.lines[end + 1:]
@@ -406,22 +398,22 @@ class TerminalGUI(Terminal):
 
         self.get_line(end)
         self.get_line(begin)
-        
+
         self.scroll_region = (begin, end)
-    
+
     def change_scroll_region(self, context):
         logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], context.params[1])
-        
+
     def insert_line(self, context):
         self.parm_insert_line(context)
-        
+
     def parm_insert_line(self, context):
         begin, end = self.get_scroll_region()
         logging.getLogger('term_gui').debug('insert line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_insert = context.params[0] if len(context.params) > 0 else 1
-        
+
         for i in range(c_to_insert):
             if self.row <= end:
                 self.lines = self.lines[:self.row] + [self.create_new_line()] + self.lines[self.row: end] +self.lines[end + 1:]
@@ -447,7 +439,7 @@ class TerminalGUI(Terminal):
 
     def set_mode(self, mode):
         self.save_line_option(TextAttribute([], [], mode))
-        
+
     def enter_ca_mode(self, context):
         self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode = self.lines, self.line_options, self.col, self.row, self.bold_mode
         self.lines, self.line_options, self.col, self.row, self.bold_mode = [], [], 0, 0, False
@@ -487,14 +479,14 @@ class TerminalGUI(Terminal):
         for i in range(count):
             self.get_cur_line()
             self.get_cur_line_option()
-        
+
             if self.row == end:
                 if begin == 0:
                     self.history_lines.append(self.lines[begin])
                     self.history_line_options.append(self.line_options[begin])
                 self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [self.create_new_line()] + self.lines[end + 1:]
                 self.line_options = self.line_options[:begin] + self.line_options[begin + 1: end + 1] + [self.create_new_line_option()] + self.line_options[end + 1:]
-            else:        
+            else:
                 self.row += 1
 
             self.get_cur_line()
@@ -508,7 +500,7 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('enable mode:{}'.format(context.params))
 
         mode = context.params[0]
-        
+
         if mode == 25:
             self.cursor_normal(context)
 
@@ -516,15 +508,15 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('disable mode:{}'.format(context.params))
 
         mode = context.params[0]
-        
+
         if mode == 25:
             self.cursor_invisible(context)
-            
+
     def process_key(self, keycode, text, modifiers):
         handled = False
         code, key = keycode
         view_history_key = False
-        
+
         if ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and key == 'insert':
             #paste
             self.paste_data()
@@ -547,7 +539,7 @@ class TerminalGUI(Terminal):
     def paste_data(self):
         logging.getLogger('term_gui').debug('paste data by default doing nothing')
         pass
-        
+
     def has_selection(self):
         s_from, s_to = self.term_widget.get_selection()
 
@@ -555,7 +547,7 @@ class TerminalGUI(Terminal):
 
     def get_selection_text(self):
         lines, line_options = self.get_text()
-        
+
         s_from, s_to = self.term_widget.get_selection()
 
         if s_from == s_to:
@@ -570,7 +562,7 @@ class TerminalGUI(Terminal):
             line = lines[s_f_row]
             if not line:
                 return ''
-            
+
             if s_f_col >= len(line):
                 return ''
 
@@ -578,7 +570,7 @@ class TerminalGUI(Terminal):
                 s_t_col = len(line)
 
             return ''.join(line[s_f_col:s_t_col]).replace('\000', '')
-        
+
         for line_num, line in enumerate(lines[s_f_row:s_t_row + 1], start=s_f_row):
             if not line:
                 continue
@@ -595,15 +587,15 @@ class TerminalGUI(Terminal):
 
         if 'carriage_return' in self.cap.cmds:
             d = self.cap.cmds['carriage_return'].cap_value
-            
+
         data = d.join(texts).replace('\000', '')
 
         return data
-        
+
     def copy_data(self):
         logging.getLogger('term_gui').debug('copy data by default doing nothing')
         pass
-    
+
     def column_address(self, context):
         col, row = self.get_cursor()
         self.set_cursor(context.params[0], row)
@@ -617,24 +609,24 @@ class TerminalGUI(Terminal):
         for i in range(count):
             self.get_cur_line()
             self.get_cur_line_option()
-        
+
             if self.row == begin:
                 self.lines = self.lines[:begin] + [self.create_new_line()] + self.lines[begin: end] + self.lines[end + 1:]
                 self.line_options = self.line_options[:begin] + [self.create_new_line_option()] + self.line_options[begin: end] + self.line_options[end + 1:]
-            else:        
+            else:
                 self.row -= 1
 
             self.get_cur_line()
             self.get_cur_line_option()
         logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
-        
+
     def view_history(self, pageup):
         lines, line_options = self.get_history_text()
         logging.getLogger('term_gui').debug('view history:pageup={}, lines={}, rows={}, view_history_begin={}'.format(pageup, len(lines), self.get_rows(), self.view_history_begin))
-            
+
         if len(lines) <=  self.get_rows():
             return
-        
+
         if self.view_history_begin is not None:
             self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
         elif pageup:
@@ -656,7 +648,7 @@ class TerminalGUI(Terminal):
     def prompt_password(self, action):
         logging.getLogger('term_gui').warn('sub class must implement prompt password')
         pass
-        
+
     def create_new_line(self):
         return []
 
@@ -673,10 +665,10 @@ class TerminalGUI(Terminal):
             data = self.term_widget.paste_from_clipboard()
         else:
             self.term_widget.copy_to_clipboard(data)
-            
+
         if len(data) > 0:
             self.session.send(data)
-        
+
     def copy_data(self):
         data = self.get_selection_text()
 
@@ -686,4 +678,3 @@ class TerminalGUI(Terminal):
         self.term_widget.copy_to_clipboard(data)
 
         self.term_widget.cancel_selection()
-    

@@ -3,7 +3,7 @@ import logging
 class TerminalWidget(object):
     def __init__(self, **kwargs):
         super(TerminalWidget, self).__init__()
-        
+
         self.visible_rows = 25
         self.visible_cols = 80
         self.lines = []
@@ -13,7 +13,7 @@ class TerminalWidget(object):
         self._selection_from = self._selection_to = self.term_cursor
         self._selection = False
         self._selection_finished = True
-        
+
     def refresh(self):
         logging.getLogger('term_widget').debug('default refresh do nothing')
         pass
@@ -31,24 +31,24 @@ class TerminalWidget(object):
         self._selection = False
         self._selection_finished = True
 
+    def compare_cursor(self, a, b):
+        a_col, a_row = a
+        b_col, b_row = b
+
+        if a == b:
+            return False
+
+        if a_row > b_row:
+            return True
+
+        if a_row < b_row:
+            return False
+
+        return a_col > b_col
+
     def get_selection(self):
-        def compare_cursor(a, b):
-            a_col, a_row = a
-            b_col, b_row = b
-
-            if a == b:
-                return False
-
-            if a_row > b_row:
-                return True
-
-            if a_row < b_row:
-                return False
-
-            return a_col > b_col
-        
         a, b = self._selection_from, self._selection_to
-        if compare_cursor(a, b):
+        if self.compare_cursor(a, b):
             a, b = b, a
         return (a, b)
 
