@@ -16,10 +16,10 @@ def set_attr_mode(attr, mode):
 
     return attr._replace(mode=mode)
 
-def reserve(l, size, default = None):
-    if l is None:
-        l = [default] * size
+def reserve(l, size, default=None):
+    import copy
 
     if size > len(l):
-        l += [default] * (size - len(l))
+        for i in range(len(l), size):
+            l.append(copy.deepcopy(default) if default is not None else None)
 

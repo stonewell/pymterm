@@ -129,6 +129,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         lines = [line[:] for line in self.lines]
         line_options = [line_option[:] for line_option in self.line_options]
+
         c_col, c_row = self.term_cursor
 
         s_f, s_t = self._selection_from, self._selection_to
@@ -204,9 +205,10 @@ class TerminalPyGUIView(View, TerminalWidget):
                     cur_f_color = self._merge_color(cur_f_color, self.selection_color)
                     cur_b_color = self._merge_color(cur_b_color, self.selection_color)
 
-                canvas.textcolor = self._get_color(cur_f_color)
-                canvas.backcolor = canvas.fillcolor= self._get_color(cur_b_color)
-                canvas.pencolor = canvas.backcolor
+                tmp_t_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
+                tmp_b_c, canvas.backcolor = canvas.backcolor, self._get_color(cur_b_color)
+                tmp_f_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
+                tmp_p_c, canvas.pencolor = canvas.pencolor, canvas.backcolor
 
                 right = xxxx + canvas.font.width(t)
                 if cur_b_color != self.session.cfg.default_background_color:
@@ -214,6 +216,8 @@ class TerminalPyGUIView(View, TerminalWidget):
 
                 canvas.moveto(xxxx, y + canvas.font.ascent)
                 canvas.show_text(t)
+
+                canvas.textcolor, canvas.backcolor, canvas.fillcolor, canvas.pencolor = tmp_t_c, tmp_b_c, tmp_f_c, tmp_p_c
 
                 return right
 
@@ -276,9 +280,6 @@ class TerminalPyGUIView(View, TerminalWidget):
         application().schedule_idle(self.__refresh)
 
     def _setup_canvas(self, canvas):
-        canvas.fillcolor = red
-        canvas.pencolor = black
-
         canvas.set_font(self._get_font())
 
     def _get_font(self):

@@ -28,9 +28,7 @@ class TerminalGUI(Terminal):
         self.history_line_options = []
 
     def get_line(self, row):
-        if row >= len(self.lines):
-            for i in range(len(self.lines), row + 1):
-                self.lines.append([])
+        reserve(self.lines, row + 1, [])
 
         self.get_line_option(row)
 
@@ -45,10 +43,9 @@ class TerminalGUI(Terminal):
 
     def save_buffer(self, c, insert = False, wrap = False):
         line = self.get_cur_line()
+
         self.get_cur_option()
         line_option = self.get_cur_line_option()
-
-        reserve(line, self.col + 1, ' ')
 
         #update line option
         line_option[self.col] = self.cur_line_option
@@ -295,7 +292,7 @@ class TerminalGUI(Terminal):
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
-        reserve(line_option, col + 1, TextAttribute(None, None, None))
+        reserve(line_option, col + 1, self.cur_line_option)
 
         return line_option[col]
 
