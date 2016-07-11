@@ -156,7 +156,6 @@ class TerminalPyGUIView(View, TerminalWidget):
 
             # temprary add cusor and selection mode
             if self.cursor_visible and i == c_row and c_col < len(line):
-                print c_row, c_col, i, len(line), last_mode
                 reserve(line_option, c_col + 1, TextAttribute(None, None, None))
                 line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
 
@@ -377,13 +376,18 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         self._selection_from = self._selection_to = self._get_cursor_from_xy(*event.position)
 
+        mouse_tracker = self.track_mouse()
         while True:
-            event = self.track_mouse().next()
+            event = mouse_tracker.next()
             self._selection_to = self._get_cursor_from_xy(*event.position)
 
             self.refresh()
 
             if event.kind == 'mouse_up':
+                try:
+                    mouse_tracker.next()
+                except StopIteration:
+                    pass
                 break
 
     def _get_cursor_from_xy(self, x, y):
