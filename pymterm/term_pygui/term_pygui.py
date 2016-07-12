@@ -23,6 +23,7 @@ from term.terminal_widget import TerminalWidget
 import term.term_keyboard
 import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
+from term_menu import basic_menus
 
 def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''
@@ -35,6 +36,7 @@ class TerminalPyGUIApp(Application):
         self.cfg = cfg
         self.current_tab = None
         self.conn_history = []
+        self.menus = basic_menus()
 
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & pyGUI'
@@ -417,12 +419,18 @@ class TerminalPyGUIView(View, TerminalWidget):
                     if i < 0:
                         while ii < len(l[cy]) and l[cy][ii] == '\000':
                             ii += 1
-                        return ii, cy
+                        return ii + 1, cy
 
         return len(l[cy]), cy
 
     def _merge_color(self, c1, c2):
         return [c1[i] * c2[i] for i in range(len(c1))]
+
+    def setup_menus(self, m):
+        View.setup_menus(self, m)
+        if self.session and self.session.terminal:
+            m.copy_cmd.enable = self.session.terminal.has_selection()
+            m.paste_cmd.enable = self.session.terminal.has_selection()
 
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
