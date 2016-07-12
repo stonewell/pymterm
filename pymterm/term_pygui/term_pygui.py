@@ -116,9 +116,6 @@ class TerminalPyGUIView(View, TerminalWidget):
     def _get_color(self, color_spec):
         c = map(lambda x: x / 255, map(float, color_spec))
 
-        if len(c) < 4:
-            print c
-            
         return rgb(*c)
 
     def draw(self, canvas, update_rect):
@@ -210,22 +207,13 @@ class TerminalPyGUIView(View, TerminalWidget):
                 if last_mode & TextMode.CURSOR:
                     cur_f_color, cur_b_color = cur_b_color, self.session.cfg.default_cursor_color
 
-                if len(cur_b_color) == 0:
-                    print '--------'
                 if last_mode & TextMode.SELECTION:
                     cur_f_color = self._merge_color(cur_f_color, self.selection_color)
                     cur_b_color = self._merge_color(cur_b_color, self.selection_color)
-                    print cur_b_color, cur_f_color
 
                 tmp_t_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
-                if len(cur_b_color) == 0:
-                    print '--------'
                 tmp_b_c, canvas.backcolor = canvas.backcolor, self._get_color(cur_b_color)
-                if len(cur_b_color) == 0:
-                    print '--------++++'
                 tmp_f_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
-                if len(cur_b_color) == 0:
-                    print '--------===='
                 tmp_p_c, canvas.pencolor = canvas.pencolor, canvas.backcolor
 
                 right = xxxx + canvas.font.width(t)
