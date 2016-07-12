@@ -116,9 +116,18 @@ class TerminalPyGUIView(View, TerminalWidget):
     def _get_color(self, color_spec):
         c = map(lambda x: x / 255, map(float, color_spec))
 
+        if len(c) < 4:
+            print c
+            
         return rgb(*c)
 
     def draw(self, canvas, update_rect):
+        try:
+            self._draw(canvas, update_rect)
+        except:
+            logging.getLogger('term_pygui').exception('draw failed')
+            
+    def _draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
 
         self._setup_canvas(canvas)
@@ -201,13 +210,22 @@ class TerminalPyGUIView(View, TerminalWidget):
                 if last_mode & TextMode.CURSOR:
                     cur_f_color, cur_b_color = cur_b_color, self.session.cfg.default_cursor_color
 
+                if len(cur_b_color) == 0:
+                    print '--------'
                 if last_mode & TextMode.SELECTION:
                     cur_f_color = self._merge_color(cur_f_color, self.selection_color)
                     cur_b_color = self._merge_color(cur_b_color, self.selection_color)
+                    print cur_b_color, cur_f_color
 
                 tmp_t_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
+                if len(cur_b_color) == 0:
+                    print '--------'
                 tmp_b_c, canvas.backcolor = canvas.backcolor, self._get_color(cur_b_color)
+                if len(cur_b_color) == 0:
+                    print '--------++++'
                 tmp_f_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
+                if len(cur_b_color) == 0:
+                    print '--------===='
                 tmp_p_c, canvas.pencolor = canvas.pencolor, canvas.backcolor
 
                 right = xxxx + canvas.font.width(t)
@@ -265,10 +283,8 @@ class TerminalPyGUIView(View, TerminalWidget):
                 b_x = render_text(''.join(line[last_col:]), b_x)
 
             if self.cursor_visible and i == c_row and c_col >= len(line):
-                tmp_l_f, last_f_color, tmp_l_b, last_b_color = \
-                          last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
+                last_mode |= TextMode.CURSOR
                 b_x = render_text(' ', b_x)
-                last_f_color, last_b_color = tmp_l_f, tmp_l_b
 
             y += canvas.font.line_height
 
@@ -418,7 +434,7 @@ class TerminalPyGUIView(View, TerminalWidget):
         return len(l[cy]), cy
 
     def _merge_color(self, c1, c2):
-        return (c1[i] * c2[i] for i in range(len(c1)))
+        return [c1[i] * c2[i] for i in range(len(c1))]
 
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
