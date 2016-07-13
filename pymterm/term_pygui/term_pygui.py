@@ -45,11 +45,16 @@ class TerminalPyGUIApp(Application):
         Application.setup_menus(self, m)
         m.paste_cmd.enabled = application().query_clipboard()
         m.new_window_cmd.enabled = 1
+        m.open_session_cmd.set_items(self.cfg.get_session_names())
+        m.open_session_cmd.enabled = 1
         
-    def connect_to(self, conn_str = None, port = None):
+    def connect_to(self, conn_str = None, port = None, session_name = None):
         cfg = self.cfg.clone()
         if conn_str:
             cfg.set_conn_str(conn_str)
+        elif session_name:
+            cfg.session_name = session_name
+            cfg.config_session()
 
         if port:
             cfg.port = port
@@ -103,6 +108,10 @@ class TerminalPyGUIApp(Application):
 
     def new_window_cmd(self):
         pass
+
+    def open_session_cmd(self, *args):
+        index, = args
+        self.connect_to(session_name=self.cfg.get_session_names()[index])
 
 class TerminalPyGUIDoc(Document):
     def new_contents(self):

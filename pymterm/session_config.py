@@ -47,17 +47,8 @@ class SessionConfig:
             if self.session_type == 'ssh':
                 raise ValueError("no engouth connect information")
 
-        if not args.conn_str and self.session_name and self.session_type == 'ssh':
-            if not self.config or not 'sessions' in self.config or not self.session_name in self.config['sessions']:
-                raise ValueError("unable to find the session:{}".format(self.session_name))
-
-            #set session config
-            session = self.config['sessions'][self.session_name]
-
-            if not 'conn_str' in session:
-                raise ValueError("unable to find connection string for the session:{}".format(self.session_name))
-
-            self.set_conn_str(session['conn_str'])
+        if not args.conn_str:
+            self.config_session()
 
         if self.session_type == 'pipe':
             if self.config and 'pipe-config' in self.config and 'default-shell' in self.config['pipe-config']:
@@ -195,3 +186,23 @@ class SessionConfig:
             if os.path.exists(pp):
                 return pp
         return p
+    
+    def config_session(self):
+        if self.session_name and self.session_type == 'ssh':
+            if not self.config or not 'sessions' in self.config or not self.session_name in self.config['sessions']:
+                raise ValueError("unable to find the session:{}".format(self.session_name))
+
+            #set session config
+            session = self.config['sessions'][self.session_name]
+
+            if not 'conn_str' in session:
+                raise ValueError("unable to find connection string for the session:{}".format(self.session_name))
+
+            self.set_conn_str(session['conn_str'])
+
+    def get_session_names(self):
+        if not 'sessions' in self.config:
+            return []
+
+        return [name for name in self.config['sessions']]
+        
