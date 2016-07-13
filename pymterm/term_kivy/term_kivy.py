@@ -141,9 +141,8 @@ class TermTextInput(TerminalWidgetKivy):
 
         logging.getLogger('term_kivy').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, vw, vh, self.size, self.pos))
         
-        self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
-
         self.session.resize_pty(self.visible_cols, self.visible_rows, vw, vh)
+        self.session.terminal.resize_terminal()
         self.session.terminal.refresh_display()
 
 class TerminalKivyApp(App):

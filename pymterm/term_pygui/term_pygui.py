@@ -376,20 +376,21 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         logging.getLogger('term_pygui').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
         if self.session:
-            self.session.terminal.set_scroll_region(0, self.visible_rows - 1)
             self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
+            self.session.terminal.resize_terminal()
+            self.session.terminal.refresh_display()
 
     def _calculate_visible_rows(self, h):
         f = self._get_font()
-        self.visible_rows = int(h / f.line_height)
-        if self.visible_rows == 0:
+        self.visible_rows = int(h / f.line_height) - 1
+        if self.visible_rows <= 0:
             self.visible_rows = 1
 
     def _calculate_visible_cols(self, w):
         f = self._get_font()
-        self.visible_cols = int(w / f.width('ABCDabcd') * 8)
+        self.visible_cols = int(w / f.width('ABCDabcd') * 8) - 1
 
-        if self.visible_cols == 0:
+        if self.visible_cols <= 0:
             self.visible_cols = 1
 
     def copy_to_clipboard(self, data):

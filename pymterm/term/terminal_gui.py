@@ -667,3 +667,23 @@ class TerminalGUI(Terminal):
         self.term_widget.copy_to_clipboard(data)
 
         self.term_widget.cancel_selection()
+        
+    def resize_terminal(self):
+        if len(self.lines) <= self.get_rows():
+            self.set_scroll_region(0, self.get_rows() - 1)
+            return
+        
+        last_line = -1
+        for i in range(len(self.lines) - 1, 0, -1):
+            if len(''.join(self.lines[i]).strip()) > 0:
+                last_line = i
+                break
+
+        self.lines = self.lines[:last_line + 1]
+
+        for i in range(len(self.lines)):
+            line = self.lines[i]
+            if len(line) > self.get_cols():
+                self.lines[i] = line[:self.get_cols()]
+
+        self.set_scroll_region(0, self.get_rows() - 1)
