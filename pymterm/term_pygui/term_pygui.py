@@ -378,17 +378,16 @@ class TerminalPyGUIView(View, TerminalWidget):
         if self.session:
             self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
             self.session.terminal.resize_terminal()
-            self.session.terminal.refresh_display()
 
     def _calculate_visible_rows(self, h):
         f = self._get_font()
-        self.visible_rows = int(h / f.line_height) - 1
+        self.visible_rows = int(h / f.line_height)
         if self.visible_rows <= 0:
             self.visible_rows = 1
 
     def _calculate_visible_cols(self, w):
         f = self._get_font()
-        self.visible_cols = int(w / f.width('ABCDabcd') * 8) - 1
+        self.visible_cols = int(w / f.width('ABCDabcd') * 8)
 
         if self.visible_cols <= 0:
             self.visible_cols = 1
