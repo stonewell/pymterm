@@ -533,10 +533,6 @@ class TerminalGUI(Terminal):
 
         return handled
 
-    def paste_data(self):
-        logging.getLogger('term_gui').debug('paste data by default doing nothing')
-        pass
-
     def has_selection(self):
         s_from, s_to = self.term_widget.get_selection()
 
@@ -588,10 +584,6 @@ class TerminalGUI(Terminal):
         data = d.join(texts).replace('\000', '')
 
         return data
-
-    def copy_data(self):
-        logging.getLogger('term_gui').debug('copy data by default doing nothing')
-        pass
 
     def column_address(self, context):
         col, row = self.get_cursor()

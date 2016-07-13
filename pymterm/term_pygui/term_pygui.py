@@ -41,6 +41,11 @@ class TerminalPyGUIApp(Application):
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & pyGUI'
 
+    def setup_menus(self, m):
+        Application.setup_menus(self, m)
+        m.paste_cmd.enabled = application().query_clipboard()
+        m.new_window_cmd.enabled = 1
+        
     def connect_to(self, conn_str = None, port = None):
         cfg = self.cfg.clone()
         if conn_str:
@@ -65,6 +70,9 @@ class TerminalPyGUIApp(Application):
 
     def open_app(self):
         self.connect_to()
+
+    def open_window_cmd(self):
+        pass
 
     def make_window(self, document):
         view = TerminalPyGUIView(model=document)
@@ -92,6 +100,9 @@ class TerminalPyGUIApp(Application):
         doc.title = 'Multi-Tab Terminal Emulator in Python & pyGUI'
 
         return doc
+
+    def new_window_cmd(self):
+        pass
 
 class TerminalPyGUIDoc(Document):
     def new_contents(self):
@@ -429,8 +440,17 @@ class TerminalPyGUIView(View, TerminalWidget):
     def setup_menus(self, m):
         View.setup_menus(self, m)
         if self.session and self.session.terminal:
-            m.copy_cmd.enable = self.session.terminal.has_selection()
-            m.paste_cmd.enable = self.session.terminal.has_selection()
+            m.copy_cmd.enabled = self.session.terminal.has_selection()
+            m.paste_cmd.enabled = self.session.terminal.has_selection() or application().query_clipboard()
+            m.clear_cmd.enabled = self.session.terminal.has_selection()
+
+    def copy_cmd(self):
+        if self.session and self.session.terminal:
+            self.session.terminal.copy_data()
+
+    def paste_cmd(self):
+        if self.session and self.session.terminal:
+            self.session.terminal.paste_data()
 
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):

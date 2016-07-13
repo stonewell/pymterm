@@ -1,17 +1,19 @@
 from GUI.GStdMenus import build_menus, \
     fundamental_cmds, help_cmds, pref_cmds, file_cmds, print_cmds, edit_cmds
 
+file_cmds += 'new_window_cmd'
+
 _file_menu_items = [
-    ("New Tab/N",      'new_cmd'),
-    ("New Window",  'open_window_cmd'),
-    ("Close/W",    'close_cmd'),
+    ("New Tab/^T",   'new_cmd'),
+    ("New Window/^N",  'new_window_cmd'),
+    ("Close/^W",    'close_cmd'),
     "-",
     ("Exit/Q",   'quit_cmd'),
 ]
 
 _edit_menu_items = [
-    ("Copy/C",       'copy_cmd'),
-    ("Paste/V",      'paste_cmd'),
+    ("Copy/^C",       'copy_cmd'),
+    ("Paste/^V",      'paste_cmd'),
     ("Clear",        'clear_cmd'),
 ]
 
