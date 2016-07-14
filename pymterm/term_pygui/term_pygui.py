@@ -36,7 +36,7 @@ class TerminalPyGUIApp(Application):
         self.cfg = cfg
         self.current_tab = None
         self.conn_history = []
-        self.menus = basic_menus()
+        self.menus = basic_menus(self.cfg.get_session_names())
 
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & pyGUI'
@@ -45,7 +45,6 @@ class TerminalPyGUIApp(Application):
         Application.setup_menus(self, m)
         m.paste_cmd.enabled = application().query_clipboard()
         m.new_window_cmd.enabled = 1
-        m.open_session_cmd.set_items(self.cfg.get_session_names())
         m.open_session_cmd.enabled = 1
         
     def connect_to(self, conn_str = None, port = None, session_name = None):
