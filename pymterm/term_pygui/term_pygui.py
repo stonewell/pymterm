@@ -159,13 +159,14 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         c_col, c_row = self.term_cursor
 
-        s_f, s_t = self._selection_from, self._selection_to
-
-        if self.compare_cursor(s_f, s_t):
-            s_f, s_t = s_t, s_f
+        s_f, s_t = self.get_selection()
 
         s_f_c, s_f_r = s_f
         s_t_c, s_t_r = s_t
+
+        #selection is cursor position, should convert to char index
+        if s_f_c > 0:
+            s_f_c -= 1
 
         last_f_color = self.session.cfg.default_foreground_color
         last_b_color = self.session.cfg.default_background_color
@@ -189,8 +190,8 @@ class TerminalPyGUIView(View, TerminalWidget):
 
             if s_f != s_t:
                 if s_f_r == s_t_r and i == s_f_r:
-                    reserve(line_option, s_t_c + 1, TextAttribute(None, None, None))
-                    for mm in range(s_f_c, s_t_c + 1):
+                    reserve(line_option, s_t_c, TextAttribute(None, None, None))
+                    for mm in range(s_f_c, s_t_c):
                         line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
                 else:
                     if i == s_f_r:
@@ -198,8 +199,8 @@ class TerminalPyGUIView(View, TerminalWidget):
                         for mm in range(s_f_c, len(line)):
                             line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
                     elif i == s_t_r:
-                        reserve(line_option, s_t_c + 1, TextAttribute(None, None, None))
-                        for mm in range(0, s_t_c + 1):
+                        reserve(line_option, s_t_c, TextAttribute(None, None, None))
+                        for mm in range(0, s_t_c):
                             line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
                     elif i > s_f_r and i < s_t_r:
                         reserve(line_option, len(line), TextAttribute(None, None, None))
@@ -438,7 +439,7 @@ class TerminalPyGUIView(View, TerminalWidget):
                     if i < 0:
                         while ii < len(l[cy]) and l[cy][ii] == '\000':
                             ii += 1
-                        return ii + 1, cy
+                        return ii, cy
 
         return len(l[cy]), cy
 
