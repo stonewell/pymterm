@@ -549,10 +549,6 @@ class TerminalGUI(Terminal):
         s_f_col, s_f_row = s_from
         s_t_col, s_t_row = s_to
 
-        #selection is cursor position, should convert to char index
-        if s_f_col >= 0:
-            s_f_col -= 1
-
         texts = []
 
         if s_f_row == s_t_row:

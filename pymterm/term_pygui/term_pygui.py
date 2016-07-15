@@ -164,9 +164,6 @@ class TerminalPyGUIView(View, TerminalWidget):
         s_f_c, s_f_r = s_f
         s_t_c, s_t_r = s_t
 
-        #selection is cursor position, should convert to char index
-        if s_f_c > 0:
-            s_f_c -= 1
 
         last_f_color = self.session.cfg.default_foreground_color
         last_b_color = self.session.cfg.default_background_color
