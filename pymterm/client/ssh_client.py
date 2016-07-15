@@ -170,10 +170,10 @@ def start_client(session, cfg):
                 except paramiko.SSHException:
                     pass
         
-                if not t.is_authenticated():
-                    action = build_auth_actions(session, t, username)
-                    action.execute()
-                    return
+            if not t.is_authenticated():
+                action = build_auth_actions(session, t, username)
+                action.execute()
+                return
 
         if not t.is_authenticated():
             session.report_error('Authentication failed.')
