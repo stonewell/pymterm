@@ -22,6 +22,7 @@ def agent_auth(transport, username):
     agent = paramiko.Agent()
     agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
+        logging.getLogger('ssh_client').debug('no agent keys found!')
         return
         
     for key in agent_keys:
