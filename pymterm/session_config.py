@@ -203,9 +203,13 @@ class SessionConfig:
 
             if 'port' in session:
                 self.port = session['port']
+            else:
+                self.port = 22
 
             if 'password' in session:
                 self.password = session['password']
+            else:
+                self.password = None
 
     def get_session_names(self):
         if not 'sessions' in self.config:
