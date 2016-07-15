@@ -12,6 +12,12 @@
 	
 	"d-235027-b":{
 	    "conn_str":"stone@d-235027-b"
+	},
+	
+	"dave-cm":{
+	    "conn_str":"cm@localhost",
+	    "port":2222,
+	    "password":"1"
 	}
     },
 

@@ -28,6 +28,7 @@ class SessionConfig:
         self.config = args.config
         self.kivy = args.kivy
         self.pygui = args.pygui
+        self.password = None
 
         self.load_config()
         
@@ -199,6 +200,12 @@ class SessionConfig:
                 raise ValueError("unable to find connection string for the session:{}".format(self.session_name))
 
             self.set_conn_str(session['conn_str'])
+
+            if 'port' in session:
+                self.port = session['port']
+
+            if 'password' in session:
+                self.password = session['password']
 
     def get_session_names(self):
         if not 'sessions' in self.config:
