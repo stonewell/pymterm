@@ -410,6 +410,8 @@ class TerminalPyGUIView(View, TerminalWidget):
         return application().get_clipboard().decode('utf-8')
 
     def mouse_down(self, event):
+        self.become_target()
+        
         self.cancel_selection()
 
         self._selection_from = self._selection_to = self._get_cursor_from_xy(*event.position)
@@ -463,6 +465,9 @@ class TerminalPyGUIView(View, TerminalWidget):
             m.copy_cmd.enabled = self.session.terminal.has_selection()
             m.paste_cmd.enabled = self.session.terminal.has_selection() or application().query_clipboard()
             m.clear_cmd.enabled = self.session.terminal.has_selection()
+
+    def next_handler(self):
+        return application().target_window
 
     def copy_cmd(self):
         if self.session and self.session.terminal:
