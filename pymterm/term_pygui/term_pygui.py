@@ -8,7 +8,7 @@ import time
 import traceback
 import string
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View
+from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
 from GUI import application
 from GUI.Files import FileType
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
@@ -47,7 +47,7 @@ class TerminalPyGUIApp(Application):
         m.new_window_cmd.enabled = 1
         m.open_session_cmd.enabled = 1
         
-    def connect_to(self, conn_str = None, port = None, session_name = None):
+    def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
         cfg = self.cfg.clone()
         if conn_str:
             cfg.set_conn_str(conn_str)
@@ -64,7 +64,11 @@ class TerminalPyGUIApp(Application):
         doc.new_contents()
         doc.cfg = cfg
 
-        self.make_window(doc)
+        if win:
+            view = TerminalPyGUIView(model=doc)
+            self._create_new_tab(win, view)
+        else:
+            self.make_window(doc)
 
     def create_terminal(self, cfg):
         return TerminalPyGUI(cfg)
@@ -76,25 +80,32 @@ class TerminalPyGUIApp(Application):
         self.connect_to()
 
     def open_window_cmd(self):
-        pass
+        self.connect_to()
 
     def make_window(self, document):
         view = TerminalPyGUIView(model=document)
         w, h = view.get_prefered_size()
 
         win = Window(size = (w + 10, h + 50), document = document)
+        win.tabview = tabview = TabView()
 
-        cfg = document.cfg
+        self._create_new_tab(win, view)
+        
+        win.place(tabview, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
+
+        win.show()
+        
+    def _create_new_tab(self, win, view):
+        win.tabview.add_item(view)
+
+        cfg = view.model.cfg
         session = create_session(cfg, self.create_terminal(cfg))
         session.term_widget = view
         session.terminal.term_widget = view
         view.session = session
         view.tab_width = session.get_tab_width()
 
-        win.place(view, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
-
         session.start()
-        win.show()
 
         view.become_target()
 
@@ -106,11 +117,14 @@ class TerminalPyGUIApp(Application):
         return doc
 
     def new_window_cmd(self):
-        pass
+        self.connect_to()
+
+    def new_cmd(self):
+        self.connect_to(win = self.get_target_window())
 
     def open_session_cmd(self, *args):
         index, = args
-        self.connect_to(session_name=self.cfg.get_session_names()[index])
+        self.connect_to(session_name=self.cfg.get_session_names()[index], win=self.get_target_window())
 
 class TerminalPyGUIDoc(Document):
     def new_contents(self):
