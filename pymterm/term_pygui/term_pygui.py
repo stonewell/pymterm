@@ -46,7 +46,7 @@ class TerminalPyGUIApp(Application):
         m.paste_cmd.enabled = application().query_clipboard()
         m.new_window_cmd.enabled = 1
         m.open_session_cmd.enabled = 1
-        
+
     def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
         cfg = self.cfg.clone()
         if conn_str:
@@ -90,11 +90,11 @@ class TerminalPyGUIApp(Application):
         win.tabview = tabview = TabView()
 
         self._create_new_tab(win, view)
-        
+
         win.place(tabview, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
 
         win.show()
-        
+
     def _create_new_tab(self, win, view):
         win.tabview.add_item(view)
 
@@ -158,7 +158,7 @@ class TerminalPyGUIView(View, TerminalWidget):
             self._draw(canvas, update_rect)
         except:
             logging.getLogger('term_pygui').exception('draw failed')
-            
+
     def _draw(self, canvas, update_rect):
         canvas.erase_rect(update_rect)
 
@@ -411,7 +411,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
     def mouse_down(self, event):
         self.become_target()
-        
+
         self.cancel_selection()
 
         self._selection_from = self._selection_to = self._get_cursor_from_xy(*event.position)
