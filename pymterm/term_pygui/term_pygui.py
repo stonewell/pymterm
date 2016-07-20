@@ -87,7 +87,7 @@ class TerminalPyGUIApp(Application):
         w, h = view.get_prefered_size()
 
         win = Window(size = (w + 10, h + 50), document = document)
-        win.tabview = tabview = TabView()
+        win.tabview = tabview = TermTabView()
 
         self._create_new_tab(win, view)
 
@@ -477,6 +477,12 @@ class TerminalPyGUIView(View, TerminalWidget):
         if self.session and self.session.terminal:
             self.session.terminal.paste_data()
 
+class TermTabView(TabView):
+    def tab_changed(self, tab_index):
+        v = self.items[tab_index]
+
+        v.become_target()
+        
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyGUI, self).__init__(cfg)
