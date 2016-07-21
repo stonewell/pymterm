@@ -107,7 +107,7 @@ class TerminalPyGUIApp(Application):
 
         session.start()
 
-        view.become_target()
+        win.tabview.selected_index = len(win.tabview.items) - 1
 
     def make_document(self, fileref):
         doc = TerminalPyGUIDoc()
