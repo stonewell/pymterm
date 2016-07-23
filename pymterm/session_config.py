@@ -148,7 +148,7 @@ class SessionConfig:
     def set_conn_str(self, conn_str):
         parts = conn_str.split('@')
 
-        if parts >= 2:
+        if len(parts) >= 2:
             self.hostname = '@'.join(parts[1:])
             self.username = parts[0]
         else:

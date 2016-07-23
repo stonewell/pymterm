@@ -482,7 +482,7 @@ class TermTabView(TabView):
         v = self.items[tab_index]
 
         v.become_target()
-        
+
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyGUI, self).__init__(cfg)
