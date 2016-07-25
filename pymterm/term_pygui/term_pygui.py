@@ -94,6 +94,7 @@ class TerminalPyGUIApp(Application):
         win.place(tabview, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
 
         win.show()
+        view.become_target()
 
     def _create_new_tab(self, win, view):
         win.tabview.add_item(view)
@@ -320,8 +321,9 @@ class TerminalPyGUIView(View, TerminalWidget):
         canvas.set_font(self._get_font())
 
     def _get_font(self):
-        return application_font.but(family='Noto Sans Mono CJK SC Regular',
-                                        size=self.font_size)
+        return application_font.but(family=#'Noto Sans Mono CJK SC',
+                                    'YaHei Consolas Hybrid',
+                                    size=self.font_size)
 
     def get_prefered_size(self):
         f = self._get_font()
@@ -381,6 +383,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         w -= self.padding_x * 2
         h -= self.padding_y * 2
+        h -= (self._get_font().line_height / 3)
 
         self._calculate_visible_rows(h)
         self._calculate_visible_cols(w)
@@ -441,6 +444,9 @@ class TerminalPyGUIView(View, TerminalWidget):
         cx = x
         cy = y - padding_top
         cy = int(boundary(round(cy / dy - 0.5), 0, len(l) - 1))
+
+        if cy >= len(l) or cy < 0:
+            return 0, 0
 
         text = self.norm_text(''.join(l[cy]))
         for i in range(0, len(text)):
