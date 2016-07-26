@@ -15,6 +15,7 @@ from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
 from GUI.Colors import rgb
+import GUI.Font
 
 import cap.cap_manager
 from session import create_session
@@ -321,8 +322,10 @@ class TerminalPyGUIView(View, TerminalWidget):
         canvas.set_font(self._get_font())
 
     def _get_font(self):
-        return application_font.but(family=#'Noto Sans Mono CJK SC',
-                                    'YaHei Consolas Hybrid',
+        return GUI.Font(family='Noto Sans Mono CJK SC Regular',
+                                    #u'文泉驿等宽微米黑',
+                                    #'YaHei Consolas Hybrid',
+                                    #'WenQuanYi Micro Hei Mono',
                                     size=self.font_size)
 
     def get_prefered_size(self):
