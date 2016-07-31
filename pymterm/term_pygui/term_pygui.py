@@ -138,6 +138,8 @@ class TerminalPyGUIDoc(Document):
     def write_contents(self, file):
         pass
 
+_color_map = {}
+
 class TerminalPyGUIView(View, TerminalWidget):
 
     def __init__(self, **kwargs):
@@ -149,11 +151,18 @@ class TerminalPyGUIView(View, TerminalWidget):
         self.padding_y = 5
         self.session = None
         self.selection_color = [0.1843, 0.6549, 0.8313, .5]
+        self._width_cache = {}
 
     def _get_color(self, color_spec):
+        key = repr(color_spec)
+        if key in _color_map:
+            return _color_map[key]
+
         c = map(lambda x: x / 255, map(float, color_spec))
 
-        return rgb(*c)
+        _color_map[key] = r = rgb(*c)
+
+        return r
 
     def draw(self, canvas, update_rect):
         try:
@@ -162,8 +171,6 @@ class TerminalPyGUIView(View, TerminalWidget):
             logging.getLogger('term_pygui').exception('draw failed')
 
     def _draw(self, canvas, update_rect):
-        canvas.erase_rect(update_rect)
-
         self._setup_canvas(canvas)
 
         x = self.padding_x
@@ -251,7 +258,7 @@ class TerminalPyGUIView(View, TerminalWidget):
                 tmp_f_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
                 tmp_p_c, canvas.pencolor = canvas.pencolor, canvas.backcolor
 
-                right = xxxx + canvas.font.width(t)
+                right = xxxx + self._get_width(canvas.font, t)
                 if cur_b_color != self.session.cfg.default_background_color:
                     canvas.fill_frame_rect((xxxx, y, right, y + canvas.font.line_height))
 
@@ -330,7 +337,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
     def get_prefered_size(self):
         f = self._get_font()
-        w = int(f.width('ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
+        w = int(self._get_width(f, 'ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
         h = int(f.line_height * self.visible_rows + self.padding_y * 2 + 0.5)
 
         return (w, h)
@@ -404,7 +411,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
     def _calculate_visible_cols(self, w):
         f = self._get_font()
-        self.visible_cols = int(w / f.width('ABCDabcd') * 8)
+        self.visible_cols = int(w / self._get_width(f, 'ABCDabcd') * 8)
 
         if self.visible_cols <= 0:
             self.visible_cols = 1
@@ -453,7 +460,7 @@ class TerminalPyGUIView(View, TerminalWidget):
 
         text = self.norm_text(''.join(l[cy]))
         for i in range(0, len(text)):
-            if f.width(text[:i]) + f.width(text[i]) * 0.6 + padding_left > cx:
+            if self._get_width(f, text[:i]) + self._get_width(f, text[i]) * 0.6 + padding_left > cx:
                 for ii in range(len(l[cy])):
                     if l[cy][ii] == '\000':
                         continue
@@ -485,6 +492,17 @@ class TerminalPyGUIView(View, TerminalWidget):
     def paste_cmd(self):
         if self.session and self.session.terminal:
             self.session.terminal.paste_data()
+
+    def _get_width(self, f = None, t = ''):
+        if t in self._width_cache:
+            return self._width_cache[t]
+
+        if f is None:
+            f = self._get_font()
+
+        self._width_cache[t] = w = f.width(t)
+
+        return w
 
 class TermTabView(TabView):
     def tab_changed(self, tab_index):
