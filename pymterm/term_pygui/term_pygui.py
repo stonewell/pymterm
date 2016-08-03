@@ -87,8 +87,9 @@ class TerminalPyGUIApp(Application):
         view = TerminalPyGUIView(model=document)
         w, h = view.get_prefered_size()
 
-        win = Window(size = (w + 10, h + 50), document = document)
+        win = Window(bounds = (0, 0, w + 10, h + 50), document = document)
         win.tabview = tabview = TermTabView()
+        win.auto_position = False
 
         self._create_new_tab(win, view)
 
