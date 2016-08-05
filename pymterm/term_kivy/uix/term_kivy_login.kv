@@ -19,23 +19,23 @@
                     size_hint: (None, 1)
                     size: (200, 100)
                     ToggleButton:
-                        id: rsa		    
+                        id: rsa
                         text: 'RSA'
                         group: 'key_type'
                         state: 'down'
-    
+
                     ToggleButton:
                         text: 'DSS'
                         group: 'key_type'
-            
+
             BoxLayout:
                 orientation: 'horizontal'
-        
+
                 TextInput:
                     id: keyfile
                     multiline:False
                     font_size: 18
-           
+
                 Button:
                     text: 'Browse'
                     size_hint: (None, None)
@@ -43,7 +43,7 @@
                     pos_hint: {'center_x': 0.5, 'center_y': 0.5}
                     font_size: 16
                     on_press: root.do_key_file_select(keyfile.text)
-            
+
         BoxLayout:
             orientation: 'vertical'
 
@@ -82,25 +82,25 @@
 
 <KeyFileChooser>:
     size_hint:(1, 1)
-    
+
 <KeyFileChooserScreen>:
     BoxLayout:
         orientation: 'vertical'
         BoxLayout:
             size_hint_y: None
             height: '48dp'
-    
+
             ToggleButton:
                 text: 'Icon'
                 state: 'down'
                 group: 'filechooser'
                 on_release: filechooser.view_mode = 'icon'
-    
+
             ToggleButton:
                 text: 'List'
                 group: 'filechooser'
                 on_release: filechooser.view_mode = 'list'
-    
+
         KeyFileChooser:
             id: filechooser
             show_hidden: True
@@ -110,11 +110,11 @@
         BoxLayout:
             size_hint_y: None
             height: '48dp'
-    
+
             Button:
                 text: 'Cancel'
                 on_release: root.do_cancel()
-		
+
             Button:
                 text: 'Select'
                 on_release: root.do_select(filechooser.path, filechooser.selection)

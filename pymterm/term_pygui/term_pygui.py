@@ -26,6 +26,56 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
+from GUI import ModalDialog, Label, Button
+from GUI import RadioGroup, RadioButton
+from GUI import TextField
+
+padding = 5
+
+class LoginBox(ModalDialog):
+
+    def __init__(self):
+        ModalDialog.__init__(self, title='Login')
+
+        label = Label('Key File:')
+        btn_rsa = RadioButton(title='RSA', value = 'rsa')
+        btn_dss = RadioButton(title='DSS', value = 'dss')
+        key_file_group = RadioGroup(items = [btn_rsa, btn_dss])
+        key_file_group.value = 'rsa'
+        self.txt_key_file = txt_key_file = TextField(multiline = False, password = False)
+        btn_browse_file = Button('Browse', action='choose_key_file', enabled = True)
+
+        lbl_login = Label('Login')
+        self.txt_login = TextField(multiline = False, password = False)
+
+        lbl_passwd = Label('Password')
+        self.txt_passwd = TextField(multiline = False, password = True)
+
+        self.ok_button = Button("Connect", action = "ok", enabled = True, style = 'default')
+        self.cancel_button = Button("Cancel", enabled = True, style = 'cancel', action='cancel')
+
+        self.place(label, left = padding, top = padding)
+        self.place(btn_rsa, left = label + padding, top = padding)
+        self.place(btn_dss, left = btn_rsa + padding, top = padding)
+        self.place(txt_key_file, left = padding, top = btn_rsa + padding, right = 240)
+        self.place(btn_browse_file, left = txt_key_file, top = txt_key_file.top)
+
+        self.place(lbl_login, left = padding, top = txt_key_file + padding)
+        self.place(self.txt_login, left = padding, top = lbl_login + padding, right = btn_browse_file.right)
+
+        self.place(lbl_passwd, left = padding, top = self.txt_login + padding)
+        self.place(self.txt_passwd, left = padding, top = lbl_passwd + padding, right = btn_browse_file.right)
+
+        self.place(self.cancel_button, top = self.txt_passwd + padding, right = btn_browse_file.right)
+        self.place(self.ok_button, top = self.txt_passwd + padding, right = self.cancel_button - padding)
+        self.shrink_wrap(padding = (padding, padding))
+
+    def ok(self):
+        self.dismiss(True)
+
+    def choose_key_file(self):
+        pass
+
 def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''
     return min(max(value, minvalue), maxvalue)
@@ -78,6 +128,8 @@ class TerminalPyGUIApp(Application):
         self.run()
 
     def open_app(self):
+        dlog = LoginBox()
+        dlog.present()
         self.connect_to()
 
     def open_window_cmd(self):
