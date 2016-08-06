@@ -22,11 +22,11 @@ def args_parser():
     parser.add_argument('--kivy', action="store_true", help='Use kivy as gui system', required = False)
     parser.add_argument('--pygui', action="store_true", help='Use pyGUI as gui system', required = False, default=True)
 
-    if not platform.is_windows():    
+    if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
     else:
         parser.add_argument('--session_type', choices=['ssh', 'pipe'], default='ssh')
-        
+
     parser.add_argument(metavar='user@host', type=str, help='', nargs='?', dest='conn_str')
 
     return parser
@@ -56,20 +56,23 @@ def pymterm_main():
                  'YaHei Consolas':'YaHei Consolas Hybrid 1.12.ttf',
                  'NotoSans':'NotoSansMonoCJKsc-Regular.otf'}
         for f_name in FONTS:
-            font_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'fonts', FONTS[f_name]) 
+            font_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'fonts', FONTS[f_name])
             logging.getLogger('term_kivy_app').debug(font_path)
-        
+
             LabelBase.register(f_name, font_path)
-        
+
         from term_kivy.term_kivy import TerminalKivyApp
         from kivy.logger import Logger
         #Logger.setLevel(logging.ERROR)
-        
+
         TerminalKivyApp(cfg).start()
     else:
         from term_pygui.term_pygui import TerminalPyGUIApp
         TerminalPyGUIApp(cfg).start()
-    
+
 if __name__ == '__main__':
-    pymterm_main()
+    try:
+        pymterm_main()
+    except:
+        logging.exception('unknown error happening')
     os._exit(0)

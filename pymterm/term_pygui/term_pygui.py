@@ -29,6 +29,7 @@ from term_menu import basic_menus
 from GUI import ModalDialog, Label, Button
 from GUI import RadioGroup, RadioButton
 from GUI import TextField
+from GUI import Task
 
 padding = 5
 
@@ -160,7 +161,7 @@ class TerminalPyGUIApp(Application):
         view.session = session
         view.tab_width = session.get_tab_width()
 
-        session.start()
+        self._session_task = Task(session.start, .1)
 
         win.tabview.selected_index = len(win.tabview.items) - 1
 
