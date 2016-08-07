@@ -18,13 +18,13 @@ def agent_auth(transport, username):
     Attempt to authenticate to the given transport using any of the private
     keys available from an SSH agent.
     """
-    
+
     agent = paramiko.Agent()
     agent_keys = agent.get_keys()
     if len(agent_keys) == 0:
         logging.getLogger('ssh_client').debug('no agent keys found!')
         return
-        
+
     for key in agent_keys:
         logging.getLogger('ssh_client').debug('Trying ssh-agent key %s' % hexlify(key.get_fingerprint()))
         try:
@@ -46,7 +46,7 @@ class KeyAuthAction(object):
 
     def execute(self):
         key = None
-        
+
         try:
             if self.password:
                 if self.key_type == 'RSA':
@@ -61,7 +61,7 @@ class KeyAuthAction(object):
         except:
             self.session.prompt_password(self)
             return
-    
+
         if key:
             try:
                 self.transport.auth_publickey(self.username, key)
@@ -69,16 +69,15 @@ class KeyAuthAction(object):
                 pass
 
         self._post_execute()
-        
+
     def _post_execute(self):
         if self.transport.is_authenticated():
             self.session.interactive_shell(self.transport)
         elif self.next_action:
             self.next_action.execute()
         else:
-            session.report_error('Authentication failed.')
-            t.close()
-        
+            self.session.report_error('Authentication failed.')
+
     def get_pass_desc(self):
         return "key file " + self.key_file + " 's password:"
 
@@ -90,18 +89,18 @@ class PromptLoginAction(object):
 
     def execute(self):
         self.session.prompt_login(self.transport, self.username)
-        
+
 def build_auth_actions(session, t, username):
     key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
     root_action = None
     cur_action = None
-    
+
     for key_file in key_files:
         path = os.path.join(os.environ['HOME'], '.ssh', key_file)
 
         if not os.path.exists(path):
             continue
-        
+
         action = KeyAuthAction(session, t, path, key_files[key_file], username)
 
         if cur_action:
@@ -118,7 +117,7 @@ def build_auth_actions(session, t, username):
         root_action = action
 
     return root_action
-        
+
 def start_client(session, cfg):
     username = cfg.username
     hostname = cfg.hostname
@@ -129,7 +128,7 @@ def start_client(session, cfg):
 
         if not sock:
             return
-    
+
         t = paramiko.Transport(sock)
         try:
             t.start_client()
@@ -157,10 +156,7 @@ def start_client(session, cfg):
 
         # get username
         if username == '':
-            default_username = getpass.getuser()
-            username = input('Username [%s]: ' % default_username)
-            if len(username) == 0:
-                username = default_username
+            username = getpass.getuser()
 
         agent_auth(t, username)
         if not t.is_authenticated():
@@ -169,7 +165,7 @@ def start_client(session, cfg):
                     t.auth_password(username, cfg.password)
                 except paramiko.SSHException:
                     pass
-        
+
             if not t.is_authenticated():
                 action = build_auth_actions(session, t, username)
                 action.execute()
@@ -185,7 +181,7 @@ def start_client(session, cfg):
         logging.getLogger('ssh_client').exception('ssh client caught exception:')
 
         session.report_error(str(e))
-        
+
         try:
             t.close()
         except:
@@ -194,14 +190,15 @@ def start_client(session, cfg):
 class PassAuthAction(KeyAuthAction):
     def __init__(self, session, transport, username, password):
         super(PassAuthAction, self).__init__(session, transport, None, None, username, None, password)
+        self.prompt_pass = True
 
     def execute(self):
         try:
             self.transport.auth_password(self.username, self.password)
         except paramiko.SSHException:
             pass
-        
-        if not self.transport.is_authenticated():
+
+        if not self.transport.is_authenticated() and self.prompt_pass:
             self.session.prompt_password(self)
             return
 
@@ -209,18 +206,19 @@ class PassAuthAction(KeyAuthAction):
 
     def get_pass_desc(self):
         return self.username + " 's password:"
-        
+
 def try_login(session, t, key_file, key_type, username, password):
     root_action = None
-    
+
     if os.path.exists(key_file):
         root_action = KeyAuthAction(session, t, key_file, key_type, username)
 
     action = PassAuthAction(session, t, username, password)
+    action.prompt_pass = False
+
     if root_action:
         root_action.next_action = action
     else:
         root_action = action
 
     root_action.execute()
-        

@@ -31,23 +31,71 @@ from GUI import RadioGroup, RadioButton
 from GUI import TextField
 from GUI import Task
 
-padding = 5
+padding = 10
 
-class LoginBox(ModalDialog):
+class PasswordDialog(ModalDialog):
+    def __init__(self, action, **kwargs):
+        title = 'Password'
 
-    def __init__(self):
-        ModalDialog.__init__(self, title='Login')
+        self._action = action
+
+        lbl_text = action.get_pass_desc()
+
+        ModalDialog.__init__(self, title=title)
+
+        label = Label(lbl_text)
+        self.txt_passwd = TextField(multiline = False, password = True)
+
+        self.ok_button = Button("Connect", action = "ok", enabled = True, style = 'default')
+        self.cancel_button = Button("Cancel", enabled = True, style = 'cancel', action='cancel')
+
+        self.place(label, left = padding, top = padding)
+        self.place(self.txt_passwd, left = padding, top = label + padding,
+                   right= label.right if label.right > 260 else 260)
+
+        self.place(self.cancel_button, top = self.txt_passwd + padding, right = self.txt_passwd.right)
+        self.place(self.ok_button, top = self.txt_passwd + padding, right = self.cancel_button - padding)
+        self.shrink_wrap(padding = (padding, padding))
+
+    def ok(self):
+        if len(self.txt_passwd.text) == 0:
+            return
+        self._action.password = self.txt_passwd.text
+        self.dismiss(True)
+        self._action.execute()
+
+    def cancel(self):
+        self.dismiss(False)
+
+        if self._action.next_action:
+            self._action.next_action.execute()
+
+class LoginDialog(ModalDialog):
+
+    def __init__(self, session, transport,  **kwargs):
+        title = 'Login'
+
+        self._session = session
+        self._transport = transport
+
+        if 'title' in kwargs:
+            title = kwargs['title']
+
+        ModalDialog.__init__(self, title=title)
 
         label = Label('Key File:')
-        btn_rsa = RadioButton(title='RSA', value = 'rsa')
-        btn_dss = RadioButton(title='DSS', value = 'dss')
-        key_file_group = RadioGroup(items = [btn_rsa, btn_dss])
-        key_file_group.value = 'rsa'
+        btn_rsa = RadioButton(title='RSA', value = 'RSA')
+        btn_dss = RadioButton(title='DSS', value = 'DSS')
+        self.key_file_group = key_file_group = RadioGroup(items = [btn_rsa, btn_dss])
+        key_file_group.value = 'RSA'
         self.txt_key_file = txt_key_file = TextField(multiline = False, password = False)
         btn_browse_file = Button('Browse', action='choose_key_file', enabled = True)
 
         lbl_login = Label('Login')
         self.txt_login = TextField(multiline = False, password = False)
+
+        if 'username' in kwargs:
+            self.txt_login.text = kwargs['username']
 
         lbl_passwd = Label('Password')
         self.txt_passwd = TextField(multiline = False, password = True)
@@ -72,7 +120,18 @@ class LoginBox(ModalDialog):
         self.shrink_wrap(padding = (padding, padding))
 
     def ok(self):
-        self.dismiss(True)
+        if self._session.try_login(self._transport,
+                                self.txt_key_file.text,
+                                self.key_file_group.value,
+                                self.txt_login.text,
+                                self.txt_passwd.text):
+            self.dismiss(True)
+
+    def cancel(self):
+        self.dismiss(False)
+
+        if self._action.next_action:
+            self._action.next_action.execute()
 
     def choose_key_file(self):
         pass
@@ -129,8 +188,6 @@ class TerminalPyGUIApp(Application):
         self.run()
 
     def open_app(self):
-        dlog = LoginBox()
-        dlog.present()
         self.connect_to()
 
     def open_window_cmd(self):
@@ -148,6 +205,7 @@ class TerminalPyGUIApp(Application):
 
         win.place(tabview, left = 0, top = 0, right = 0, bottom = 0, sticky = 'nsew')
 
+        win.center()
         win.show()
         view.become_target()
 
@@ -162,6 +220,7 @@ class TerminalPyGUIApp(Application):
         view.tab_width = session.get_tab_width()
 
         self._session_task = Task(session.start, .1)
+        #session.start()
 
         win.tabview.selected_index = len(win.tabview.items) - 1
 
@@ -568,8 +627,10 @@ class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyGUI, self).__init__(cfg)
 
-    def prompt_login(self, t, username):
-        pass
+    def prompt_login(self, transport, username):
+        dlog = LoginDialog(self.session, transport, username = username)
+        dlog.present()
 
     def prompt_password(self, action):
-        pass
+        dlog = PasswordDialog(action)
+        dlog.present()

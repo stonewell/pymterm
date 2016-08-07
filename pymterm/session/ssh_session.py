@@ -14,7 +14,7 @@ from session import Session
 class SSHSession(Session):
     def __init__(self, cfg, terminal):
         super(SSHSession, self).__init__(cfg, terminal)
-        
+
         self.sock = None
         self.channel = None
         self.transport = None
@@ -60,21 +60,21 @@ class SSHSession(Session):
         if self.sock:
             self.sock.close()
             self.sock = None
-            
+
     def interactive_shell(self, transport):
         self.transport = transport
         self.channel = chan = transport.open_session()
 
         cols = self.terminal.get_cols()
         rows = self.terminal.get_rows()
-        
+
         chan.get_pty(term=self.cfg.term_name, width=cols, height = rows)
         chan.invoke_shell()
         self._start_reader()
 
     def start(self):
         super(SSHSession, self).start()
-        
+
         client.ssh_client.start_client(self, self.cfg)
 
     def send(self, data):
@@ -86,7 +86,7 @@ class SSHSession(Session):
             col = self.terminal.get_cols()
         if not row:
             row = self.terminal.get_rows()
-            
+
         if self.channel and not self.stopped:
             self.channel.resize_pty(col, row, w, h)
 
