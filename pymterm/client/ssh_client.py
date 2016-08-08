@@ -91,7 +91,7 @@ class PromptLoginAction(object):
         self.session.prompt_login(self.transport, self.username)
 
 def build_auth_actions(session, t, username):
-    key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
+    key_files = {'1d_rsa':'RSA', '1d_dsa':'DSS'}
     root_action = None
     cur_action = None
 
@@ -148,9 +148,9 @@ def start_client(session, cfg):
         # check server's host key -- this is important.
         key = t.get_remote_server_key()
         if hostname not in keys:
-            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key!')
+            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key, hostname is not in the list!')
         elif key.get_name() not in keys[hostname]:
-            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key!')
+            logging.getLogger('ssh_client').warn('*** WARNING: Unknown host key, key is not found in host keys!')
         elif keys[hostname][key.get_name()] != key:
             logging.getLogger('ssh_client').warn('*** WARNING: Host key has changed!!!')
 

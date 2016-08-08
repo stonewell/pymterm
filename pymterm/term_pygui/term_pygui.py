@@ -15,6 +15,9 @@ from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
 from GUI.Colors import rgb
+from GUI.Files import FileType, DirRef, FileRef
+from GUI import FileDialogs
+
 import GUI.Font
 
 import cap.cap_manager
@@ -32,6 +35,8 @@ from GUI import TextField
 from GUI import Task
 
 padding = 10
+file_types = None
+last_dir = DirRef(path = os.path.abspath(os.path.expanduser("~/.ssh")))
 
 class PasswordDialog(ModalDialog):
     def __init__(self, action, **kwargs):
@@ -130,11 +135,14 @@ class LoginDialog(ModalDialog):
     def cancel(self):
         self.dismiss(False)
 
-        if self._action.next_action:
-            self._action.next_action.execute()
-
     def choose_key_file(self):
-        pass
+        global last_dir
+        result = FileDialogs.request_old_file("Open SSH key File:",
+            default_dir = last_dir, file_types = file_types)
+
+        if isinstance(result, FileRef):
+            last_dir = result.dir
+            self.txt_key_file.text = result.path
 
 def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''

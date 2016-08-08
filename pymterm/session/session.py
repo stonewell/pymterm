@@ -7,6 +7,7 @@ import threading
 import time
 import traceback
 
+from GUI.Alerts import stop_alert
 
 class Session(object):
     def __init__(self, cfg, terminal):
@@ -17,7 +18,8 @@ class Session(object):
         self.stopped = True
 
     def report_error(self, msg):
-        logging.getLogger('session').error(msg);
+        logging.getLogger('session').error(msg)
+        stop_alert(msg)
 
     def _start_reader(self):
         def read_term_data():
@@ -46,18 +48,18 @@ class Session(object):
         self.stopped = True
 
         self._stop_reader()
-        
+
         self._wait_for_quit()
 
     def _stop_reader(self):
         pass
-    
+
     def start(self):
         if not self.stopped:
             return
 
         self.stopped = False
-        
+
     def send(self, data):
         pass
 

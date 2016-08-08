@@ -31,10 +31,10 @@ class SessionConfig:
         self.password = None
 
         self.load_config()
-        
+
         if self.debug_more:
             self.debug = True
-            
+
         self.color_table = []
 
         if args.conn_str:
@@ -65,7 +65,7 @@ class SessionConfig:
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(default_formatter)
         root_logger.addHandler(console_handler)
-        
+
         if self.is_logging or self.debug:
             root_logger.setLevel(logging.DEBUG if self.debug else logging.INFO)
 
@@ -110,7 +110,7 @@ class SessionConfig:
     def init_color_table(self):
         #copy default table
         self.color_table = [c[:] for c in SessionConfig.COLOR_TABLE]
-        
+
         for i in range(240):
             if i < 216:
                 r = i / 36
@@ -132,7 +132,7 @@ class SessionConfig:
             color_theme = get_color_theme(self.color_theme)
             if color_theme:
                 color_theme.apply_color(self, self.color_table)
-                
+
     def get_color(self, idx):
         return self.color_table[idx]
 
@@ -140,7 +140,7 @@ class SessionConfig:
         import copy
 
         c = copy.deepcopy(self)
-        
+
         c.init_color_table()
 
         return c
@@ -154,7 +154,7 @@ class SessionConfig:
         else:
             self.hostname = conn_str
             self.username = get_default_user()
-            
+
     def get_conn_str(self):
         return ''.join([self.username, '@', self.hostname, ':', str(self.port)])
 
@@ -187,7 +187,7 @@ class SessionConfig:
             if os.path.exists(pp):
                 return pp
         return p
-    
+
     def config_session(self):
         if self.session_name and self.session_type == 'ssh':
             if not self.config or not 'sessions' in self.config or not self.session_name in self.config['sessions']:
@@ -216,4 +216,3 @@ class SessionConfig:
             return []
 
         return [name for name in self.config['sessions']]
-        
