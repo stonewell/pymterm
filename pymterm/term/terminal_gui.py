@@ -342,6 +342,9 @@ class TerminalGUI(Terminal):
     def parm_right_cursor(self, context):
         self.col += context.params[0]
 
+    def parm_left_cursor(self, context):
+        self.col -= context.params[0]
+
     def client_report_version(self, context):
         self.session.send('\033[>0;136;0c')
 

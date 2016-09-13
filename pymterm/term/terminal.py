@@ -33,13 +33,13 @@ class Terminal(object):
     def __load_cap_str__(self, term_name):
         if 'termcap_dir' in self.cfg.config:
             term_path = os.path.join(self.cfg.config['termcap_dir'], term_name+'.dat')
-            
+
         if not os.path.exists(term_path):
             term_path = os.path.dirname(os.path.realpath(__file__))
             term_path = os.path.join(term_path, '..', '..', 'data', term_name+'.dat')
 
         logging.getLogger('terminal').info('load term cap data file:{}'.format(term_path))
-        
+
         return read_termdata.get_entry(term_path, term_name)
 
     def on_data(self, data):
@@ -65,7 +65,7 @@ class Terminal(object):
 
         if cap_turple:
             self.on_control_data(cap_turple)
-            
+
             self.state = self.cap.control_data_start_state
             self.context.params = []
             self.control_data = []
@@ -86,8 +86,8 @@ class Terminal(object):
             logging.getLogger('terminal').debug('found unfinished data')
 
         return cap_turple
-	    
-    def __try_parse__(self, data):	
+
+    def __try_parse__(self, data):
         next_state = None
 
         for c in data:
@@ -115,7 +115,7 @@ class Terminal(object):
 
         if self.state:
 	        self.__handle_cap__(False)
-	        
+
     def enter_status_line(self, enter):
         self.in_status_line = enter
 
@@ -136,4 +136,3 @@ class Terminal(object):
             return self.cap.flags['init_tabs']
 
         return 8
-    
