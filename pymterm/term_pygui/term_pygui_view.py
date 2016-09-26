@@ -196,3 +196,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def setup_menus(self, m):
         View.setup_menus(self, m)
         super(TerminalPyGUIView, self).setup_menus(m)
+
+    def resized(self, delta):
+        View.resized(self, delta)
+        TerminalPyGUIViewBase.resized(self, delta)

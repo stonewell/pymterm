@@ -38,14 +38,14 @@ _color_map = {}
 class TerminalPyGUIViewBase(TerminalWidget):
 
     def __init__(self, **kwargs):
-        TerminalWidget.__init__(self, **kwargs)
-
         self.font_size = 17.5
         self.padding_x = 5
         self.padding_y = 5
         self.session = None
         self.selection_color = [0.1843, 0.6549, 0.8313, .5]
         self._width_cache = {}
+        
+        TerminalWidget.__init__(self, **kwargs)
 
     def _get_color(self, color_spec):
         key = repr(color_spec)
@@ -124,8 +124,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
         super(TerminalPyGUIViewBase, self).destroy()
 
     def resized(self, delta):
-        super(TerminalPyGUIViewBase, self).resized(delta)
-
         w, h = self.size
 
         if w <= 0 or h <=0:

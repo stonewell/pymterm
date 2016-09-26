@@ -306,3 +306,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     def setup_menus(self, m):
         GLView.setup_menus(self, m)
         super(TerminalPyGUIGLView, self).setup_menus(m)
+
+    def viewport_changed(self):
+        GLView.viewport_changed(self)
+
+        self.resized((1, 1))
