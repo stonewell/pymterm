@@ -74,7 +74,6 @@ class Texture(object):
                      texture_data)
 
     def render(self):
-        glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glMatrixMode(GL_PROJECTION)
 
         glLoadIdentity()
@@ -87,7 +86,6 @@ class Texture(object):
         glEnable(GL_TEXTURE_2D)
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-        glClearColor(0, 0, 0, 1.0)
 
         self.Draw(0, 0, self.h, self.w)
 
@@ -136,8 +134,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
     def _draw(self):
         color = map(lambda x: x / 255, map(float, self.session.cfg.default_background_color))
-        glClearColor(*color)
-        glClear(GL_COLOR_BUFFER_BIT)
 
         width , height = self.size
 
@@ -171,7 +167,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         last_b_color = self.session.cfg.default_background_color
         last_mode = 0
 
-        font = pygame.font.Font('/Users/stone/Work/GitHub/pymterm/data/fonts/wqy-microhei-mono.ttf',
+        font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts', 'wqy-microhei-mono.ttf')
+        font = pygame.font.Font(font_path,
                                     int(self.font_size))
 
         line_height = font.get_linesize()
@@ -308,6 +305,11 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         super(TerminalPyGUIGLView, self).setup_menus(m)
 
     def viewport_changed(self):
+        width, height = self.size
+
+        if width <= 0 or height <= 0:
+            return
+        
         GLView.viewport_changed(self)
 
         self.resized((1, 1))

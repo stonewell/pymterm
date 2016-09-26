@@ -18,6 +18,23 @@
 	    "conn_str":"cm@localhost",
 	    "port":2222,
 	    "password":"1"
+	},
+	
+	"dave-build":{
+	    "conn_str":"dave@localhost",
+	    "port":2222,
+	    "password":"1"
+	},
+	
+	"101":{
+	    "conn_str":"pi@192.168.0.101",
+	    "port":22,
+	    "password":"Zh78ong06@10"
+	},
+	"105":{
+	    "conn_str":"angelstone@192.168.0.105",
+	    "port":22,
+	    "password":"1"
 	}
     },
 

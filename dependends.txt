@@ -1,0 +1,6 @@
+paramiko
+appdirs
+pypiwin32
+pyopengl pyopengl-accelerate
+pygame
+numpy
