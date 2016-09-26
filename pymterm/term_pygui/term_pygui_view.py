@@ -31,6 +31,8 @@ from term_menu import basic_menus
 
 from term_pygui_view_base import TerminalPyGUIViewBase
 
+from functools32 import lru_cache
+
 #put View on right to make Base class method override happer
 #because python resolve method from left to right
 class TerminalPyGUIView(TerminalPyGUIViewBase, View):
@@ -135,7 +137,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
                 right = xxxx + self._get_width(canvas.font, t)
                 if cur_b_color != self.session.cfg.default_background_color:
-                    canvas.fill_frame_rect((xxxx, y, right, y + canvas.font.line_height))
+                    canvas.fill_frame_rect((xxxx, y, right, y + self._get_line_height()))
 
                 canvas.moveto(xxxx, y + canvas.font.ascent)
                 canvas.show_text(t)
@@ -191,7 +193,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
                 last_mode |= TextMode.CURSOR
                 b_x = render_text(' ', b_x)
 
-            y += canvas.font.line_height
+            y += self._get_line_height()
 
     def setup_menus(self, m):
         View.setup_menus(self, m)
@@ -200,3 +202,33 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def resized(self, delta):
         View.resized(self, delta)
         TerminalPyGUIViewBase.resized(self, delta)
+        
+    def _setup_canvas(self, canvas):
+        canvas.set_font(self._get_font())
+
+    @lru_cache(1)
+    def _get_font(self):
+        return GUI.Font(family='Noto Sans Mono CJK SC Regular',
+                                    #u'文泉驿等宽微米黑',
+                                    #'YaHei Consolas Hybrid',
+                                    #'WenQuanYi Micro Hei Mono',
+                                    size=self.font_size)
+
+    def get_prefered_size(self):
+        f = self._get_font()
+        w = int(self._get_width(f, 'ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
+        h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
+
+        return (w, h)
+
+    @lru_cache(200)
+    def _get_width(self, f = None, t = ''):
+        if f is None:
+            f = self._get_font()
+            
+        return w
+    
+    def _get_line_height(self):
+        f = self._get_font()
+
+        return f.line_height

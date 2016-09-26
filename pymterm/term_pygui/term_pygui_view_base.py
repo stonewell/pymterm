@@ -65,23 +65,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
     def refresh(self):
         application().schedule_idle(self.__refresh)
 
-    def _setup_canvas(self, canvas):
-        canvas.set_font(self._get_font())
-
-    def _get_font(self):
-        return GUI.Font(family='Noto Sans Mono CJK SC Regular',
-                                    #u'文泉驿等宽微米黑',
-                                    #'YaHei Consolas Hybrid',
-                                    #'WenQuanYi Micro Hei Mono',
-                                    size=self.font_size)
-
-    def get_prefered_size(self):
-        f = self._get_font()
-        w = int(self._get_width(f, 'ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
-        h = int(f.line_height * self.visible_rows + self.padding_y * 2 + 0.5)
-
-        return (w, h)
-
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
 
@@ -131,7 +114,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         w -= self.padding_x * 2
         h -= self.padding_y * 2
-        h -= (self._get_font().line_height / 3)
+        h -= (self._get_line_height() / 3)
 
         self._calculate_visible_rows(h)
         self._calculate_visible_cols(w)
@@ -143,7 +126,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def _calculate_visible_rows(self, h):
         f = self._get_font()
-        self.visible_rows = int(h / f.line_height)
+        self.visible_rows = int(h / self._get_line_height())
         if self.visible_rows <= 0:
             self.visible_rows = 1
 
@@ -188,7 +171,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         padding_top = self.padding_y
         l = self.lines
         f = self._get_font()
-        dy = f.line_height
+        dy = self._get_line_height()
         cx = x
         cy = y - padding_top
         cy = int(boundary(round(cy / dy - 0.5), 0, len(l) - 1))
@@ -229,14 +212,3 @@ class TerminalPyGUIViewBase(TerminalWidget):
     def paste_cmd(self):
         if self.session and self.session.terminal:
             self.session.terminal.paste_data()
-
-    def _get_width(self, f = None, t = ''):
-        if t in self._width_cache:
-            return self._width_cache[t]
-
-        if f is None:
-            f = self._get_font()
-
-        self._width_cache[t] = w = f.width(t)
-
-        return w

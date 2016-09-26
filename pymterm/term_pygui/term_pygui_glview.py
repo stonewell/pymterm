@@ -43,6 +43,8 @@ try:
 except:
     logging.getLogger('term_pygui').exception('draw failed')
 
+from functools32 import lru_cache
+
 class Texture(object):
     def __init__(self, data, w=0, h=0):
         """
@@ -167,11 +169,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         last_b_color = self.session.cfg.default_background_color
         last_mode = 0
 
-        font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts', 'wqy-microhei-mono.ttf')
-        font = pygame.font.Font(font_path,
-                                    int(self.font_size))
+        font = self._get_font();
 
-        line_height = font.get_linesize()
+        line_height = self._get_line_height()
 
         width, height = self.size
 
@@ -212,6 +212,21 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             text = ''
             last_option = None
 
+            line_surf = None
+
+            @lru_cache(1000)
+            def __get_surf(line, line_option):
+                return line_surf
+
+            line_surf = __get_surf(line, line_option)
+
+            if line_surf is not None:
+                print 'surf hit'
+                v_surf.blit(line_surf, (0, y))
+
+                y += line_height
+                continue
+            
             line_surf = pygame.Surface((width, line_height))
             color = map(lambda x: x / 255, map(float, self.session.cfg.default_background_color))
             line_surf.fill(color)
@@ -309,7 +324,45 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
         if width <= 0 or height <= 0:
             return
-        
+
         GLView.viewport_changed(self)
 
         self.resized((1, 1))
+
+    @lru_cache(1)
+    def _get_font(self):
+        font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
+                                     #'wqy-microhei-mono.ttf'
+                                     #'NotoSansMonoCJKsc-Regular.otf'
+                                     'YaHei Consolas Hybrid 1.12.ttf'
+                                     )
+        font = pygame.font.Font(font_path,
+                                    int(self.font_size))
+        return font
+
+    def get_prefered_size(self):
+        f = self._get_font()
+        w = self._get_width(f, 'ABCDabcd')
+        w = int(w / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
+        h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
+
+        return (w, h)
+
+    def _get_width(self, f = None, t = ''):
+        w, h = self._get_size(f, t)
+        return w
+
+    @lru_cache(200)
+    def _get_size(self, f = None, t = ''):
+        if f is None:
+            f = self._get_font()
+
+        text = f.render(t, 1, (0,0,0,0))
+        text_pos = text.get_rect()
+
+        return (text_pos.width, text_pos.height)
+
+    def _get_line_height(self):
+        f = self._get_font()
+
+        return f.get_linesize()

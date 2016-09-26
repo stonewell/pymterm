@@ -4,3 +4,4 @@ pypiwin32
 pyopengl pyopengl-accelerate
 pygame
 numpy
+functools32
