@@ -45,6 +45,18 @@ except:
 
 from functools32 import lru_cache
 
+class __cached_line_surf(object):
+    pass
+
+@lru_cache(maxsize=1000)
+def _get_surf(k, width, line_height):
+    logging.getLogger('term_pygui_cache').debug('key:{}, w={}, h={}'.format(k, width, line_height))
+    cached_line_surf = __cached_line_surf()
+    cached_line_surf.cached = False
+    cached_line_surf.surf = pygame.Surface((width, line_height))
+
+    return cached_line_surf
+
 class Texture(object):
     def __init__(self, data, w=0, h=0):
         """
@@ -184,8 +196,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             last_mode &= ~TextMode.SELECTION
 
             # temprary add cusor and selection mode
-            if self.cursor_visible and i == c_row and c_col < len(line):
+            if self.cursor_visible and i == c_row:
                 reserve(line_option, c_col + 1, TextAttribute(None, None, None))
+                reserve(line, c_col + 1, ' ')
                 line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
 
             if s_f != s_t:
@@ -212,22 +225,20 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             text = ''
             last_option = None
 
-            line_surf = None
+            key = self._get_cache_key(line, line_option)
+            cached_line_surf = _get_surf(key, width, line_height)
+            line_surf = cached_line_surf.surf
 
-            @lru_cache(1000)
-            def __get_surf(line, line_option):
-                return line_surf
-
-            line_surf = __get_surf(line, line_option)
-
-            if line_surf is not None:
-                print 'surf hit'
+            if cached_line_surf.cached:
+                logging.getLogger('term_pygui').debug('surf hit:{}'.format(key))
                 v_surf.blit(line_surf, (0, y))
 
                 y += line_height
                 continue
-            
-            line_surf = pygame.Surface((width, line_height))
+
+            logging.getLogger('term_pygui').debug('not cached:{}, {}, {}'.format(key, cached_line_surf, _get_surf.cache_info()))
+
+            cached_line_surf.cached = True
             color = map(lambda x: x / 255, map(float, self.session.cfg.default_background_color))
             line_surf.fill(color)
 
@@ -307,10 +318,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             if last_col < len(line):
                 b_x = render_text(''.join(line[last_col:]), b_x)
 
-            if self.cursor_visible and i == c_row and c_col >= len(line):
-                last_mode |= TextMode.CURSOR
-                b_x = render_text(' ', b_x)
-
             v_surf.blit(line_surf, (0, y))
 
             y += line_height
@@ -332,9 +339,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     @lru_cache(1)
     def _get_font(self):
         font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
-                                     #'wqy-microhei-mono.ttf'
+                                     'wqy-microhei-mono.ttf'
                                      #'NotoSansMonoCJKsc-Regular.otf'
-                                     'YaHei Consolas Hybrid 1.12.ttf'
+                                     #'YaHei Consolas Hybrid 1.12.ttf'
                                      )
         font = pygame.font.Font(font_path,
                                     int(self.font_size))
@@ -366,3 +373,15 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         f = self._get_font()
 
         return f.get_linesize()
+
+    def _get_cache_key(self, line, line_option):
+        line_key = self._get_line_cache_key(line)
+        line_option_key = self._get_line_option_cache_key(line_option)
+
+        return '{}_{}'.format(line_key, line_option_key)
+
+    def _get_line_cache_key(self, line):
+        return repr(line)
+
+    def _get_line_option_cache_key(self, line_option):
+        return repr(line_option)
