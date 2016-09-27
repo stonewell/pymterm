@@ -60,6 +60,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def __refresh(self):
         self.invalidate()
+        #do not need to call update 
         #self.update()
 
     def refresh(self):

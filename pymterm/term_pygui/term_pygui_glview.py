@@ -63,7 +63,7 @@ class Texture(GTexture):
     def __init__(self, data, w=0, h=0):
         texture_data = pygame.image.tostring(data, "RGBA", True)
         self.w, self.h = data.get_size()
-        
+
         super(Texture, self).__init__(GL_TEXTURE_2D)
         self.load_texture(texture_data)
 
@@ -113,9 +113,6 @@ class Texture(GTexture):
 
         glEnd()
 
-import threading
-
-_render_lock = threading.Lock()
 #put View on right to make Base class method override happer
 #because python resolve method from left to right
 class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
@@ -123,7 +120,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     def __init__(self, **kwargs):
         pf = GLConfig(double_buffer = True)
         TerminalPyGUIViewBase.__init__(self, **kwargs)
-        GLView.__init__(self, pf, **kwargs)
+        GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
 
     def init_context(self):
         glClearColor(0.0, 0.0, 0.0, 0.0)
