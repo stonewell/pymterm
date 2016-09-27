@@ -60,7 +60,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def __refresh(self):
         self.invalidate()
-        self.update()
+        #self.update()
 
     def refresh(self):
         application().schedule_idle(self.__refresh)

@@ -45,6 +45,8 @@ except:
 
 from functools32 import lru_cache
 
+from GUI.GLTextures import Texture as GTexture
+
 class __cached_line_surf(object):
     pass
 
@@ -57,37 +59,25 @@ def _get_surf(k, width, line_height):
 
     return cached_line_surf
 
-class Texture(object):
+class Texture(GTexture):
     def __init__(self, data, w=0, h=0):
-        """
-        Initialize the texture from 3 diferents types of data:
-        filename = open the image, get its string and produce texture
-        surface = get its string and produce texture
-        string surface = gets it texture and use w and h provided
-        """
-        if type(data) == pygame.Surface:
-            texture_data = pygame.image.tostring(data, "RGBA", True)
-            self.w, self.h = data.get_size()
-
-        elif type(data) == bytes:
-            self.w, self.h = w, h
-            texture_data = data
-
-        self.texID = 0
+        texture_data = pygame.image.tostring(data, "RGBA", True)
+        self.w, self.h = data.get_size()
+        
+        super(Texture, self).__init__(GL_TEXTURE_2D)
         self.load_texture(texture_data)
 
     def load_texture(self, texture_data):
-        self.texID = glGenTextures(1)
+        self.bind()
 
         glPixelStorei(GL_UNPACK_ALIGNMENT,1)
-        glBindTexture(GL_TEXTURE_2D, self.texID)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.w,
                      self.h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
                      texture_data)
 
-    def render(self):
+    def do_setup(self):
         glMatrixMode(GL_PROJECTION)
 
         glLoadIdentity()
@@ -101,14 +91,11 @@ class Texture(object):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
-        self.Draw(0, 0, self.h, self.w)
+    def render(self):
+        self.bind()
+        self.draw(0, 0, self.h, self.w)
 
-    def Draw(self, top, left, bottom, right):
-        """
-        Draw the image on the Opengl Screen
-        """
-        # Make sure he is looking at the position (0,0,0)
-        glBindTexture(GL_TEXTURE_2D, self.texID)
+    def draw(self, top, left, bottom, right):
         glBegin(GL_QUADS)
 
         # The top left of the image must be the indicated position
@@ -126,8 +113,9 @@ class Texture(object):
 
         glEnd()
 
-        #pygame.display.flip()
+import threading
 
+_render_lock = threading.Lock()
 #put View on right to make Base class method override happer
 #because python resolve method from left to right
 class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
