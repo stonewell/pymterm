@@ -38,11 +38,11 @@ from term_pygui_view_base import TerminalPyGUIViewBase
 import pygame
 from pygame.locals import *
 
-use_freetype = True
+use_freetype = False
 
 try:
     pygame.font.init()
-    
+
     if use_freetype:
         import pygame.freetype
         pygame.freetype.init()
@@ -135,7 +135,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
     def _get_texture(self):
         return Texture()
-    
+
     def render(self):
         try:
             self._draw()
@@ -143,12 +143,10 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             logging.getLogger('term_pygui').exception('draw failed')
 
     def _draw(self):
-        color = map(lambda x: x / 255, map(float, self.session.cfg.default_background_color))
-
         width , height = self.size
 
         background = pygame.Surface((width, height))
-        background.fill(color)
+        background.fill(self.session.cfg.default_background_color)
 
         # Display some text
         self._draw2(background)
@@ -236,8 +234,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             logging.getLogger('term_pygui').debug('not cached:{}, {}, {}'.format(key, cached_line_surf, _get_surf.cache_info()))
 
             cached_line_surf.cached = True
-            color = map(lambda x: x / 255, map(float, self.session.cfg.default_background_color))
-            line_surf.fill(color)
+            line_surf.fill(self.session.cfg.default_background_color)
 
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
@@ -265,11 +262,16 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                 else:
                     text = font.render(t, 1, cur_f_color)
                     text_pos = text.get_rect()
-                text_pos.centery = line_surf.get_rect().centery
-                text_pos.left = xxxx
+                if use_freetype:
+                    text_pos.top = font.get_sized_ascender() - text_pos.top
+                else:
+                    text_pos.centery = line_surf.get_rect().centery
+
+                old_left = text_pos.left
+                text_pos.left += xxxx
 
                 if cur_b_color != self.session.cfg.default_background_color:
-                    line_surf.fill(cur_b_color, text_pos)
+                    line_surf.fill(cur_b_color, (xxxx, 0, text_pos.width, self._get_line_height()))
 
                 line_surf.blit(text, text_pos)
 
@@ -339,15 +341,15 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     @lru_cache(1)
     def _get_font(self):
         font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
-                                     #'wqy-microhei-mono.ttf'
-                                     'NotoSansMonoCJKsc-Regular.otf'
+                                     'wqy-microhei-mono.ttf'
+                                     #'NotoSansMonoCJKsc-Regular.otf'
                                      #'YaHei Consolas Hybrid 1.12.ttf'
                                      )
         if use_freetype:
             font = pygame.freetype.Font(font_path,
                                             int(self.font_size))
         else:
-            font = pygame.font.SysFont("monospace",
+            font = pygame.font.Font(font_path,
                                         int(self.font_size))
         return font
 
