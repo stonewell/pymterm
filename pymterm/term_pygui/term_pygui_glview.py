@@ -348,7 +348,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                                      )
         if use_freetype:
             font = pygame.freetype.Font(font_path,
-                                            int(self.font_size))
+                                            self.font_size)
         else:
             font = pygame.font.Font(font_path,
                                         int(self.font_size))
@@ -383,9 +383,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         f = self._get_font()
 
         if use_freetype:
-            return f.get_sized_height()
+            return f.get_sized_height() + 1
         else:
-            return f.get_linesize()
+            return f.get_linesize() + 1
 
     def _get_cache_key(self, line, line_option):
         line_key = self._get_line_cache_key(line)
