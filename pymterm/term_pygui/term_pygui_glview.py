@@ -38,7 +38,7 @@ from term_pygui_view_base import TerminalPyGUIViewBase
 import pygame
 from pygame.locals import *
 
-use_freetype = False
+use_freetype = True
 
 try:
     pygame.font.init()
@@ -257,25 +257,26 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     cur_f_color = self._merge_color(cur_f_color, self.selection_color)
                     cur_b_color = self._merge_color(cur_b_color, self.selection_color)
 
+                right_adjust = 0
                 if use_freetype:
                     text, text_pos = font.render(t, cur_f_color)
+                    for turple in font.get_metrics(t):
+                        right_adjust += turple[4]
+                    text_pos.top = font.get_sized_ascender() - text_pos.top
                 else:
                     text = font.render(t, 1, cur_f_color)
                     text_pos = text.get_rect()
-                if use_freetype:
-                    text_pos.top = font.get_sized_ascender() - text_pos.top
-                else:
+                    right_adjust = text_pos.width
                     text_pos.centery = line_surf.get_rect().centery
 
-                old_left = text_pos.left
                 text_pos.left += xxxx
 
                 if cur_b_color != self.session.cfg.default_background_color:
-                    line_surf.fill(cur_b_color, (xxxx, 0, text_pos.width, self._get_line_height()))
+                    line_surf.fill(cur_b_color, (xxxx, 0, right_adjust, self._get_line_height()))
 
                 line_surf.blit(text, text_pos)
 
-                return text_pos.right
+                return xxxx + right_adjust
 
             for col in range(len(line_option)):
                 if line_option[col] is None:
