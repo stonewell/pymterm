@@ -38,10 +38,16 @@ from term_pygui_view_base import TerminalPyGUIViewBase
 import pygame
 from pygame.locals import *
 
+use_freetype = False
+
 try:
     pygame.font.init()
+    
+    if use_freetype:
+        import pygame.freetype
+        pygame.freetype.init()
 except:
-    logging.getLogger('term_pygui').exception('draw failed')
+    logging.getLogger('term_pygui').exception('pygame initialize failed')
 
 from functools32 import lru_cache
 
@@ -60,14 +66,13 @@ def _get_surf(k, width, line_height):
     return cached_line_surf
 
 class Texture(GTexture):
-    def __init__(self, data, w=0, h=0):
+    def __init__(self):
+        super(Texture, self).__init__(GL_TEXTURE_2D)
+
+    def load_texture(self, data):
         texture_data = pygame.image.tostring(data, "RGBA", True)
         self.w, self.h = data.get_size()
 
-        super(Texture, self).__init__(GL_TEXTURE_2D)
-        self.load_texture(texture_data)
-
-    def load_texture(self, texture_data):
         self.bind()
 
         glPixelStorei(GL_UNPACK_ALIGNMENT,1)
@@ -81,9 +86,6 @@ class Texture(GTexture):
         glMatrixMode(GL_PROJECTION)
 
         glLoadIdentity()
-        glRotatef(180, 1, 0, 0)
-        glTranslate(-1, -1, 0)
-        glScale(2.0/self.w, 2.0/self.h, 1)
         glDisable(GL_DEPTH_TEST)
         glDisable(GL_CULL_FACE)
         glDisable(GL_LIGHTING)
@@ -91,7 +93,13 @@ class Texture(GTexture):
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
 
+    def _pre_render(self):
+        glRotatef(180, 1, 0, 0)
+        glTranslate(-1, -1, 0)
+        glScale(2.0/self.w, 2.0/self.h, 1)
+
     def render(self):
+        self._pre_render()
         self.bind()
         self.draw(0, 0, self.h, self.w)
 
@@ -125,6 +133,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     def init_context(self):
         glClearColor(0.0, 0.0, 0.0, 0.0)
 
+    def _get_texture(self):
+        return Texture()
+    
     def render(self):
         try:
             self._draw()
@@ -142,9 +153,10 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         # Display some text
         self._draw2(background)
 
-        texture = Texture(background, width, height)
-
+        texture = self._get_texture()
+        texture.load_texture(background)
         texture.render()
+        texture.deallocate()
 
     def _draw2(self, v_surf):
         x = self.padding_x
@@ -248,8 +260,11 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     cur_f_color = self._merge_color(cur_f_color, self.selection_color)
                     cur_b_color = self._merge_color(cur_b_color, self.selection_color)
 
-                text = font.render(t, 1, cur_f_color)
-                text_pos = text.get_rect()
+                if use_freetype:
+                    text, text_pos = font.render(t, cur_f_color)
+                else:
+                    text = font.render(t, 1, cur_f_color)
+                    text_pos = text.get_rect()
                 text_pos.centery = line_surf.get_rect().centery
                 text_pos.left = xxxx
 
@@ -328,8 +343,12 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                                      #'NotoSansMonoCJKsc-Regular.otf'
                                      #'YaHei Consolas Hybrid 1.12.ttf'
                                      )
-        font = pygame.font.Font(font_path,
-                                    int(self.font_size))
+        if use_freetype:
+            font = pygame.freetype.Font(font_path,
+                                            int(self.font_size))
+        else:
+            font = pygame.font.SysFont("monospace",
+                                        int(self.font_size))
         return font
 
     def get_prefered_size(self):
@@ -349,15 +368,21 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         if f is None:
             f = self._get_font()
 
-        text = f.render(t, 1, (0,0,0,0))
-        text_pos = text.get_rect()
+        if use_freetype:
+            text, text_pos = f.render(t, (0, 0, 0, 0))
+        else:
+            text = f.render(t, 1, (0,0,0,0))
+            text_pos = text.get_rect()
 
         return (text_pos.width, text_pos.height)
 
     def _get_line_height(self):
         f = self._get_font()
 
-        return f.get_linesize()
+        if use_freetype:
+            return f.get_sized_height()
+        else:
+            return f.get_linesize()
 
     def _get_cache_key(self, line, line_option):
         line_key = self._get_line_cache_key(line)
