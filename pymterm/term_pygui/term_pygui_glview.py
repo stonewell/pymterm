@@ -38,7 +38,7 @@ from term_pygui_view_base import TerminalPyGUIViewBase
 import pygame
 from pygame.locals import *
 
-use_freetype = False
+use_freetype = True
 
 try:
     pygame.font.init()
@@ -339,8 +339,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     @lru_cache(1)
     def _get_font(self):
         font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
-                                     'wqy-microhei-mono.ttf'
-                                     #'NotoSansMonoCJKsc-Regular.otf'
+                                     #'wqy-microhei-mono.ttf'
+                                     'NotoSansMonoCJKsc-Regular.otf'
                                      #'YaHei Consolas Hybrid 1.12.ttf'
                                      )
         if use_freetype:
