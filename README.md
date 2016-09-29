@@ -5,6 +5,14 @@ UI framework https://kivy.org
 
 ssh library https://github.com/paramiko/paramiko
 
+## Dependecy
+ - paramiko
+ - appdirs
+ - pypiwin32/pygtk/pycoco
+ - pyopengl pyopengl-accelerate
+ - pygame
+ - numpy
+ - functools32
 ## TODO
 - [X] UTF-8 handling
 - [X] Scroll history
