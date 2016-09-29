@@ -1,7 +1,9 @@
 # pymterm
 A multiple tab terminal emulator implemented in python
 
-UI framework https://kivy.org
+UI framework 
+ - https://kivy.org
+ - https://github.com/stonewell/pygui/
 
 ssh library https://github.com/paramiko/paramiko
 
