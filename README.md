@@ -5,7 +5,8 @@ UI framework
  - https://kivy.org
  - https://github.com/stonewell/pygui/
 
-ssh library https://github.com/paramiko/paramiko
+ssh library 
+ - https://github.com/paramiko/paramiko
 
 ## Dependecy
  - paramiko
@@ -15,6 +16,7 @@ ssh library https://github.com/paramiko/paramiko
  - pygame
  - numpy
  - functools32
+ 
 ## TODO
 - [X] UTF-8 handling
 - [X] Scroll history
