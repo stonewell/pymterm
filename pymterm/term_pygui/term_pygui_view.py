@@ -202,7 +202,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def resized(self, delta):
         View.resized(self, delta)
         TerminalPyGUIViewBase.resized(self, delta)
-        
+
     def _setup_canvas(self, canvas):
         canvas.set_font(self._get_font())
 
@@ -225,9 +225,10 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _get_width(self, f = None, t = ''):
         if f is None:
             f = self._get_font()
-            
+
+        w = f.width(t)
         return w
-    
+
     def _get_line_height(self):
         f = self._get_font()
 

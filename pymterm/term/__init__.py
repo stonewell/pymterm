@@ -23,3 +23,5 @@ def reserve(l, size, default=None):
         for i in range(len(l), size):
             l.append(copy.deepcopy(default) if default is not None else None)
 
+def clone_attr(attr):
+    return TextAttribute(attr.f_color, attr.b_color, attr.mode)

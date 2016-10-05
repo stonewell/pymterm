@@ -7,6 +7,7 @@ import sys
 import time
 import traceback
 import string
+import threading
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, TabView
 from GUI import application
@@ -58,7 +59,6 @@ class __cached_line_surf(object):
 
 @lru_cache(maxsize=1000)
 def _get_surf(k, width, line_height):
-    logging.getLogger('term_pygui_cache').debug('key:{}, w={}, h={}'.format(k, width, line_height))
     cached_line_surf = __cached_line_surf()
     cached_line_surf.cached = False
     cached_line_surf.surf = pygame.Surface((width, line_height))
@@ -129,6 +129,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         pf = GLConfig(double_buffer = True)
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
+        self.lock = threading.Lock()
 
     def init_context(self):
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -161,8 +162,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         b_x = self.padding_x
         y = self.padding_y
 
-        lines = [line[:] for line in self.lines]
-        line_options = [line_option[:] for line_option in self.line_options]
+        with self.lock:
+            lines = [line[:] for line in self.lines]
+            line_options = [line_option[:] for line_option in self.line_options]
 
         c_col, c_row = self.term_cursor
 
@@ -185,6 +187,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         for i in range(len(lines)):
             x = b_x = self.padding_x
             line = lines[i]
+            logging.getLogger('render_data_origin').debug(u'{}.{}'.format(i, ''.join(line)))
             line_option = line_options[i] if i < len(line_options) else []
 
             last_mode &= ~TextMode.CURSOR
@@ -225,16 +228,15 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             line_surf = cached_line_surf.surf
 
             if cached_line_surf.cached:
-                logging.getLogger('term_pygui').debug('surf hit:{}'.format(key))
+                logging.getLogger('render_hit_data').debug(''.join(line))
                 v_surf.blit(line_surf, (0, y))
 
                 y += line_height
                 continue
 
-            logging.getLogger('term_pygui').debug('not cached:{}, {}, {}'.format(key, cached_line_surf, _get_surf.cache_info()))
-
             cached_line_surf.cached = True
             line_surf.fill(self.session.cfg.default_background_color)
+            logging.getLogger('render_data').debug(''.join(line))
 
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
@@ -372,13 +374,18 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             f = self._get_font()
 
         if use_freetype:
-            text, text_pos = f.render(t, (0, 0, 0, 0))
+            width = 0
+            for turple in f.get_metrics(t):
+                width += turple[4]
+
+            return (width, self._get_line_height())
         else:
             text = f.render(t, 1, (0,0,0,0))
             text_pos = text.get_rect()
 
         return (text_pos.width, text_pos.height)
 
+    @lru_cache(1)
     def _get_line_height(self):
         f = self._get_font()
 

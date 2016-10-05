@@ -6,6 +6,11 @@ import sys
 import cross_platform as platform
 import session_config
 
+def unhandled_exception(exctype, value, tb):
+    logging.exception('unknown error happening')
+
+sys.excepthook = unhandled_exception
+
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
                                      description='a multiple tab terminal emulator in python')

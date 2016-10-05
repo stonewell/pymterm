@@ -68,6 +68,7 @@ class SSHSession(Session):
         cols = self.terminal.get_cols()
         rows = self.terminal.get_rows()
 
+        logging.getLogger('ssh_session').debug('get_pty, term={}, cols={}, rows={}'.format(self.cfg.term_name, cols, rows))
         chan.get_pty(term=self.cfg.term_name, width=cols, height = rows)
         chan.invoke_shell()
         self._start_reader()

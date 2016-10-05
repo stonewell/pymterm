@@ -1,8 +1,8 @@
 import logging
 
 from terminal import Terminal
-from term import TextAttribute, TextMode, reserve
-
+from term import TextAttribute, TextMode, reserve, clone_attr
+from term_char_width import char_width
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
@@ -41,67 +41,91 @@ class TerminalGUI(Terminal):
 
         return line
 
-    def save_buffer(self, c, insert = False, wrap = False):
+    def wrap_line(self, c, insert):
+        self.col = 0
+        self.cursor_down(None)
+        self._save_buffer(c, insert)
+
+    def save_buffer(self, c, insert = False):
         line = self.get_cur_line()
 
         self.get_cur_option()
         line_option = self.get_cur_line_option()
 
-        #update line option
-        line_option[self.col] = self.cur_line_option
+        #take care utf_8
+        self.remain_buffer.append(c)
+
+        c = ''.join(self.remain_buffer).decode('utf_8', errors='ignore')
+
+        if len(c) == 0:
+            logging.getLogger('term_gui').debug('remain_buffer found:{}'.format(map(ord, self.remain_buffer)))
+            return
+
+        self.remain_buffer = []
+
+        w = char_width(c)
+
+        if w == 0 or w == -1:
+            logging.getLogger('term_gui').warning(u'save buffer get a invalid width char: w= {}, c={}'.format(w, c))
+            
+        if len(c.encode('utf_8')) > 1 and w > 1:
+            c += '\000'
 
         if self.cfg.debug_more:
-            logging.getLogger('term_gui').debug('save buffer:{},{},{}'.format(self.col, self.row, c))
-
-        #take care utf_8
-        if not wrap:
-            self.remain_buffer.append(c)
-
-            c = ''.join(self.remain_buffer).decode('utf_8', errors='ignore')
-
-            if len(c) == 0:
-                logging.getLogger('term_gui').debug('remain_buffer found:{}'.format(map(ord, self.remain_buffer)))
-                return
-
-            self.remain_buffer = []
-
-            if len(c.encode('utf_8')) > 1:
-                c += '\000'
-
-        def wrap_line():
-            self.col = 0
-            self.cursor_down(None)
-            self.save_buffer(c, insert, True)
-
+            logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}'.format(self.col, self.row, w, len(c)))
+            
         if insert:
-            line.insert(self.col, c[0])
-            if len(c) > 1:
-                line.insert(self.col + 1, c[1])
+            if len(line) + len(c) > self.get_cols():
+                wrap_c = line[self.get_cols() - len(line) - len(c):]
 
-            if len(line) > self.get_cols():
-                c = line[self.get_cols()]
-                two_bytes = 0
-                if c == '\000':
-                    c = line[self.get_cols() - 1]
-                    c += '\000'
-                    two_bytes = 1
+                if wrap_c[0] == '\000':
+                    wrap_c = line[self.get_cols() - len(c) - 1]
+
+                two_bytes = len(wrap_c)
+                wrap_c = wrap_c.replace('\000', '')
 
                 line = line[:self.get_cols() - two_bytes]
-                wrap_line()
-                return
+                self._save_buffer(c, insert)
+                self.wrap_line(wrap_c, insert)
+            else:
+                self._save_buffer(c, insert)
         else:
-            if self.col == self.get_cols():
+            if self.col + len(c) > self.get_cols():
                 #wrap
-                #TODO: need to handle the double bytes
-                wrap_line()
-                return
+                self.wrap_line(c, insert)
+            else:
+                self._save_buffer(c, insert)
+
+
+    def _save_buffer(self, c, insert):
+        line = self.get_cur_line()
+
+        self.get_cur_option()
+        line_option = self.get_cur_line_option()
+
+        if self.cfg.debug_more:
+            logging.getLogger('term_gui').debug(u'save buffer:{},{},{},len={}'.format(self.col, self.row, c, len(c)))
+            
+        if insert:
+            line.insert(self.col, c[0])
+            #update line option
+            line_option.insert(self.col, clone_attr(self.cur_line_option))
+            self.col += 1
+
+            if len(c) > 1:
+                line.insert(self.col + 1, c[1])
+                #update line option
+                line_option.insert(self.col + 1, clone_attr(self.cur_line_option))
+                self.col += 1
+        else:
+            reserve(line, self.col + len(c), ' ')
+            reserve(line_option, self.col + len(c), None)
             line[self.col] = c[0]
+            line_option[self.col] = clone_attr(self.cur_line_option)
             self.col += 1
             if len(c) > 1:
-                if self.col < len(line):
-                    line[self.col] = c[1]
-                else:
-                    line.append(c[1])
+                line[self.col] = c[1]
+                line_option[self.col] = clone_attr(self.cur_line_option)
                 self.col += 1
 
     def get_rows(self):
@@ -125,6 +149,7 @@ class TerminalGUI(Terminal):
         if len(self.lines) <= self.get_rows():
             return self.lines + [self.create_new_line()] * (self.get_rows() - len(self.lines)), self.line_options + [self.create_new_line_option()] * (self.get_rows() - len(self.lines))
         else:
+            logging.getLogger('get_text').debug('{}={}'.format(len(self.lines), self.get_rows))
             lines = self.lines[len(self.lines) - self.get_rows():]
             line_options = self.line_options[len(self.lines) - self.get_rows():]
             return lines, line_options
@@ -158,8 +183,12 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('termianl cursor:{}, {}'.format(self.col, self.row));
 
     def cursor_right(self, context):
+        logging.getLogger('term_gui').debug('cursor right:{}, {}'.format(self.col, self.row));
         if self.col < self.get_cols() - 1:
             self.col += 1
+            line = self.get_cur_line()
+            if line[self.col] == '\000':
+                self.col += 1
 
     def cursor_left(self, context):
         logging.getLogger('term_gui').debug('cursor left:{}, {}'.format(self.col, self.row));
@@ -670,12 +699,12 @@ class TerminalGUI(Terminal):
         self.term_widget.copy_to_clipboard(data)
 
         self.term_widget.cancel_selection()
-        
+
     def resize_terminal(self):
         if len(self.lines) <= self.get_rows():
             self.set_scroll_region(0, self.get_rows() - 1)
             return
-        
+
         last_line = -1
         for i in range(len(self.lines) - 1, 0, -1):
             if len(''.join(self.lines[i]).strip()) > 0:

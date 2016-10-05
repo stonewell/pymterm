@@ -124,6 +124,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if self.session:
             self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
             self.session.terminal.resize_terminal()
+            logging.getLogger('term_pygui').debug('on size done: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
 
     def _calculate_visible_rows(self, h):
         f = self._get_font()

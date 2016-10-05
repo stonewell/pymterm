@@ -11,14 +11,8 @@ import string
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
 from GUI import application
 from GUI.Files import FileType
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
-from GUI.StdColors import black, red, blue
-from GUI.StdFonts import application_font
-from GUI.Colors import rgb
 from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
-
-import GUI.Font
 
 import cap.cap_manager
 from session import create_session
@@ -30,6 +24,7 @@ from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
 from term_pygui_glview import TerminalPyGUIGLView as TerminalPyGUIView
+#from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
 
 from GUI import ModalDialog, Label, Button
 from GUI import RadioGroup, RadioButton

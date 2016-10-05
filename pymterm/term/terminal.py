@@ -49,6 +49,7 @@ class Terminal(object):
         cap_name, increase_params = cap_turple
         cap_handler = cap.cap_manager.get_cap_handler(cap_name)
 
+        logging.getLogger('terminal').debug("control data:[[[" + ''.join(self.control_data) + ']]],for cap:' + cap_name)
         if not cap_handler:
             logging.getLogger('terminal').error('no matched:{}, params={}'.format(cap_turple, self.context.params))
         elif cap_handler:
