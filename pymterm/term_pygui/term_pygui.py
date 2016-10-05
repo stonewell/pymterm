@@ -23,8 +23,10 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
-from term_pygui_glview import TerminalPyGUIGLView as TerminalPyGUIView
-#from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
+try:
+    from term_pygui_glview import TerminalPyGUIGLView as TerminalPyGUIView
+except:
+    from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
 
 from GUI import ModalDialog, Label, Button
 from GUI import RadioGroup, RadioButton
