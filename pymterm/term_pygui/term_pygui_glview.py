@@ -42,12 +42,11 @@ from pygame.locals import *
 use_freetype = True
 
 try:
-    pygame.font.init()
-
-    if use_freetype:
-        import pygame.freetype
-        pygame.freetype.init()
+    import pygame.freetype
+    pygame.freetype.init()
 except:
+    use_freetype = False
+    pygame.font.init()
     logging.getLogger('term_pygui').exception('pygame initialize failed')
 
 from functools32 import lru_cache
@@ -187,7 +186,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         for i in range(len(lines)):
             x = b_x = self.padding_x
             line = lines[i]
-            logging.getLogger('render_data_origin').debug(u'{}.{}'.format(i, ''.join(line)))
             line_option = line_options[i] if i < len(line_options) else []
 
             last_mode &= ~TextMode.CURSOR
@@ -228,7 +226,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             line_surf = cached_line_surf.surf
 
             if cached_line_surf.cached:
-                logging.getLogger('render_hit_data').debug(''.join(line))
                 v_surf.blit(line_surf, (0, y))
 
                 y += line_height
@@ -236,7 +233,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
             cached_line_surf.cached = True
             line_surf.fill(self.session.cfg.default_background_color)
-            logging.getLogger('render_data').debug(''.join(line))
 
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color

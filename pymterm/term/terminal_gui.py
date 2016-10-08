@@ -67,13 +67,13 @@ class TerminalGUI(Terminal):
 
         if w == 0 or w == -1:
             logging.getLogger('term_gui').warning(u'save buffer get a invalid width char: w= {}, c={}'.format(w, c))
-            
+
         if len(c.encode('utf_8')) > 1 and w > 1:
             c += '\000'
 
         if self.cfg.debug_more:
             logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}'.format(self.col, self.row, w, len(c)))
-            
+
         if insert:
             if len(line) + len(c) > self.get_cols():
                 wrap_c = line[self.get_cols() - len(line) - len(c):]
@@ -105,18 +105,16 @@ class TerminalGUI(Terminal):
 
         if self.cfg.debug_more:
             logging.getLogger('term_gui').debug(u'save buffer:{},{},{},len={}'.format(self.col, self.row, c, len(c)))
-            
+
         if insert:
             line.insert(self.col, c[0])
             #update line option
             line_option.insert(self.col, clone_attr(self.cur_line_option))
-            self.col += 1
 
             if len(c) > 1:
                 line.insert(self.col + 1, c[1])
                 #update line option
                 line_option.insert(self.col + 1, clone_attr(self.cur_line_option))
-                self.col += 1
         else:
             reserve(line, self.col + len(c), ' ')
             reserve(line_option, self.col + len(c), None)

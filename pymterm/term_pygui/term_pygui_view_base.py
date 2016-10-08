@@ -94,6 +94,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         if len(v) > 0:
             self.session.send(v)
+        elif len(e.char) > 0:
+            self.session.send(e.char)
         elif text:
             self.session.send(text)
 
