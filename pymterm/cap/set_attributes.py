@@ -30,6 +30,12 @@ def handle(term, context, cap_turple):
                 mode |= 1
             else:
                 mode |= (1 << v)
+        elif v == 39:
+            #reset foreground
+            f_color_idx = -1
+        elif v == 49:
+            #reset background
+            b_color_idx = -1
         elif (v >= 30 and v <= 37) or (v >= 90 and v <= 97):
             #foreground
             f_color_idx = v % 10 + (8 if v >= 90 else 0)
