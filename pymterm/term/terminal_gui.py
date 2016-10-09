@@ -42,9 +42,17 @@ class TerminalGUI(Terminal):
         return line
 
     def wrap_line(self, c, insert):
+        save_col, save_row = self.col, self.row
+        
         self.col = 0
         self.cursor_down(None)
-        self._save_buffer(c, insert)
+        for cc in c:
+            if cc == '\000':
+                continue
+            self._save_buffer(c, insert)
+
+        if insert:
+            self.col, self.row = save_col, save_row
 
     def save_buffer(self, c, insert = False):
         line = self.get_cur_line()
@@ -72,19 +80,22 @@ class TerminalGUI(Terminal):
             c += '\000'
 
         if self.cfg.debug_more:
-            logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}'.format(self.col, self.row, w, len(c)))
+            logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}, line_len={}, cols={}'.format(self.col, self.row, w, len(c), len(line), self.get_cols()))
 
         if insert:
             if len(line) + len(c) > self.get_cols():
                 wrap_c = line[self.get_cols() - len(line) - len(c):]
 
                 if wrap_c[0] == '\000':
-                    wrap_c = line[self.get_cols() - len(c) - 1]
+                    wrap_c = line[self.get_cols() - len(line) - len(c) - 1:]
 
                 two_bytes = len(wrap_c)
-                wrap_c = wrap_c.replace('\000', '')
 
                 line = line[:self.get_cols() - two_bytes]
+                
+                if self.cfg.debug_more:
+                    logging.getLogger('term_gui').debug(u'save buffer wrap:c=[{}], wrap=[{}]'.format(c, wrap_c))
+                    
                 self._save_buffer(c, insert)
                 self.wrap_line(wrap_c, insert)
             else:
@@ -157,7 +168,11 @@ class TerminalGUI(Terminal):
             logging.getLogger('term_gui').error('normal data has escape char')
             sys.exit(1)
 
-        self.save_buffer(c, insert)
+        try:
+            for cc in c:
+                self.save_buffer(cc, insert)
+        except:
+            logging.getLogger('term_gui').exception('save buffer failed')
 
     def output_status_line_data(self, c):
         if c == '\x1b':
