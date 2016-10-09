@@ -7,6 +7,7 @@ import sys
 import time
 import traceback
 import string
+import threading
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
 from GUI import application
@@ -18,7 +19,7 @@ from GUI.Colors import rgb
 from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
 
-import GUI.Font
+from GUI import Task
 
 import cap.cap_manager
 from session import create_session
@@ -44,6 +45,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.session = None
         self.selection_color = [0.1843, 0.6549, 0.8313, .5]
         self._width_cache = {}
+        self._lock = threading.Lock()
+        self._refresh_task = None
         
         TerminalWidget.__init__(self, **kwargs)
 
@@ -59,13 +62,21 @@ class TerminalPyGUIViewBase(TerminalWidget):
         return r
 
     def __refresh(self):
+        logging.getLogger('term_pygui').debug('refresh called')
         self.invalidate()
-        #do not need to call update 
-        #self.update()
+        self.update()
+
+        with self.lock:
+            self._refresh_task = None
 
     def refresh(self):
-        application().schedule_idle(self.__refresh)
+        with self.lock:
+            if self._refresh_task is not None:
+                logging.getLogger('term_pygui').debug('refresh already scheduled')
+                return
 
+            self._refresh_task = Task(self.__refresh, .01)
+            
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
 
