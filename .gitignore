@@ -65,3 +65,4 @@ venv/
 venv_64/
 .DS_Store
 *.prof
+pymterm.json

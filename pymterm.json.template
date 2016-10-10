@@ -1,0 +1,22 @@
+{
+    "termcap_dir":"/home/user/pymterm/data",
+
+    "sessions":{
+	"session1":{
+	    "conn_str":"user@remoteserver1"
+	    "port":2222,
+	    "password":"1"
+	},
+    },
+
+    "pty-config":{
+	"default-shell":["/bin/bash", "-i", "-l"]
+    },
+
+    "pipe-config":{
+	"default-shell":["C:\\local\\winpty\\bin\\winpty.exe",
+			 "--pipe",
+			 "C:\\local\\msys64\\usr\\bin\\bash.exe" ,
+			 "--login"]
+    }
+}

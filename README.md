@@ -27,3 +27,4 @@ ssh library
 - [ ] IME
 - [X] Copy and Paste
 - [X] local pty (windows using pipe)
+- [X] sftp file transfer
