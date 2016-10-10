@@ -3,6 +3,7 @@ from GUI.GStdMenus import build_menus, \
 
 file_cmds += 'new_window_cmd'
 file_cmds += 'open_session_cmd'
+file_cmds += 'transfer_file_cmd'
 
 _edit_menu_items = [
     ("Copy/^C",       'copy_cmd'),
@@ -21,6 +22,8 @@ def basic_menus(session_items, substitutions = {}, include = None, exclude = Non
         ("New Tab/^T",   'new_cmd'),
         ("New Window/^N",  'new_window_cmd'),
         ("Close/^W",    'close_cmd'),
+        "-",
+        ("Transfer File...", 'transfer_file_cmd'),
         "-",
         (session_items, 'open_session_cmd'),
         "-",

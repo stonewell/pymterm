@@ -10,6 +10,7 @@ import traceback
 import client.ssh_client
 from session import Session
 
+import paramiko
 
 class SSHSession(Session):
     def __init__(self, cfg, terminal):
@@ -101,3 +102,11 @@ class SSHSession(Session):
 
     def prompt_password(self, action):
         self.terminal.prompt_password(action)
+
+    def transfer_file(self, l_f, r_f, is_upload = True, callback = None):
+        sftp = paramiko.SFTPClient.from_transport(self.transport)
+
+        if is_upload:
+            sftp.put(l_f, r_f, callback)
+        else:
+            sftp.get(r_f, l_f, callback)

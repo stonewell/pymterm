@@ -143,6 +143,100 @@ class LoginDialog(ModalDialog):
             last_dir = result.dir
             self.txt_key_file.text = result.path
 
+class FileTransferDialog(ModalDialog):
+
+    def __init__(self, session,  **kwargs):
+        title = 'File Transfer'
+
+        self._session = session
+
+        if 'title' in kwargs:
+            title = kwargs['title']
+
+        ModalDialog.__init__(self, title=title)
+
+        label_local = Label('Local File:')
+        self.txt_local_file = txt_local_file = TextField(multiline = False, password = False)
+        btn_browse_file = Button('Browse', action='choose_local_file', enabled = True)
+
+        label_remote = Label('Remote File:')
+        self.txt_remote_file = txt_remote_file = TextField(multiline = False, password = False)
+
+        self.download_button = Button("Download", action = "download", enabled = True)
+        self.upload_button = Button("Upload", action = "upload", enabled = True)
+        self.cancel_button = Button("Close", enabled = True, style = 'cancel', action='cancel')
+
+        self.label_progress = label_progress = Label('Progress: 0%')
+
+        self.place(label_local, left = padding, top = padding)
+        self.place(txt_local_file, left = padding, top = label_local + padding, right = 240)
+        self.place(btn_browse_file, left = txt_local_file, top = txt_local_file.top)
+
+        self.place(label_remote, left = padding, top = txt_local_file + padding)
+        self.place(txt_remote_file, left = padding, top = label_remote + padding, right = 240)
+
+        self.place(label_progress, left = padding, top = txt_remote_file + padding, right = btn_browse_file.right)
+
+        self.place(self.cancel_button, top = self.label_progress + padding, right = btn_browse_file.right)
+        self.place(self.download_button, top = self.cancel_button.top, right = self.cancel_button - padding)
+        self.place(self.upload_button, top = self.cancel_button.top, right = self.download_button - padding)
+        self.shrink_wrap(padding = (padding, padding))
+
+    def on_progress(self, transfered, total):
+        if total <= 0:
+            return
+
+        progress = int(float(transfered) / float(total) * 100)
+        logging.error('Progress:{}%, {}, {}'.format(progress, transfered, total))
+        self.label_progress.text = 'Progress: {}%'.format(progress)
+
+    def upload(self):
+        l_f = self.txt_local_file.text
+
+        if not os.path.isfile(l_f):
+            return
+
+        r_f = self.txt_remote_file.text
+
+        if len(r_f) == 0:
+            r_f = os.path.join(".", os.path.basename(l_f))
+
+        self._session.transfer_file(l_f,
+                                        r_f,
+                                        True,
+                                        self.on_progress)
+
+    def download(self):
+        r_f = self.txt_remote_file.text
+
+        if len(r_f) == 0:
+            return
+
+        l_f = self.txt_local_file.text
+
+        if len(l_f) == 0:
+            l_f = os.path.join('.', os.path.basename(r_f))
+
+        if os.path.isdir(l_f):
+            l_f = os.path.join(l_f, os.path.basename(r_f))
+
+        self._session.transfer_file(l_f,
+                                    r_f,
+                                    False,
+                                        self.on_progress)
+
+    def cancel(self):
+        self.dismiss(False)
+
+    def choose_key_file(self):
+        global last_dir
+        result = FileDialogs.request_old_file("Open Local File:",
+            default_dir = last_dir, file_types = file_types)
+
+        if isinstance(result, FileRef):
+            last_dir = result.dir
+            self.txt_local_file.text = result.path
+
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
         Application.__init__(self)
@@ -243,6 +337,17 @@ class TerminalPyGUIApp(Application):
     def open_session_cmd(self, *args):
         index, = args
         self.connect_to(session_name=self.cfg.get_session_names()[index], win=self.get_target_window())
+
+    def transfer_file_cmd(self):
+        win = self.get_target_window()
+        tab_view = win.tabview
+
+        if tab_view.selected_index < 0:
+            return
+        view = tab_view.items[tab_view.selected_index]
+        dlog = FileTransferDialog(view.session)
+        dlog.present()
+
 
 class TerminalPyGUIDoc(Document):
     def new_contents(self):

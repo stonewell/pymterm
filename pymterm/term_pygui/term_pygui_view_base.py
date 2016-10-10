@@ -66,17 +66,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.invalidate()
         self.update()
 
-        with self.lock:
-            self._refresh_task = None
-
     def refresh(self):
-        with self.lock:
-            if self._refresh_task is not None:
-                logging.getLogger('term_pygui').debug('refresh already scheduled')
-                return
-
-            self._refresh_task = Task(self.__refresh, .01)
-            
+        self._refresh_task = Task(self.__refresh, .01)
+        
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
 
@@ -216,6 +208,12 @@ class TerminalPyGUIViewBase(TerminalWidget):
             m.copy_cmd.enabled = self.session.terminal.has_selection()
             m.paste_cmd.enabled = self.session.terminal.has_selection() or application().query_clipboard()
             m.clear_cmd.enabled = self.session.terminal.has_selection()
+            m.transfer_file_cmd.enabled = hasattr(self.session, "transfer_file")
+        else:
+            m.transfer_file_cmd.enabled = False
+            m.copy_cmd.enabled = False
+            m.paste_cmd.enabled = False
+            m.clear_cmd.enabled = False
 
     def next_handler(self):
         return application().target_window
