@@ -6,7 +6,7 @@
 	    "conn_str":"user@remoteserver1"
 	    "port":2222,
 	    "password":"1"
-	},
+	}
     },
 
     "pty-config":{

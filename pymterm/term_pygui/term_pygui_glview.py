@@ -128,7 +128,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         pf = GLConfig(double_buffer = True)
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
-        self.lock = threading.Lock()
 
     def init_context(self):
         glClearColor(0.0, 0.0, 0.0, 0.0)
@@ -161,9 +160,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         b_x = self.padding_x
         y = self.padding_y
 
-        with self.lock:
-            lines = [line[:] for line in self.lines]
-            line_options = [line_option[:] for line_option in self.line_options]
+        lines = [line[:] for line in self.lines]
+        line_options = [line_option[:] for line_option in self.line_options]
 
         c_col, c_row = self.term_cursor
 

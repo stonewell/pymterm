@@ -46,7 +46,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.selection_color = [0.1843, 0.6549, 0.8313, .5]
         self._width_cache = {}
         self._lock = threading.Lock()
-        self._refresh_task = None
+        self._refresh_task = Task(self.__refresh, .1, False, False)
         
         TerminalWidget.__init__(self, **kwargs)
 
@@ -67,7 +67,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.update()
 
     def refresh(self):
-        self._refresh_task = Task(self.__refresh, .1)
+        self._refresh_task.start()
         
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
