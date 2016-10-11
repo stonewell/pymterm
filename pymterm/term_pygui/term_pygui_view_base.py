@@ -67,7 +67,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.update()
 
     def refresh(self):
-        self._refresh_task = Task(self.__refresh, .01)
+        self._refresh_task = Task(self.__refresh, .1)
         
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
