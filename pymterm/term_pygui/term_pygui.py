@@ -202,9 +202,9 @@ class FileTransferDialog(ModalDialog):
             r_f = os.path.join(".", os.path.basename(l_f))
 
         self._session.transfer_file(l_f,
-                                        r_f,
-                                        True,
-                                        self.on_progress)
+                                    r_f,
+                                    True,
+                                    self.on_progress)
 
     def download(self):
         r_f = self.txt_remote_file.text
@@ -223,12 +223,12 @@ class FileTransferDialog(ModalDialog):
         self._session.transfer_file(l_f,
                                     r_f,
                                     False,
-                                        self.on_progress)
+                                    self.on_progress)
 
     def cancel(self):
         self.dismiss(False)
 
-    def choose_key_file(self):
+    def choose_local_file(self):
         global last_dir
         result = FileDialogs.request_old_file("Open Local File:",
             default_dir = last_dir, file_types = file_types)
