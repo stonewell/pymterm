@@ -44,8 +44,10 @@ class SSHSession(Session):
         data = []
 
         data.append(self.channel.recv(block_size))
-        while self.channel.recv_ready():
+        time.sleep(.001)
+        while self.channel and self.channel.recv_ready():
             data.append(self.channel.recv(block_size))
+            time.sleep(.001)
 
         return ''.join(data)
 
