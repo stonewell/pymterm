@@ -200,6 +200,8 @@ class FileTransferDialog(ModalDialog):
 
         if len(r_f) == 0:
             r_f = os.path.join(".", os.path.basename(l_f))
+        elif len(os.path.basename(r_f)) == 0:
+            r_f = os.path.join(r_f, os.path.basename(l_f))
 
         self._session.transfer_file(l_f,
                                     r_f,

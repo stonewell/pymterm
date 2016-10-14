@@ -113,6 +113,6 @@ class SSHSession(Session):
         sftp = paramiko.SFTPClient.from_transport(self.transport)
 
         if is_upload:
-            sftp.put(l_f, r_f, callback)
+            sftp.put(l_f, sftp.normalize(r_f), callback)
         else:
-            sftp.get(r_f, l_f, callback)
+            sftp.get(sftp.normalize(r_f), l_f, callback)
