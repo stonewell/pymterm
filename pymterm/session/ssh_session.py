@@ -43,11 +43,15 @@ class SSHSession(Session):
 
         data = []
 
+        def wait():
+            if not (self.channel and self.channel.recv_ready()):
+                time.sleep(.001)
+            
         data.append(self.channel.recv(block_size))
-        time.sleep(.001)
+        wait()
         while self.channel and self.channel.recv_ready():
             data.append(self.channel.recv(block_size))
-            time.sleep(.001)
+            wait()
 
         return ''.join(data)
 
