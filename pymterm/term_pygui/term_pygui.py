@@ -13,6 +13,7 @@ from GUI import application
 from GUI.Files import FileType
 from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
+from GUI.Alerts import stop_alert, ask
 
 import cap.cap_manager
 from session import create_session
@@ -187,13 +188,13 @@ class FileTransferDialog(ModalDialog):
             return
 
         progress = int(float(transfered) / float(total) * 100)
-        logging.error('Progress:{}%, {}, {}'.format(progress, transfered, total))
         self.label_progress.text = 'Progress: {}%'.format(progress)
 
     def upload(self):
-        l_f = self.txt_local_file.text
+        l_f = os.path.expandvars(os.path.expanduser(self.txt_local_file.text))
 
         if not os.path.isfile(l_f):
+            self._session.report_error("local file:{} is not existing, upload failed".format(l_f))
             return
 
         r_f = self.txt_remote_file.text
@@ -212,6 +213,7 @@ class FileTransferDialog(ModalDialog):
         r_f = self.txt_remote_file.text
 
         if len(r_f) == 0:
+            self._session.report_error("remote file is not existing, download failed")
             return
 
         l_f = self.txt_local_file.text
@@ -219,8 +221,14 @@ class FileTransferDialog(ModalDialog):
         if len(l_f) == 0:
             l_f = os.path.join('.', os.path.basename(r_f))
 
+        l_f = os.path.expandvars(os.path.expanduser(l_f))
+
         if os.path.isdir(l_f):
             l_f = os.path.join(l_f, os.path.basename(r_f))
+
+        if os.path.isfile(l_f):
+            if ask('file:{} exists, overwrite?'.format(l_f)) != 1:
+                return
 
         self._session.transfer_file(l_f,
                                     r_f,
@@ -232,12 +240,15 @@ class FileTransferDialog(ModalDialog):
 
     def choose_local_file(self):
         global last_dir
-        result = FileDialogs.request_old_file("Open Local File:",
-            default_dir = last_dir, file_types = file_types)
+        try:
+            result = FileDialogs.request_old_file("Open Local File:",
+                default_dir = last_dir, file_types = file_types)
 
-        if isinstance(result, FileRef):
-            last_dir = result.dir
-            self.txt_local_file.text = result.path
+            if isinstance(result, FileRef):
+                last_dir = result.dir
+                self.txt_local_file.text = result.path
+        except:
+            logging.getLogger('term_pygui').exception('unable to choose file')
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -379,3 +390,9 @@ class TerminalPyGUI(TerminalGUI):
     def prompt_password(self, action):
         dlog = PasswordDialog(action)
         dlog.present()
+
+    def report_error(self, msg):
+        stop_alert(msg)
+
+    def ask_user(self, msg):
+        return ask(msg)

@@ -6,6 +6,7 @@ import sys
 import threading
 import time
 import traceback
+import stat
 
 import client.ssh_client
 from session import Session
@@ -46,7 +47,7 @@ class SSHSession(Session):
         def wait():
             if not (self.channel and self.channel.recv_ready()):
                 time.sleep(.001)
-            
+
         data.append(self.channel.recv(block_size))
         wait()
         while self.channel and self.channel.recv_ready():
@@ -109,10 +110,65 @@ class SSHSession(Session):
     def prompt_password(self, action):
         self.terminal.prompt_password(action)
 
-    def transfer_file(self, l_f, r_f, is_upload = True, callback = None):
-        sftp = paramiko.SFTPClient.from_transport(self.transport)
+    def get_home_and_pwd(self):
+        with self.transport.open_session() as chan:
+            chan.exec_command('echo -n "${HOME};`pwd`"')
 
-        if is_upload:
-            sftp.put(l_f, sftp.normalize(r_f), callback)
-        else:
-            sftp.get(sftp.normalize(r_f), l_f, callback)
+            return chan.recv(4096).split(';')
+
+    def normalize_remote_file_path(self, p):
+        home, pwd = self.get_home_and_pwd()
+        logging.getLogger('session').debug('sftp get home:{} and cwd:{}'.format(home, pwd))
+
+        if p.startswith('~/'):
+            p = os.path.join(home, p[2:])
+
+        if not os.path.isabs(p):
+            p = os.path.join(pwd, p)
+
+        return p
+
+    def transfer_file(self, l_f, r_f, is_upload = True, callback = None):
+        try:
+            r_f = self.normalize_remote_file_path(r_f)
+
+            with paramiko.SFTPClient.from_transport(self.transport) as sftp:
+                try:
+                    r_stat = sftp.stat(r_f)
+
+                    if not is_upload:
+                        while True:
+                            if stat.S_ISDIR(r_stat.st_mode):
+                                self.report_error('unable to download dir:{}'.format(r_f))
+                                return
+                            elif stat.S_ISLNK(r_stat.st_mode):
+                                r_f = sftp.normalize(r_f)
+                                r_stat = sftp.state(r_f)
+                            else:
+                                break
+                    else:
+                        while True:
+                            if stat.S_ISDIR(r_stat.st_mode):
+                                r_f = os.path.join(r_f, os.path.basename(l_f))
+                                r_stat = sftp.state(r_f)
+                            elif stat.S_ISLNK(r_stat.st_mode):
+                                r_f = sftp.normalize(r_f)
+                                r_stat = sftp.state(r_f)
+                            elif self.terminal.ask_user('overwirte remote file:{}?'.format(r_f)) != 1:
+                                return
+                            else:
+                                break
+
+                except:
+                    logging.getLogger('session').exception('stat remote file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
+                    if not is_upload:
+                        self.report_error('transfer file failed:{}'.format(sys.exc_info()[0]))
+                        return
+
+                if is_upload:
+                    sftp.put(l_f, sftp.normalize(r_f), callback)
+                else:
+                    sftp.get(sftp.normalize(r_f), l_f, callback)
+        except:
+            logging.getLogger('session').exception('transfer file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
+            self.report_error('transfer file failed:{}'.format(sys.exc_info()[0]))
