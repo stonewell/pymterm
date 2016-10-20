@@ -1,6 +1,8 @@
 import os
 import sys
-
+import logging
 
 def handle(term, context, cap_turple):
-    term.enter_status_line(True)
+    logging.getLogger('cap').debug('status line:{}'.format(context.params))
+    mode = context.params[0] if len(context.params) > 0 else 0
+    term.enter_status_line(mode, True)

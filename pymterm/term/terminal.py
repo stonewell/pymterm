@@ -117,7 +117,7 @@ class Terminal(object):
         if self.state:
 	        self.__handle_cap__(False)
 
-    def enter_status_line(self, enter):
+    def enter_status_line(self, mode, enter):
         self.in_status_line = enter
 
     def get_cols(self):

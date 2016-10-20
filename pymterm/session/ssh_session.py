@@ -20,6 +20,9 @@ class SSHSession(Session):
         self.sock = None
         self.channel = None
         self.transport = None
+        self.status_cmd_event = threading.Event()
+        self.status_cmd_event.set()
+        self.status_lines = {}
 
     def _connect(self):
         username = self.cfg.username
@@ -110,27 +113,48 @@ class SSHSession(Session):
     def prompt_password(self, action):
         self.terminal.prompt_password(action)
 
+    def on_status_line(self, mode, status_line):
+        if status_line.startswith('PYMTERM_STATUS_HOME_PWD='):
+            self.status_lines['PYMTERM_STATUS_HOME_PWD'] = status_line[len('PYMTERM_STATUS_HOME_PWD='):]
+
+        self.status_cmd_event.set()
+
     def get_home_and_pwd(self):
-        with self.transport.open_session() as chan:
-            chan.exec_command('echo -n "${HOME};`pwd`"')
+        if not self.channel:
+            return (None, None)
 
-            return chan.recv(4096).split(';')
+        self.status_cmd_event.clear()
+        self.channel.sendall(r'echo -ne "\033]0;PYMTERM_STATUS_HOME_PWD=${HOME};${PWD}\007"' + '\r')
 
-    def normalize_remote_file_path(self, p):
-        home, pwd = self.get_home_and_pwd()
+        self.status_cmd_event.wait(5)
+
+        if self.status_cmd_event.is_set() and 'PYMTERM_STATUS_HOME_PWD' in self.status_lines:
+            return self.status_lines['PYMTERM_STATUS_HOME_PWD'].split(';')
+
+        return (None, None)
+
+    def normalize_remote_file_path(self, p, r_home = None, r_pwd = None):
+        if os.path.isabs(p):
+            return p
+
+        home, pwd = r_home, r_pwd
+
+        if not home or not pwd:
+            home, pwd = self.get_home_and_pwd()
+            
         logging.getLogger('session').debug('sftp get home:{} and cwd:{}'.format(home, pwd))
 
-        if p.startswith('~/'):
+        if home and p.startswith('~/'):
             p = os.path.join(home, p[2:])
 
-        if not os.path.isabs(p):
+        if pwd and not os.path.isabs(p):
             p = os.path.join(pwd, p)
 
         return p
 
-    def transfer_file(self, l_f, r_f, is_upload = True, callback = None):
+    def transfer_file(self, l_f, r_f, r_home = None, r_pwd = None, is_upload = True, callback = None):
         try:
-            r_f = self.normalize_remote_file_path(r_f)
+            r_f = self.normalize_remote_file_path(r_f, r_home, r_pwd)
 
             with paramiko.SFTPClient.from_transport(self.transport) as sftp:
                 try:

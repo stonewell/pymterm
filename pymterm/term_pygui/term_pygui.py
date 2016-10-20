@@ -7,32 +7,34 @@ import sys
 import time
 import traceback
 import string
+import json
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
 from GUI import application
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
+from GUI import ModalDialog, Label, Button
+from GUI import RadioGroup, RadioButton
+from GUI import TextField
+from GUI.Files import FileType, DirRef, FileRef
 from GUI.Alerts import stop_alert, ask
+from GUI import Task
 
 import cap.cap_manager
-from session import create_session
-from term.terminal_gui import TerminalGUI
-from term.terminal_widget import TerminalWidget
 import term.term_keyboard
 import term_pygui_key_translate
+
+from session import create_session
+from term.terminal_gui import TerminalGUI
 from term import TextAttribute, TextMode, set_attr_mode, reserve
+from term.terminal_widget import TerminalWidget
 from term_menu import basic_menus
+
+from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDialog
 
 try:
     from term_pygui_glview import TerminalPyGUIGLView as TerminalPyGUIView
 except:
     from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
-
-from GUI import ModalDialog, Label, Button
-from GUI import RadioGroup, RadioButton
-from GUI import TextField
-from GUI import Task
 
 padding = 10
 file_types = None
@@ -143,112 +145,6 @@ class LoginDialog(ModalDialog):
         if isinstance(result, FileRef):
             last_dir = result.dir
             self.txt_key_file.text = result.path
-
-class FileTransferDialog(ModalDialog):
-
-    def __init__(self, session,  **kwargs):
-        title = 'File Transfer'
-
-        self._session = session
-
-        if 'title' in kwargs:
-            title = kwargs['title']
-
-        ModalDialog.__init__(self, title=title)
-
-        label_local = Label('Local File:')
-        self.txt_local_file = txt_local_file = TextField(multiline = False, password = False)
-        btn_browse_file = Button('Browse', action='choose_local_file', enabled = True)
-
-        label_remote = Label('Remote File:')
-        self.txt_remote_file = txt_remote_file = TextField(multiline = False, password = False)
-
-        self.download_button = Button("Download", action = "download", enabled = True)
-        self.upload_button = Button("Upload", action = "upload", enabled = True)
-        self.cancel_button = Button("Close", enabled = True, style = 'cancel', action='cancel')
-
-        self.label_progress = label_progress = Label('Progress: 0%')
-
-        self.place(label_local, left = padding, top = padding)
-        self.place(txt_local_file, left = padding, top = label_local + padding, right = 240)
-        self.place(btn_browse_file, left = txt_local_file, top = txt_local_file.top)
-
-        self.place(label_remote, left = padding, top = txt_local_file + padding)
-        self.place(txt_remote_file, left = padding, top = label_remote + padding, right = 240)
-
-        self.place(label_progress, left = padding, top = txt_remote_file + padding, right = btn_browse_file.right)
-
-        self.place(self.cancel_button, top = self.label_progress + padding, right = btn_browse_file.right)
-        self.place(self.download_button, top = self.cancel_button.top, right = self.cancel_button - padding)
-        self.place(self.upload_button, top = self.cancel_button.top, right = self.download_button - padding)
-        self.shrink_wrap(padding = (padding, padding))
-
-    def on_progress(self, transfered, total):
-        if total <= 0:
-            return
-
-        progress = int(float(transfered) / float(total) * 100)
-        self.label_progress.text = 'Progress: {}%'.format(progress)
-
-    def upload(self):
-        l_f = os.path.expandvars(os.path.expanduser(self.txt_local_file.text))
-
-        if not os.path.isfile(l_f):
-            self._session.report_error("local file:{} is not existing, upload failed".format(l_f))
-            return
-
-        r_f = self.txt_remote_file.text
-
-        if len(r_f) == 0:
-            r_f = os.path.join(".", os.path.basename(l_f))
-        elif len(os.path.basename(r_f)) == 0:
-            r_f = os.path.join(r_f, os.path.basename(l_f))
-
-        self._session.transfer_file(l_f,
-                                    r_f,
-                                    True,
-                                    self.on_progress)
-
-    def download(self):
-        r_f = self.txt_remote_file.text
-
-        if len(r_f) == 0:
-            self._session.report_error("remote file is not existing, download failed")
-            return
-
-        l_f = self.txt_local_file.text
-
-        if len(l_f) == 0:
-            l_f = os.path.join('.', os.path.basename(r_f))
-
-        l_f = os.path.expandvars(os.path.expanduser(l_f))
-
-        if os.path.isdir(l_f):
-            l_f = os.path.join(l_f, os.path.basename(r_f))
-
-        if os.path.isfile(l_f):
-            if ask('file:{} exists, overwrite?'.format(l_f)) != 1:
-                return
-
-        self._session.transfer_file(l_f,
-                                    r_f,
-                                    False,
-                                    self.on_progress)
-
-    def cancel(self):
-        self.dismiss(False)
-
-    def choose_local_file(self):
-        global last_dir
-        try:
-            result = FileDialogs.request_old_file("Open Local File:",
-                default_dir = last_dir, file_types = file_types)
-
-            if isinstance(result, FileRef):
-                last_dir = result.dir
-                self.txt_local_file.text = result.path
-        except:
-            logging.getLogger('term_pygui').exception('unable to choose file')
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -396,3 +292,50 @@ class TerminalPyGUI(TerminalGUI):
 
     def ask_user(self, msg):
         return ask(msg)
+    
+    def process_status_line(self, mode, status_line):
+        TerminalGUI.process_status_line(self, mode, status_line)
+
+        if status_line.startswith('PYMTERM_STATUS_CMD='):
+            try:
+                context = json.loads(status_line[len('PYMTERM_STATUS_CMD='):])
+                task = Task(lambda:self.process_status_cmd(context), .01)
+            except:
+                logging.getLogger('term_pygui').exception('invalid status cmd found')
+
+    def process_status_cmd(self, context):
+        if not 'ACTION' in context:
+            logging.getLogger('term_pygui').warn('action not found in status cmd')
+            return
+
+        action = context['ACTION'].upper()
+        home = context['HOME']
+        pwd = context['PWD']
+        r_f = context['R_F']
+
+        global last_dir
+        l_f = None
+        result = None
+        
+        if action == 'UPLOAD':
+            result = FileDialogs.request_old_file("Choose file to upload:",
+                default_dir = last_dir, file_types = file_types)
+        elif action == 'DOWNLOAD':
+            result = FileDialogs.request_new_file("Choose location to save download file:",
+                default_dir = last_dir, file_types = file_types)
+        else:
+            logging.getLogger('term_pygui').warn('action not valid:{} in status cmd'.format(action))
+            return
+
+        if not isinstance(result, FileRef):
+            return
+        last_dir = result.dir
+        l_f = result.path
+
+        dlg = FileTransferProgressDialog(self.session,
+                                        l_f,
+                                        r_f,
+                                        home,
+                                        pwd,
+                                        action == 'UPLOAD')
+        dlg.present()

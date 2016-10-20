@@ -27,6 +27,9 @@ class TerminalGUI(Terminal):
         self.history_lines = []
         self.history_line_options = []
 
+        self.status_line = []
+        self.status_line_mode = 0
+
     def get_line(self, row):
         reserve(self.lines, row + 1, [])
 
@@ -43,7 +46,7 @@ class TerminalGUI(Terminal):
 
     def wrap_line(self, c, insert):
         save_col, save_row = self.col, self.row
-        
+
         self.col = 0
         self.cursor_down(None)
         for cc in c:
@@ -92,10 +95,10 @@ class TerminalGUI(Terminal):
                 two_bytes = len(wrap_c)
 
                 line = line[:self.get_cols() - two_bytes]
-                
+
                 if self.cfg.debug_more:
                     logging.getLogger('term_gui').debug(u'save buffer wrap:c=[{}], wrap=[{}]'.format(c, wrap_c))
-                    
+
                 self._save_buffer(c, insert)
                 self.wrap_line(wrap_c, insert)
             else:
@@ -178,7 +181,8 @@ class TerminalGUI(Terminal):
         if c == '\x1b':
             logging.getLogger('term_gui').error('status line data has escape char')
             sys.exit(1)
-        pass
+
+        self.status_line.append(c)
 
     def get_cursor(self):
         if len(self.lines) <= self.get_rows():
@@ -732,3 +736,18 @@ class TerminalGUI(Terminal):
                 self.lines[i] = line[:self.get_cols()]
 
         self.set_scroll_region(0, self.get_rows() - 1)
+
+    def enter_status_line(self, mode, enter):
+        if not enter:
+            status_line = ''.join(self.status_line)
+            if len(status_line) > 0:
+                self.process_status_line(mode, status_line)
+        else:
+            self.status_line = []
+            self.status_line_mode = mode
+
+        Terminal.enter_status_line(self, mode, enter)
+
+    def process_status_line(self, mode, status_line):
+        logging.getLogger('term_gui').debug('status line:mode={}, {}'.format(mode, status_line))
+        self.session.on_status_line(mode, status_line)

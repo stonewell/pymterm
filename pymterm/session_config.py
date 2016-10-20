@@ -3,7 +3,7 @@ import logging
 import logging.config
 import os
 import sys
-
+import json
 
 def get_default_user():
 	return getpass.getuser()
@@ -167,7 +167,6 @@ class SessionConfig:
         if not os.path.exists(config_path):
             raise ValueError('unable to find the config file:{}'.format(config_path))
 
-        import json
         with open(config_path) as f:
             self.config = json.load(f)
 
