@@ -19,7 +19,7 @@ cmd = {}
 cmd['ACTION'] = action.upper()
 cmd['HOME'] = os.path.expanduser('~')
 cmd['PWD'] = os.path.abspath('.')
-cmd['R_F'] = sys.argv[2] if action == 'download' else ''
+cmd['R_F'] = sys.argv[2] if len(sys.argv) > 2  else ''
 
 print r'\033]0;PYMTERM_STATUS_CMD={}\007'.format(json.dumps(cmd))
 print '\033]0;PYMTERM_STATUS_CMD={}\007'.format(json.dumps(cmd))

@@ -141,7 +141,7 @@ class SSHSession(Session):
 
         if not home or not pwd:
             home, pwd = self.get_home_and_pwd()
-            
+
         logging.getLogger('session').debug('sftp get home:{} and cwd:{}'.format(home, pwd))
 
         if home and p.startswith('~/'):
@@ -163,7 +163,7 @@ class SSHSession(Session):
                     if not is_upload:
                         while True:
                             if stat.S_ISDIR(r_stat.st_mode):
-                                self.report_error('unable to download dir:{}'.format(r_f))
+                                self.report_error(u'unable to download dir:{}'.format(r_f))
                                 return
                             elif stat.S_ISLNK(r_stat.st_mode):
                                 r_f = sftp.normalize(r_f)
@@ -178,21 +178,20 @@ class SSHSession(Session):
                             elif stat.S_ISLNK(r_stat.st_mode):
                                 r_f = sftp.normalize(r_f)
                                 r_stat = sftp.state(r_f)
-                            elif self.terminal.ask_user('overwirte remote file:{}?'.format(r_f)) != 1:
+                            elif self.terminal.ask_user(u'overwirte remote file:{}?'.format(r_f)) != 1:
                                 return
                             else:
                                 break
-
                 except:
-                    logging.getLogger('session').exception('stat remote file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
+                    logging.getLogger('session').exception(u'stat remote file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
                     if not is_upload:
                         self.report_error('transfer file failed:{}'.format(sys.exc_info()[0]))
                         return
 
                 if is_upload:
-                    sftp.put(l_f, sftp.normalize(r_f), callback)
+                    sftp.put(l_f, r_f, callback)
                 else:
-                    sftp.get(sftp.normalize(r_f), l_f, callback)
+                    sftp.get(r_f, l_f, callback)
         except:
-            logging.getLogger('session').exception('transfer file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
+            logging.getLogger('session').exception(u'transfer file failed:local={}, remote={}, upload={}'.format(l_f, r_f, is_upload));
             self.report_error('transfer file failed:{}'.format(sys.exc_info()[0]))

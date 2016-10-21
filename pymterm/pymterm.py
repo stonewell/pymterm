@@ -7,7 +7,7 @@ import cross_platform as platform
 import session_config
 
 def unhandled_exception(exctype, value, tb):
-    logging.exception('unknown error happening')
+    logging.error('unknown error happening', exc_info=(exctype, value, tb))
 
 sys.excepthook = unhandled_exception
 

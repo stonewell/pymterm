@@ -292,14 +292,14 @@ class TerminalPyGUI(TerminalGUI):
 
     def ask_user(self, msg):
         return ask(msg)
-    
+
     def process_status_line(self, mode, status_line):
         TerminalGUI.process_status_line(self, mode, status_line)
 
         if status_line.startswith('PYMTERM_STATUS_CMD='):
             try:
                 context = json.loads(status_line[len('PYMTERM_STATUS_CMD='):])
-                task = Task(lambda:self.process_status_cmd(context), .01)
+                self.__status_cmd_task = Task(lambda:self.process_status_cmd(context), .01)
             except:
                 logging.getLogger('term_pygui').exception('invalid status cmd found')
 
@@ -316,13 +316,15 @@ class TerminalPyGUI(TerminalGUI):
         global last_dir
         l_f = None
         result = None
-        
+
+        base_name = os.path.basename(r_f)
+
         if action == 'UPLOAD':
             result = FileDialogs.request_old_file("Choose file to upload:",
                 default_dir = last_dir, file_types = file_types)
         elif action == 'DOWNLOAD':
             result = FileDialogs.request_new_file("Choose location to save download file:",
-                default_dir = last_dir, file_types = file_types)
+                default_dir = last_dir, default_name = base_name)
         else:
             logging.getLogger('term_pygui').warn('action not valid:{} in status cmd'.format(action))
             return

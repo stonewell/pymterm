@@ -8,6 +8,7 @@ import time
 import traceback
 import string
 import json
+import threading
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
 from GUI import application
@@ -33,10 +34,22 @@ padding = 10
 file_types = None
 last_dir = DirRef(path = os.path.abspath(os.path.expanduser("~/")))
 
+class MyThread(threading.Thread):
+
+    def run(self):
+        try:
+            threading.Thread.run(self)
+        except:
+            logging.getLogger('term_pygui').exception('transfer thread error')
+
 class FileTransfer(object):
-    def __init__(self, session):
+    def __init__(self, session, do_ask = True):
         self._transfer_task = None
         self._session = session
+        self._transfered = 0
+        self._total = 1
+        self.__on_progress_task = Task(self._on_progress, .001, start=False)
+        self._do_ask = do_ask
 
     def _upload(self, l_f, r_f, r_home = None, r_pwd = None):
         if not os.path.isfile(l_f):
@@ -48,14 +61,19 @@ class FileTransfer(object):
         elif len(os.path.basename(r_f)) == 0:
             r_f = os.path.join(r_f, os.path.basename(l_f))
 
-        self._transfer_task = Task(lambda: self._session.transfer_file(l_f,
+        self._transfer_thread = MyThread(target=lambda: self._session.transfer_file(l_f,
                                     r_f,
                                     r_home,
                                     r_pwd,
                                     True,
-                                    self.on_progress), .01)
+                                    self.on_progress))
+        self._transfer_thread.start()
 
     def on_progress(self, transfered, total):
+        self._transfered, self._total = transfered, total
+        self.__on_progress_task.start()
+
+    def _on_progress(self):
         pass
 
     def _download(self, l_f, r_f, r_home = None, r_pwd = None):
@@ -71,17 +89,18 @@ class FileTransfer(object):
         if os.path.isdir(l_f):
             l_f = os.path.join(l_f, os.path.basename(r_f))
 
-        if os.path.isfile(l_f):
-            if ask('file:{} exists, overwrite?'.format(l_f)) != 1:
+        if self._do_ask and os.path.isfile(l_f):
+            if ask(u'file:{} exists, overwrite?'.format(l_f)) != 1:
                 return
 
-        self._transfer_task = Task(lambda: self._session.transfer_file(l_f,
+        self._transfer_thread = MyThread(target=lambda: self._session.transfer_file(l_f,
                                     r_f,
                                     r_home,
                                     r_pwd,
                                     False,
-                                    self.on_progress), .01)
-        
+                                    self.on_progress))
+        self._transfer_thread.start()
+
 class FileTransferDialog(ModalDialog, FileTransfer):
     def __init__(self, session,  **kwargs):
         title = 'File Transfer'
@@ -121,7 +140,9 @@ class FileTransferDialog(ModalDialog, FileTransfer):
         self.place(self.upload_button, top = self.cancel_button.top, right = self.download_button - padding)
         self.shrink_wrap(padding = (padding, padding))
 
-    def on_progress(self, transfered, total):
+    def _on_progress(self):
+        transfered, total = self._transfered, self._total
+
         if total <= 0:
             return
 
@@ -169,7 +190,7 @@ class FileTransferProgressDialog(ModalDialog, FileTransfer):
             title = kwargs['title']
 
         ModalDialog.__init__(self, title=title)
-        FileTransfer.__init__(self, session)
+        FileTransfer.__init__(self, session, False)
 
         label_local = Label('Local File:')
         label_local_name = Label(l_f)
@@ -197,7 +218,8 @@ class FileTransferProgressDialog(ModalDialog, FileTransfer):
         else:
             self.task = Task(self.download, .01)
 
-    def on_progress(self, transfered, total):
+    def _on_progress(self):
+        transfered, total = self._transfered, self._total
         if total <= 0:
             return
 
@@ -211,4 +233,5 @@ class FileTransferProgressDialog(ModalDialog, FileTransfer):
         self._download(self._l_f, self._r_f, self._r_home, self._r_pwd)
 
     def cancel(self):
+        self._transfer_thread.join()
         self.dismiss(False)
