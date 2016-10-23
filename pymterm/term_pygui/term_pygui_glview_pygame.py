@@ -178,6 +178,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         font = self._get_font();
 
         line_height = self._get_line_height()
+        col_width = int(self._get_width(font, 'ABCDabcd') / 8)
 
         width, height = self.size
 
@@ -308,14 +309,20 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     continue
 
                 if last_col < col:
-                    b_x = render_text(''.join(line[last_col: col]), b_x)
+                    #b_x = render_text(''.join(line[last_col: col]), b_x)
+                    for r_col in range(last_col, col):
+                        render_text(line[r_col], b_x)
+                        b_x += col_width
 
                 last_col = col
                 last_option = line_option[col]
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
-                b_x = render_text(''.join(line[last_col:]), b_x)
+                #b_x = render_text(''.join(line[last_col:]), b_x)
+                for r_col in range(last_col, len(line)):
+                    render_text(line[r_col], b_x)
+                    b_x += col_width
 
             v_surf.blit(line_surf, (0, y))
 
@@ -339,8 +346,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     def _get_font(self):
         font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
                                      #'wqy-microhei-mono.ttf'
-                                     'NotoSansMonoCJKsc-Regular.otf'
-                                     #'YaHei Consolas Hybrid 1.12.ttf'
+                                     #'NotoSansMonoCJKsc-Regular.otf'
+                                     'YaHei Consolas Hybrid 1.12.ttf'
                                      )
         if use_freetype:
             font = pygame.freetype.Font(font_path,

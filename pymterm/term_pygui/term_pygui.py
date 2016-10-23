@@ -33,11 +33,16 @@ from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDia
 
 try:
     from term_pygui_glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
-    logging.getLogger('term_pygui').info('using opengl')
+    logging.getLogger('term_pygui').info('using opengl cairo/pango')
 except:
-    logging.getLogger('term_pygui').exception('opengl fail')
-    from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
-    logging.getLogger('term_pygui').info('using native')
+    logging.getLogger('term_pygui').exception('opengl cairo/pango fail')
+    try:
+        from term_pygui_glview_pygame import TerminalPyGUIGLView as TerminalPyGUIView
+        logging.getLogger('term_pygui').info('using opengl pygame')
+    except:
+        logging.getLogger('term_pygui').exception('opengl pygame fail')
+        from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
+        logging.getLogger('term_pygui').info('using native')
 
 padding = 10
 file_types = None

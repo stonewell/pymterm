@@ -20,24 +20,37 @@ families = font_map.list_families()
 print sorted([f.get_name() for f in   font_map.list_families()])
 
 font_name = ['Noto Sans Mono CJK SC',
-                 'WenQuanYi Micro Hei Mono'][1]
+                 'WenQuanYi Micro Hei Mono',
+                 'YaHei Consolas Hybrid',
+                 'Menlo Regular'][3]
+pc = pango.Context()
+pc.set_language(pango.Language("zh_CN.UTF-8"))
+
 font = pango.FontDescription(' '.join([font_name, str(26)]))
 
 context.translate(50,25)
 
 p_c = pangocairo_context = pangocairo.CairoContext(context)
 pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+
 l = p_c.create_layout()
 l.set_font_description(font)
-l.set_text(u'abcd')
-print l.get_pixel_extents(), l.get_pixel_size(), l.get_size(), font.get_size() / pango.SCALE
+attrList, t, c = pango.parse_markup(u"<span font_features='dlig=1, -kern, afrc on'>哈哈</span>")
+l.set_text(t)
+l.set_attributes(attrList)
+
+print l.get_pixel_extents(), l.get_pixel_size(), l.get_size(), font.get_size() / pango.SCALE, l.get_line(0).get_pixel_extents()
 
 context.set_source_rgb(0, 0, 0)
 context.rectangle(0, 0, 153, 41)
 context.stroke()
 pangocairo_context.update_layout(l)
 pangocairo_context.show_layout(l)
+l.set_text('abcd')
+pangocairo_context.update_layout(l)
+pangocairo_context.show_layout(l)
 
-print dir(surf.get_data().tolist())
+
+print pc.get_language(), dir(pc)
 with open("cairo_text.png", "wb") as image_file:
     surf.write_to_png(image_file)
