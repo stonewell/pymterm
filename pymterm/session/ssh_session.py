@@ -141,8 +141,10 @@ class SSHSession(Session):
 
         if not home or not pwd:
             home, pwd = self.get_home_and_pwd()
+            home = home.decode('utf-8') if home else None
+            pwd = pwd.decode('utf-8') if pwd else None
 
-        logging.getLogger('session').debug('sftp get home:{} and cwd:{}'.format(home, pwd))
+        logging.getLogger('session').debug(u'sftp get home:{} and cwd:{}'.format(home, pwd))
 
         if home and p.startswith('~/'):
             p = os.path.join(home, p[2:])
