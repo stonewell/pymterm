@@ -32,9 +32,12 @@ from term_menu import basic_menus
 from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDialog
 
 try:
-    from term_pygui_glview import TerminalPyGUIGLView as TerminalPyGUIView
+    from term_pygui_glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
+    logging.getLogger('term_pygui').info('using opengl')
 except:
+    logging.getLogger('term_pygui').exception('opengl fail')
     from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
+    logging.getLogger('term_pygui').info('using native')
 
 padding = 10
 file_types = None
