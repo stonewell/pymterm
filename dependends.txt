@@ -5,3 +5,4 @@ pyopengl pyopengl-accelerate
 pygame
 numpy
 functools32
+pygtk, pycairo

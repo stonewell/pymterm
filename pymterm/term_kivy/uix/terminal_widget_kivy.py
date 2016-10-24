@@ -42,19 +42,19 @@ Cache_register('termwidget.b_size', timeout=60.)
 
 class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
     _font_properties = ('lines', 'font_size', 'font_name', 'bold', 'italic',
-                        'underline', 'strikethrough', 
+                        'underline', 'strikethrough',
                         'halign', 'valign', 'padding_left', 'padding_top',
                         'padding_right', 'padding_bottom',
-                        'shorten', 'mipmap', 
+                        'shorten', 'mipmap',
                         'line_height', 'max_lines', 'strip',
                         'split_str', 'unicode_errors',
                         'font_hinting', 'font_kerning', 'font_blended')
-        
+
     def __init__(self, **kwargs):
         self._trigger_texture = Clock.create_trigger(self._texture_update, -1)
 
         super(TerminalWidgetKivy, self).__init__(**kwargs)
-        
+
         # bind all the property for recreating the texture
         d = TerminalWidgetKivy._font_properties
         fbind = self.fbind
@@ -69,10 +69,11 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         self.line_rects = {}
         self._touch_count = 0
         self.cancel_selection()
-        
+        self.font_kerning = True
+
         # force the texture creation
         self._trigger_texture()
-        
+
     def _create_label(self):
         # create the core label class according to markup value
         if self._label is not None:
@@ -92,7 +93,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         d = TerminalWidgetKivy._font_properties
         dkw = dict(list(zip(d, [getattr(self, x) for x in d])))
         return CoreMarkupLabel(**dkw)
-        
+
     def _update_line_options(self):
         min_line_ht = self._label.get_extents('_')[1]
         self.line_height = min_line_ht
@@ -126,7 +127,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         last_f_color = self.session.cfg.default_foreground_color
         last_b_color = self.session.cfg.default_background_color
         last_mode = 0
-        
+
         for i in range(len(lines)):
             x = 0
             b_x = 0
@@ -141,10 +142,10 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
-                    
+
                 if last_mode & TextMode.REVERSE:
                     cur_f_color, cur_b_color = last_b_color, last_f_color
-                        
+
                 text = ''.join(['[color=',
                                 self._get_color_hex(cur_f_color),
                                 ']',
@@ -156,7 +157,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                 return self._add_background(t,
                                         cur_b_color, xxxx, y - (i + 1) * dy)
 
-            last_option = None                
+            last_option = None
             for col in range(len(line_option)):
                 if line_option[col] is None:
                     continue
@@ -167,7 +168,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                 f_color, b_color, mode = line_option[col]
 
                 n_f_color, n_b_color, n_mode = last_f_color, last_b_color, last_mode
-                
+
                 # foreground
                 if f_color and len(f_color) > 0:
                     n_f_color = f_color
@@ -186,7 +187,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
                 if (n_f_color, n_b_color, n_mode) == (last_f_color, last_b_color, last_mode):
                     continue
-                
+
                 if last_col < col:
                     if self.cursor_visible and i == c_row and last_col <= c_col and c_col < col:
                         b_x = render_text(''.join(line[last_col: c_col]), b_x)
@@ -195,11 +196,11 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                           last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
                         b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
                         last_f_color, last_b_color = tmp_l_f, tmp_l_b
-                        
+
                         b_x = render_text(''.join(line[c_col + 1: col]), b_x)
                     else:
                         b_x = render_text(''.join(line[last_col: col]), b_x)
-                    
+
                 last_col = col
                 last_option = line_option[col]
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
@@ -212,7 +213,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                           last_f_color, last_b_color, last_b_color, self.session.cfg.default_cursor_color
                     b_x = render_text(''.join(line[c_col: c_col + 1]), b_x)
                     last_f_color, last_b_color = tmp_l_f, tmp_l_b
-                    
+
                     b_x = render_text(''.join(line[c_col + 1:]), b_x)
                 else:
                     b_x = render_text(''.join(line[last_col:]), b_x)
@@ -228,7 +229,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                 tmp_b_c, last_b_color = last_b_color, self.session.cfg.default_background_color
                 render_text(' ' * (self.visible_cols + 1), b_x)
                 last_b_color = tmp_b_c
-                                
+
             try:
                 self._add_text(i, ''.join(text_parts), x, y - (i + 1) * dy)
             except:
@@ -248,9 +249,9 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         if t is not None:
             if self.session.cfg.debug_more:
                 logging.getLogger('term_widget').debug('reuse the background texture, pos={}, {}, size={}'.format(x, y, t.size))
-            self.canvas.add(Rectangle(texture=t, pos=(x , y), size=t.size))        
+            self.canvas.add(Rectangle(texture=t, pos=(x , y), size=t.size))
             return x + t.size[0]
-        
+
         from kivy.graphics import Color
         from kivy.graphics.instructions import InstructionGroup
         from kivy.graphics.texture import Texture
@@ -271,20 +272,20 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
         Cache_append('termwidget.b', cid, t)
 
-        self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size, group='background'))        
-        
+        self.canvas.add(Rectangle(texture=t, pos=(x , y), size=size, group='background'))
+
         return x + size[0]
-    
+
     def _add_text(self, line_num, text, x, y):
         self.line_rects[line_num] = Rectangle(size=(0,0), pos=(x, y))
-        
+
         if not text or len(text) == 0:
             return
 
         label = Cache_get('termwidget.label', text)
 
         texture = None
-        
+
         if label is None:
             label = self._create_line_label()
             text = self.norm_text(text)
@@ -312,21 +313,21 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
         if width is not None:
             return width
-        
+
         txt = self.norm_text(text)
-        
+
         width = self._label.get_extents(txt)[0]
 
         Cache_append('termwidget.width', text, width)
 
         return width
-    
+
     def refresh(self):
         self._trigger_texture()
 
     def on_touch_down(self, touch):
         touch_pos = touch.pos
-        
+
         if not self.collide_point(*touch_pos):
             return super(TerminalWidgetKivy, self).on_touch_down(touch)
 
@@ -366,7 +367,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
         self.focus = True
         return super(TerminalWidgetKivy, self).on_touch_up(touch)
-        
+
     def _get_cursor_from_xy(self, x, y):
         '''Return the (row, col) of the cursor from an (x, y) position.
         '''
@@ -484,13 +485,13 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
         from kivy.core.clipboard import Clipboard
 
         return Clipboard.paste()
-    
+
     #
     # Properties
     #
 
     selection_color = ListProperty([0.1843, 0.6549, 0.8313, .5])
-    font_name = StringProperty('NotoSans')
+    font_name = StringProperty('WenQuanYi')
     font_size = NumericProperty('17.5sp')
     line_height = NumericProperty(1.0)
     line_spacing = NumericProperty(1.0)

@@ -2,24 +2,34 @@
 import os
 import sys
 import json
+import argparse
 
-if len(sys.argv) < 2:
-    sys.exit(0)
+def do_transfer(action, target):
+    if action.upper() == 'DOWNLOAD' and not os.path.isfile(target):
+        parse_args().print_help()
+        sys.exit(0)
 
-action = sys.argv[1].lower()
-print sys.argv
+    cmd = {}
+    cmd['ACTION'] = action.upper()
+    cmd['HOME'] = os.path.expanduser('~')
+    cmd['PWD'] = os.path.abspath('.')
+    cmd['R_F'] = target if target else ''
 
-if action != 'upload' and action != 'download':
-    sys.exit(1)
+    print '\033]0;PYMTERM_STATUS_CMD={}\007'.format(json.dumps(cmd))
 
-if action == 'download' and len(sys.argv) < 3:
-    sys.exit(2)
+def parse_args():
+    parser = argparse.ArgumentParser(description='helper scripts for upload/download files using sftp in command line')
+    sub_parsers = parser.add_subparsers(help='transfer action help', dest='action')
 
-cmd = {}
-cmd['ACTION'] = action.upper()
-cmd['HOME'] = os.path.expanduser('~')
-cmd['PWD'] = os.path.abspath('.')
-cmd['R_F'] = sys.argv[2] if len(sys.argv) > 2  else ''
+    upload_parser = sub_parsers.add_parser('upload', help='upload file from local system to remote')
+    upload_parser.add_argument('target', type=str, nargs='?', help='upload target file remote path')
 
-print r'\033]0;PYMTERM_STATUS_CMD={}\007'.format(json.dumps(cmd))
-print '\033]0;PYMTERM_STATUS_CMD={}\007'.format(json.dumps(cmd))
+    download_parser = sub_parsers.add_parser('download', help='download file from remote system to local')
+    download_parser.add_argument('target', type=str, help='download file remote path')
+
+    return parser
+
+if __name__ == '__main__':
+    args = parse_args().parse_args()
+
+    do_transfer(args.action, args.target)
