@@ -175,6 +175,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
         line_height = self._get_line_height()
         col_width = int(self._get_width(font, 'ABCDabcd') / 8)
+        ascent, descent = self._get_layout_metrics()
 
         width, height = self.size
 
@@ -260,21 +261,22 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                 l = line_p_context.create_layout()
                 l.set_font_description(font)
                 l.set_text(t)
-                line_context.move_to(xxxx, 0)
                 line_p_context.update_layout(l)
 
-                ink, logic = l.get_pixel_extents()
+                ink, logic = l.get_line(0).get_pixel_extents()
                 t_w, t_h = l.get_pixel_size()
+                t_w = t_w if t_w >= col_width else col_width
 
                 if cur_b_color != self.session.cfg.default_background_color:
                     r, g, b, a = self._get_color(cur_b_color)
                     line_context.set_source_rgba(r, g, b, a)
-                    b_l, b_t, b_w, b_h = logic
-                    line_context.rectangle(b_l + xxxx, b_t, b_w, b_h)
+                    line_context.rectangle(xxxx, 0, t_w, line_height)
                     line_context.fill()
         
                 r, g, b, a = self._get_color(cur_f_color)
                 line_context.set_source_rgba(r, g, b, a)
+                line_context.move_to(xxxx, line_height - descent -pango.ASCENT(logic))
+                line_p_context.update_layout(l)
                 line_p_context.show_layout(l)
 
                 return xxxx + t_w
@@ -352,7 +354,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         font_name = ['Noto Sans Mono CJK SC'
                          ,'WenQuanYi Micro Hei Mono'
                          ,'Menlo Regular'
-                         ][1]
+                         ][2]
         font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
         return font
 
@@ -378,6 +380,17 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         l.set_text(t)
         
         return l.get_pixel_size()
+
+    @lru_cache(1)
+    def _get_layout_metrics(self):
+        f = self._get_font()
+
+        l = self._get_size_layout()
+        l.set_font_description(f)
+        l.set_text('ABCDEFGabcdefgpl')
+        ink, logic = l.get_line(0).get_pixel_extents()
+        
+        return (pango.ASCENT(logic), pango.DESCENT(logic))
 
     @lru_cache(1)
     def _get_size_layout(self):

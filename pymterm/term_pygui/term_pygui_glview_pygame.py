@@ -258,7 +258,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                 if use_freetype:
                     text, text_pos = font.render(t, cur_f_color)
                     for turple in font.get_metrics(t):
-                        right_adjust += turple[4]
+                        if turple:
+                            right_adjust += turple[4]
                     text_pos.top = font.get_sized_ascender() - text_pos.top
                 else:
                     text = font.render(t, 1, cur_f_color)
@@ -267,6 +268,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     text_pos.centery = line_surf.get_rect().centery
 
                 text_pos.left += xxxx
+                right_adjust = right_adjust if right_adjust >= col_width else col_width
 
                 if cur_b_color != self.session.cfg.default_background_color:
                     line_surf.fill(cur_b_color, (xxxx, 0, right_adjust, self._get_line_height()))
@@ -345,9 +347,9 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     @lru_cache(1)
     def _get_font(self):
         font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
-                                     #'wqy-microhei-mono.ttf'
+                                     'wqy-microhei-mono.ttf'
                                      #'NotoSansMonoCJKsc-Regular.otf'
-                                     'YaHei Consolas Hybrid 1.12.ttf'
+                                     #'YaHei Consolas Hybrid 1.12.ttf'
                                      )
         if use_freetype:
             font = pygame.freetype.Font(font_path,

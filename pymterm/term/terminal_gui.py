@@ -206,11 +206,13 @@ class TerminalGUI(Terminal):
             line = self.get_cur_line()
             if line[self.col] == '\000':
                 self.col += 1
+        self.refresh_display()
 
     def cursor_left(self, context):
         logging.getLogger('term_gui').debug('cursor left:{}, {}'.format(self.col, self.row));
         if self.col > 0:
             self.col -= 1
+        self.refresh_display()
 
     def cursor_down(self, context):
         self.parm_down_cursor(context)
@@ -220,6 +222,7 @@ class TerminalGUI(Terminal):
 
     def carriage_return(self, context):
         self.col = 0
+        self.refresh_display()
 
     def set_foreground(self, light, color_idx):
         self.set_attributes(1 if light else 0, color_idx, -2)
@@ -243,6 +246,8 @@ class TerminalGUI(Terminal):
 
         for i in range(begin, len(line_option)):
             line_option[i] = TextAttribute(None, None, None)
+            
+        self.refresh_display()
 
     def delete_chars(self, count):
         line = self.get_cur_line()
@@ -263,6 +268,8 @@ class TerminalGUI(Terminal):
                 line_option[i] = line_option[i + count]
             else:
                 line_option[i] = TextAttribute(None, None, None)
+                
+        self.refresh_display()
 
     def refresh_display(self):
         lines, line_options = self.get_text()
@@ -365,9 +372,11 @@ class TerminalGUI(Terminal):
     def cursor_address(self, context):
         logging.getLogger('term_gui').debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
+        self.refresh_display()
 
     def cursor_home(self, context):
         self.set_cursor(0, 0)
+        self.refresh_display()
 
     def clr_eos(self, context):
         self.get_cur_line()
@@ -384,12 +393,15 @@ class TerminalGUI(Terminal):
 
             for i in range(len(line_option)):
                 line_option[i] = TextAttribute(None, None, None)
+        self.refresh_display()
 
     def parm_right_cursor(self, context):
         self.col += context.params[0]
+        self.refresh_display()
 
     def parm_left_cursor(self, context):
         self.col -= context.params[0]
+        self.refresh_display()
 
     def client_report_version(self, context):
         self.session.send('\033[>0;136;0c')
@@ -409,6 +421,7 @@ class TerminalGUI(Terminal):
             col = self.get_cols() - 1
 
         self.col = col
+        self.refresh_display()
 
     def row_address(self, context):
         self.set_cursor(self.col, context.params[0])
@@ -428,6 +441,8 @@ class TerminalGUI(Terminal):
 
             if self.row <= end:
                 self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1: end + 1] + [self.create_new_line_option()] + self.line_options[end + 1:]
+                
+        self.refresh_display()
 
     def get_scroll_region(self):
         if self.scroll_region:
@@ -450,6 +465,7 @@ class TerminalGUI(Terminal):
     def change_scroll_region(self, context):
         logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], context.params[1])
+        self.refresh_display()
 
     def insert_line(self, context):
         self.parm_insert_line(context)
@@ -466,6 +482,7 @@ class TerminalGUI(Terminal):
 
             if self.row <= end:
                 self.line_options = self.line_options[:self.row] + [self.create_new_line_option()] + self.line_options[self.row: end] + self.line_options[end + 1:]
+        self.refresh_display()
 
     def request_background_color(self, context):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
@@ -479,9 +496,11 @@ class TerminalGUI(Terminal):
 
     def enter_reverse_mode(self, context):
         self.set_mode(TextMode.REVERSE)
+        self.refresh_display()
 
     def exit_standout_mode(self, context):
         self.set_mode(TextMode.STDOUT)
+        self.refresh_display()
 
     def set_mode(self, mode):
         self.save_line_option(TextAttribute([], [], mode))
@@ -489,13 +508,16 @@ class TerminalGUI(Terminal):
     def enter_ca_mode(self, context):
         self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode = self.lines, self.line_options, self.col, self.row, self.bold_mode
         self.lines, self.line_options, self.col, self.row, self.bold_mode = [], [], 0, 0, False
+        self.refresh_display()
 
     def exit_ca_mode(self, context):
         self.lines, self.line_options, self.col, self.row, self.bold_mode = \
             self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode
+        self.refresh_display()
 
     def key_shome(self, context):
         self.set_cursor(1, 0)
+        self.refresh_display()
 
     def enter_bold_mode(self, context):
         self.bold_mode = True
@@ -509,9 +531,11 @@ class TerminalGUI(Terminal):
 
     def cursor_invisible(self, context):
         self.term_widget.cursor_visible = False
+        self.refresh_display()
 
     def cursor_normal(self, context):
         self.term_widget.cursor_visible = True
+        self.refresh_display()
 
     def cursor_visible(self, context):
         self.cursor_normal(context)
@@ -538,6 +562,7 @@ class TerminalGUI(Terminal):
             self.get_cur_line()
             self.get_cur_line_option()
         logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+        self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
         self.exit_standout_mode(context)
@@ -637,6 +662,7 @@ class TerminalGUI(Terminal):
     def column_address(self, context):
         col, row = self.get_cursor()
         self.set_cursor(context.params[0], row)
+        self.refresh_display()
 
     def parm_up_cursor(self, context):
         begin, end = self.get_scroll_region()
@@ -657,6 +683,7 @@ class TerminalGUI(Terminal):
             self.get_cur_line()
             self.get_cur_line_option()
         logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+        self.refresh_display()
 
     def view_history(self, pageup):
         lines, line_options = self.get_history_text()
