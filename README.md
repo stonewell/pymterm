@@ -38,7 +38,7 @@ ssh library
 - [X] sftp file transfer
 - [ ] X forwarding
 
-Tools
+## Tools
  - tools/pymter_transfer.py
  ```
 usage: pymterm_transfer.py [-h] {upload,download} ...
