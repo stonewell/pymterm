@@ -25,7 +25,11 @@ from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glE
 from OpenGL.GL import *
 from OpenGL.GLU import *
 
-import cairo
+try:
+    import cairo
+except:
+    logging.exception('cairo not found')
+    import gtk.cairo as cairo
 import pango
 import pangocairo
 import numpy
@@ -60,7 +64,12 @@ class Texture(GTexture):
 
     def load_texture(self, data):
         self.w, self.h = data.get_width(), data.get_height()
-        texture_data = numpy.ndarray(shape=(self.w, self.h, 4), dtype=numpy.uint8, buffer=data.get_data())
+        if sys.platform.startswith('win'):
+            texture_data = str(data.get_data())
+        else:
+            texture_data = numpy.ndarray(shape=(self.w, self.h, 4),
+                                             dtype=numpy.uint8,
+                                             buffer=data.get_data())
 
         self.bind()
 
@@ -351,10 +360,10 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
     @lru_cache(1)
     def _get_font(self):
-        font_name = ['Noto Sans Mono CJK SC'
+        font_name = ['Noto Sans Mono CJK SC Regular'
                          ,'WenQuanYi Micro Hei Mono'
                          ,'Menlo Regular'
-                         ][2]
+                         ][1]
         font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
         return font
 

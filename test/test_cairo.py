@@ -1,5 +1,8 @@
 #coding=utf-8
-import cairo
+try:
+    import cairo
+except:
+    import gtk.cairo as cairo
 import pango
 import pangocairo
 import sys
@@ -22,7 +25,7 @@ print sorted([f.get_name() for f in   font_map.list_families()])
 font_name = ['Noto Sans Mono CJK SC',
                  'WenQuanYi Micro Hei Mono',
                  'YaHei Consolas Hybrid',
-                 'Menlo Regular'][3]
+                 'Menlo Regular'][1]
 pc = pango.Context()
 pc.set_language(pango.Language("zh_CN.UTF-8"))
 
@@ -35,7 +38,7 @@ pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
 l = p_c.create_layout()
 l.set_font_description(font)
-attrList, t, c = pango.parse_markup(u"<span font_features='dlig=1, -kern, afrc on'>哈哈</span>")
+attrList, t, c = pango.parse_markup(u"哈哈")
 l.set_text(t)
 l.set_attributes(attrList)
 
