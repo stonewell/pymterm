@@ -147,10 +147,10 @@ class SSHSession(Session):
         logging.getLogger('session').debug(u'sftp get home:{} and cwd:{}'.format(home, pwd))
 
         if home and p.startswith('~/'):
-            p = os.path.join(home, p[2:])
+            p = '/'.join([home, p[2:]])
 
         if pwd and not os.path.isabs(p):
-            p = os.path.join(pwd, p)
+            p = '/'.join([pwd, p])
 
         return p
 

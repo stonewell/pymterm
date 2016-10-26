@@ -296,7 +296,7 @@ class TerminalPyGUI(TerminalGUI):
         dlog.present()
 
     def report_error(self, msg):
-        stop_alert(msg)
+        self.__alert_task = Task(lambda : stop_alert(msg), .001)
 
     def ask_user(self, msg):
         return ask(msg)
