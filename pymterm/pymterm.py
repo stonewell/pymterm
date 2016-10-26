@@ -14,7 +14,6 @@ sys.excepthook = unhandled_exception
 def args_parser():
     parser = argparse.ArgumentParser(prog='pymterm',
                                      description='a multiple tab terminal emulator in python')
-    parser.add_argument('-c', '--console', action="store_true", help='start the terminal emulator in console mode', required = False)
     parser.add_argument('-s', '--session', type=str, help='name of session to use', required = False)
     parser.add_argument('-p', '--port', type=int, help='port of host to connect to', required = False)
     parser.add_argument('-l', '--log', type=str, help='logging file path', required = False)
@@ -23,8 +22,7 @@ def args_parser():
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
     parser.add_argument('--config', type=str, help='show more debug information in log file and console', required = False)
-    parser.add_argument('--kivy', action="store_true", help='Use kivy as gui system', required = False)
-    parser.add_argument('--pygui', action="store_true", help='Use pyGUI as gui system', required = False, default=True)
+    parser.add_argument('--render', type=str, choices=["cairo", "pygame", "native", "kivy", "console"], help='choose a render system', required = False)
 
     if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
@@ -45,10 +43,10 @@ def pymterm_main():
         args_parser().print_help()
         sys.exit(1)
 
-    if cfg.console:
+    if cfg.render and cfg.render == 'console':
         from term.terminal_console import TerminalConsoleApp
         TerminalConsoleApp(cfg).start()
-    elif cfg.kivy:
+    elif cfg.render and cfg.render == 'kivy':
         from kivy.config import Config
         Config.set('kivy', 'exit_on_escape', 0)
         Config.set('graphics', 'height', '660')
@@ -75,8 +73,5 @@ def pymterm_main():
         TerminalPyGUIApp(cfg).start()
 
 if __name__ == '__main__':
-    try:
-        pymterm_main()
-    except:
-        logging.exception('unknown error happening')
+    pymterm_main()
     os._exit(0)

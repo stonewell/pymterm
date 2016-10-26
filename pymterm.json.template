@@ -1,6 +1,17 @@
 {
     "termcap_dir":"/home/user/pymterm/data",
 
+    "font":{
+	"font_dir":"/home/user/pymterm/data/fonts",
+	"name":"",
+	"font_file":""
+    },
+
+    "render":{
+	"default":"cairo",
+	"renders":["cairo", "pygame", "native", "kivy", "console"]
+    },
+
     "sessions":{
 	"session1":{
 	    "conn_str":"user@remoteserver1"

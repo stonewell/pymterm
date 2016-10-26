@@ -11,7 +11,6 @@ def get_default_user():
 class SessionConfig:
     def __init__(self, args):
         self.term_name = args.term_name
-        self.console = args.console if args.console is not None else False
         self.session_name = args.session
         self.port = args.port if args.port is not None else 22
         self.is_logging = args.log is not None
@@ -26,11 +25,18 @@ class SessionConfig:
         self.debug_more = args.debug_more
         self.session_type = args.session_type
         self.config = args.config
-        self.kivy = args.kivy
-        self.pygui = args.pygui
         self.password = None
+        self.render = None
 
         self.load_config()
+
+        if args.render:
+            self.render = args.render
+        elif 'render' in self.config:
+            render = self.config['render']
+
+            if 'default' in render and 'renders' in render:
+                self.render = render['default'] if render['default'] in render['renders'] else None
 
         if self.debug_more:
             self.debug = True
@@ -40,7 +46,7 @@ class SessionConfig:
         if args.conn_str:
             self.set_conn_str(args.conn_str)
         elif not self.session_name:
-            if self.console:
+            if self.render and self.render == 'console':
                 raise ValueError("no engouth connect information")
 
         #validate host and user
