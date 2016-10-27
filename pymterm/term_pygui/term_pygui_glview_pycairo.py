@@ -43,7 +43,7 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
-from term_pygui_view_base import TerminalPyGUIViewBase
+from term_pygui_view_base import TerminalPyGUIViewBase, SINGLE_WIDE_CHARACTERS
 
 from functools32 import lru_cache
 
@@ -183,7 +183,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         font = self._get_font();
 
         line_height = self._get_line_height()
-        col_width = int(self._get_width(font, 'ABCDabcd') / 8)
+        col_width = int(self._get_col_width())
         ascent, descent = self._get_layout_metrics()
 
         width, height = self.size
@@ -358,19 +358,38 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
         self.resized((1, 1))
 
+    def _find_font_desc(self, font_name):
+        font_map = pangocairo.cairo_font_map_get_default()
+        families = font_map.list_families()
+
+        for family in families:
+            for face in family.list_faces():
+                _font_name = '{} {}'.format(family.get_name() , face.get_face_name())
+                if font_name == _font_name or (font_name == family.get_name() and face.get_face_name() == 'Regular'):
+                    return face.describe()
+
+        return None
+    
     @lru_cache(1)
     def _get_font(self):
         font_name = ['Noto Sans Mono CJK SC Regular'
                          ,'WenQuanYi Micro Hei Mono'
                          ,'Menlo Regular'
-                         ][1]
-        font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
+                         ,'WenQuanYi Micro Hei'
+                         ,'Sans'
+                         ][2]
+        font = self._find_font_desc(font_name)
+
+        if not font:
+            font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
+        else:
+            font.set_size(int(self.font_size) * pango.SCALE)
         return font
 
     def get_prefered_size(self):
         f = self._get_font()
-        w = self._get_width(f, 'ABCDabcd')
-        w = int(w / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
+        w = self._get_col_width()
+        w = int(w * self.visible_cols + self.padding_x * 2 + 0.5)
         h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
 
         return (w, h)
@@ -396,7 +415,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
         l = self._get_size_layout()
         l.set_font_description(f)
-        l.set_text('ABCDEFGabcdefgpl')
+        l.set_text(SINGLE_WIDE_CHARACTERS)
         ink, logic = l.get_line(0).get_pixel_extents()
         
         return (pango.ASCENT(logic), pango.DESCENT(logic))

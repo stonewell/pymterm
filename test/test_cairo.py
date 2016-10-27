@@ -18,6 +18,7 @@ context.fill()
 
 font_map = pangocairo.cairo_font_map_get_default()
 families = font_map.list_families()
+print families[0]
 
 # to see family names:
 print sorted([f.get_name() for f in   font_map.list_families()])

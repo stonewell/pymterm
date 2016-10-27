@@ -30,6 +30,18 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
+from functools32 import lru_cache
+
+SINGLE_WIDE_CHARACTERS =	\
+					" !\"#$%&'()*+,-./" \
+					"0123456789" \
+					":;<=>?@" \
+					"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+					"[\\]^_`" \
+					"abcdefghijklmnopqrstuvwxyz" \
+					"{|}~" \
+					""
+
 def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''
     return min(max(value, minvalue), maxvalue)
@@ -47,7 +59,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self._width_cache = {}
         self._lock = threading.Lock()
         self._refresh_task = Task(self.__refresh, .02, False, False)
-        
+
         TerminalWidget.__init__(self, **kwargs)
 
     def _get_color(self, color_spec):
@@ -68,7 +80,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def refresh(self):
         self._refresh_task.start()
-        
+
     def key_down(self, e):
         key = term_pygui_key_translate.translate_key(e)
 
@@ -139,7 +151,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def _calculate_visible_cols(self, w):
         f = self._get_font()
-        self.visible_cols = int(w / self._get_width(f, 'ABCDabcd') * 8)
+        self.visible_cols = int(w / self._get_col_width())
 
         if self.visible_cols <= 0:
             self.visible_cols = 1
@@ -188,7 +200,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         text = self.norm_text(''.join(l[cy]))
         for i in range(0, len(text)):
-            if self._get_width(f, text[:i]) + self._get_width(f, text[i]) * 0.6 + padding_left > cx:
+            if self._get_col_width() * i + self._get_col_width() * 0.6 + padding_left > cx:
                 for ii in range(len(l[cy])):
                     if l[cy][ii] == '\000':
                         continue
@@ -225,3 +237,13 @@ class TerminalPyGUIViewBase(TerminalWidget):
     def paste_cmd(self):
         if self.session and self.session.terminal:
             self.session.terminal.paste_data()
+
+    @lru_cache(1)
+    def _get_col_width(self):
+        f = self._get_font()
+
+        col_width = max(map(lambda x:self._get_width(f, x), SINGLE_WIDE_CHARACTERS))
+
+        logging.getLogger('term_pygui').info('col_width:{}'.format(col_width))
+
+        return col_width

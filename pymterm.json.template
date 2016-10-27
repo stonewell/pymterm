@@ -4,7 +4,8 @@
     "font":{
 	"font_dir":"/home/user/pymterm/data/fonts",
 	"name":"",
-	"font_file":""
+	"font_file":"",
+	"size":17
     },
 
     "render":{
