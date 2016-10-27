@@ -5,6 +5,9 @@ import os
 import sys
 import json
 
+GUI_RENDERS = ["cairo", "pygame", "native"]
+RENDERS = GUI_RENDERS + ["kivy", "console"]
+
 def get_default_user():
 	return getpass.getuser()
 
@@ -27,6 +30,8 @@ class SessionConfig:
         self.config = args.config
         self.password = None
         self.render = None
+        self.gui_renders = GUI_RENDERS
+        self.renders = 	RENDERS
 
         self.load_config()
 
@@ -35,8 +40,8 @@ class SessionConfig:
         elif 'render' in self.config:
             render = self.config['render']
 
-            if 'default' in render and 'renders' in render:
-                self.render = render['default'] if render['default'] in render['renders'] else None
+            if 'default' in render:
+                self.render = render['default'] if render['default'] in self.renders else None
 
         if self.debug_more:
             self.debug = True

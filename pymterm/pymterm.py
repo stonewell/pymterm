@@ -22,7 +22,7 @@ def args_parser():
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
     parser.add_argument('--config', type=str, help='show more debug information in log file and console', required = False)
-    parser.add_argument('--render', type=str, choices=["cairo", "pygame", "native", "kivy", "console"], help='choose a render system', required = False)
+    parser.add_argument('--render', type=str, choices=session_config.RENDERS, help='choose a render system', required = False)
 
     if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')

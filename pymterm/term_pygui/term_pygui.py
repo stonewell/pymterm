@@ -31,19 +31,6 @@ from term_menu import basic_menus
 
 from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDialog
 
-try:
-    from term_pygui_glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
-    logging.getLogger('term_pygui').info('using opengl cairo/pango')
-except:
-    logging.getLogger('term_pygui').exception('opengl cairo/pango fail')
-    try:
-        from term_pygui_glview_pygame import TerminalPyGUIGLView as TerminalPyGUIView
-        logging.getLogger('term_pygui').info('using opengl pygame')
-    except:
-        logging.getLogger('term_pygui').exception('opengl pygame fail')
-        from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
-        logging.getLogger('term_pygui').info('using native')
-
 padding = 10
 file_types = None
 last_dir = DirRef(path = os.path.abspath(os.path.expanduser("~/.ssh")))
@@ -162,6 +149,54 @@ class TerminalPyGUIApp(Application):
         self.current_tab = None
         self.conn_history = []
         self.menus = basic_menus(self.cfg.get_session_names())
+        self._cls_view = self._select_view_render()
+
+    def _try_import_render(self, render):
+        if render == 'cairo':
+            try:
+                from term_pygui_glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
+                logging.getLogger('term_pygui').info('using opengl cairo/pango render')
+                return TerminalPyGUIView
+            except:
+                return None
+
+        if render == 'pygame':
+            try:
+                from term_pygui_glview_pygame import TerminalPyGUIGLView as TerminalPyGUIView
+                logging.getLogger('term_pygui').info('using opengl pygame render')
+                return TerminalPyGUIView
+            except:
+                return None
+
+        if render == 'native':
+            try:
+                from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
+                logging.getLogger('term_pygui').info('using native pygui render')
+                return TerminalPyGUIView
+            except:
+                return None
+
+        logging.getLogger('term_pygui').info('unsupported render:{}'.format(render))
+        return None
+
+    def _select_view_render(self):
+        render = self.cfg.render
+        _cls_view = None
+
+        if render and render in self.cfg.gui_renders:
+            _cls_view = self._try_import_render(render)
+
+        if _cls_view:
+            return _cls_view
+
+        for render in self.cfg.gui_renders:
+            _cls_view = self._try_import_render(render)
+            if _cls_view:
+                return _cls_view
+
+        logging.getLogger('term_pygui').error("unable to find a valid render")
+
+        stop_alert("unable to find a valid render, supported render:{}".format(self.cfg.renders))
 
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & pyGUI'
@@ -171,6 +206,9 @@ class TerminalPyGUIApp(Application):
         m.paste_cmd.enabled = application().query_clipboard()
         m.new_window_cmd.enabled = 1
         m.open_session_cmd.enabled = 1
+
+    def _create_view(self, doc):
+        return self._cls_view(model=doc)
 
     def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
         cfg = self.cfg.clone()
@@ -190,7 +228,7 @@ class TerminalPyGUIApp(Application):
         doc.cfg = cfg
 
         if win:
-            view = TerminalPyGUIView(model=doc)
+            view = self._create_view(doc)
             self._create_new_tab(win, view)
         else:
             self.make_window(doc)
@@ -208,7 +246,7 @@ class TerminalPyGUIApp(Application):
         self.connect_to()
 
     def make_window(self, document):
-        view = TerminalPyGUIView(model=document)
+        view = self._create_view(document)
         w, h = view.get_prefered_size()
 
         win = Window(bounds = (0, 0, w + 10, h + 50), document = document)

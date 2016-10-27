@@ -9,8 +9,7 @@
     },
 
     "render":{
-	"default":"cairo",
-	"renders":["cairo", "pygame", "native", "kivy", "console"]
+	"default":"cairo"
     },
 
     "sessions":{
