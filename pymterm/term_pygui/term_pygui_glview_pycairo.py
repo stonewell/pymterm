@@ -365,7 +365,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         for family in families:
             for face in family.list_faces():
                 _font_name = '{} {}'.format(family.get_name() , face.get_face_name())
-                if font_name == _font_name or (font_name == family.get_name() and face.get_face_name() == 'Regular'):
+                if font_name == _font_name or font_name == family.get_name():
                     return face.describe()
 
         return None
@@ -377,7 +377,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                          ,'Menlo Regular'
                          ,'WenQuanYi Micro Hei'
                          ,'Sans'
-                         ][2]
+                         , 'Lucida Console'
+                         ][1]
         font = self._find_font_desc(font_name)
 
         if not font:
