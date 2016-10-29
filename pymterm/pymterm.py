@@ -23,6 +23,9 @@ def args_parser():
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
     parser.add_argument('--config', type=str, help='show more debug information in log file and console', required = False)
     parser.add_argument('--render', type=str, choices=session_config.RENDERS, help='choose a render system', required = False)
+    parser.add_argument('--font_file', type=str, default = None, help='provide a font file', required = False)
+    parser.add_argument('--font_name', type=str, default = None, help='provide a font name', required = False)
+    parser.add_argument('--font_size', type=int, default = None, help='given a font size', required = False)
 
     if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')

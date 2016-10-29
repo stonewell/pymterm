@@ -32,6 +32,9 @@ class SessionConfig:
         self.render = None
         self.gui_renders = GUI_RENDERS
         self.renders = 	RENDERS
+        self.font_file = args.font_file
+        self.font_name = args.font_name
+        self.font_size = args.font_size
 
         self.load_config()
 

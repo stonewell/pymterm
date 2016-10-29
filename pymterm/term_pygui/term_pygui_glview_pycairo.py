@@ -67,9 +67,10 @@ class Texture(GTexture):
         if sys.platform.startswith('win'):
             texture_data = str(data.get_data())
         else:
-            texture_data = numpy.ndarray(shape=(self.w, self.h, 4),
-                                             dtype=numpy.uint8,
-                                             buffer=data.get_data())
+            texture_data = str(data.get_data())
+            ## texture_data = numpy.ndarray(shape=(self.w, self.h, 4),
+            ##                                  dtype=numpy.uint8,
+            ##                                  buffer=data.get_data())
 
         self.bind()
 
@@ -79,7 +80,7 @@ class Texture(GTexture):
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.w,
                      self.h, 0, GL_BGRA, GL_UNSIGNED_BYTE,
                      texture_data)
-        
+
     def do_setup(self):
         glMatrixMode(GL_PROJECTION)
 
@@ -126,6 +127,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
     def __init__(self, **kwargs):
         pf = GLConfig(double_buffer = True)
+        self._refresh_font(kwargs['model'].cfg)
+
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
 
@@ -233,7 +236,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             if cached_line_surf.cached:
                 v_context.set_source_surface(line_surf, 0, y)
                 v_context.paint()
-                
+
                 y += line_height
                 continue
 
@@ -281,7 +284,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     line_context.set_source_rgba(r, g, b, a)
                     line_context.rectangle(xxxx, 0, t_w, line_height)
                     line_context.fill()
-        
+
                 r, g, b, a = self._get_color(cur_f_color)
                 line_context.set_source_rgba(r, g, b, a)
                 line_context.move_to(xxxx, line_height - descent -pango.ASCENT(logic))
@@ -369,22 +372,47 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
                     return face.describe()
 
         return None
-    
+
+    def _refresh_font(self, cfg):
+        self.font_name = None
+        self.font_size = 17
+
+        if cfg:
+            config = cfg.config
+
+            if cfg.font_name:
+                self.font_name = cfg.font_name
+
+            if cfg.font_size:
+                self.font_size = cfg.font_size
+
+            if config is None:
+                return
+
+            if 'font' in config:
+                font_config = config['font']
+
+                if 'name' in font_config and not cfg.font_name:
+                    self.font_name = font_config['name']
+
+                if 'size' in font_config and not cfg.font_size:
+                    self.font_size = font_config['size']
+
     @lru_cache(1)
     def _get_font(self):
-        font_name = ['Noto Sans Mono CJK SC Regular'
-                         ,'WenQuanYi Micro Hei Mono'
-                         ,'Menlo Regular'
-                         ,'WenQuanYi Micro Hei'
-                         ,'Sans'
-                         , 'Lucida Console'
-                         ][1]
+        font_name = self.font_name
+
+        if not font_name:
+            stop_alert("render cairoe unable to find a valid font name, please use --font_name or pymterm.json to set font name")
+            sys.exit(1)
+
         font = self._find_font_desc(font_name)
 
         if not font:
             font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
         else:
             font.set_size(int(self.font_size) * pango.SCALE)
+
         return font
 
     def get_prefered_size(self):
@@ -407,7 +435,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         l = self._get_size_layout()
         l.set_font_description(f)
         l.set_text(t)
-        
+
         return l.get_pixel_size()
 
     @lru_cache(1)
@@ -418,7 +446,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         l.set_font_description(f)
         l.set_text(SINGLE_WIDE_CHARACTERS)
         ink, logic = l.get_line(0).get_pixel_extents()
-        
+
         return (pango.ASCENT(logic), pango.DESCENT(logic))
 
     @lru_cache(1)

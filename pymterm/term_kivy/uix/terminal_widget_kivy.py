@@ -1,3 +1,5 @@
+import os
+
 from collections import namedtuple
 import logging
 from os import environ
@@ -50,11 +52,15 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
                         'split_str', 'unicode_errors',
                         'font_hinting', 'font_kerning', 'font_blended')
 
-    def __init__(self, **kwargs):
+    def __init__(self, session, **kwargs):
         self._trigger_texture = Clock.create_trigger(self._texture_update, -1)
 
         super(TerminalWidgetKivy, self).__init__(**kwargs)
 
+        self.session = session
+        self.tab_width = session.get_tab_width()
+        self.refresh_font()
+        
         # bind all the property for recreating the texture
         d = TerminalWidgetKivy._font_properties
         fbind = self.fbind
@@ -486,6 +492,39 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
 
         return Clipboard.paste()
 
+    def refresh_font(self):
+        if self.session and self.session.cfg:
+            config = self.session.cfg.config
+            cfg = self.session.cfg
+
+            if cfg.font_file:
+                font_file = os.path.expandvars(os.path.expanduser(cfg.font_file))
+
+                if not os.path.isabs(font_file):
+                    font_file = os.path.join('.', font_file)
+                    
+                if os.path.isfile(font_file):
+                    self.font_name = font_file
+
+            if cfg.font_size:
+                self.font_size = cfg.font_size
+                
+            if config is None:
+                return
+        
+            if 'font' in config:
+                font_config = config['font']
+
+                if 'font_file' in font_config and not cfg.font_file:
+                    font_file = os.path.expandvars(os.path.expanduser(font_config['font_file']))
+
+                    if not os.path.isabs(font_file):
+                        font_file = os.path.join('.', font_file)
+                    if os.path.isfile(font_file):
+                        self.font_name = font_file
+
+                if 'size' in font_config and not cfg.font_size:
+                    self.font_size = font_config['size']
     #
     # Properties
     #

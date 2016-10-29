@@ -51,7 +51,6 @@ _color_map = {}
 class TerminalPyGUIViewBase(TerminalWidget):
 
     def __init__(self, **kwargs):
-        self.font_size = 17.5
         self.padding_x = 5
         self.padding_y = 5
         self.session = None

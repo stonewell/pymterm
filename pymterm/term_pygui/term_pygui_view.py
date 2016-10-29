@@ -38,6 +38,8 @@ from functools32 import lru_cache
 class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
     def __init__(self, **kwargs):
+        self._refresh_font(kwargs['model'].cfg)
+        
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         View.__init__(self, **kwargs)
 
@@ -206,12 +208,40 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _setup_canvas(self, canvas):
         canvas.set_font(self._get_font())
 
+    def _refresh_font(self, cfg):
+        self.font_name = None
+        self.font_size = 17
+
+        if cfg:
+            config = cfg.config
+
+            if cfg.font_name:
+                self.font_name = cfg.font_name
+
+            if cfg.font_size:
+                self.font_size = cfg.font_size
+
+            if config is None:
+                return
+
+            if 'font' in config:
+                font_config = config['font']
+
+                if 'name' in font_config and not cfg.font_name:
+                    self.font_name = font_config['name']
+
+                if 'size' in font_config and not cfg.font_size:
+                    self.font_size = font_config['size']
+
     @lru_cache(1)
     def _get_font(self):
-        return GUI.Font(family='Noto Sans Mono CJK SC Regular',
-                                    #u'文泉驿等宽微米黑',
-                                    #'YaHei Consolas Hybrid',
-                                    #'WenQuanYi Micro Hei Mono',
+        font_name = self.font_name
+
+        if not font_name:
+            stop_alert("render native unable to find a valid font name, please use --font_name or pymterm.json to set font name")
+            sys.exit(1)
+
+        return GUI.Font(family=font_name,
                                     size=self.font_size)
 
     def get_prefered_size(self):

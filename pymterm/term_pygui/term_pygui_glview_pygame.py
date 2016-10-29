@@ -19,6 +19,8 @@ from GUI.Colors import rgb
 from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
 from GUI.GL import GLView, GLConfig
+from GUI.Alerts import stop_alert, ask
+
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
 import GUI.Font
@@ -126,6 +128,8 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
     def __init__(self, **kwargs):
         pf = GLConfig(double_buffer = True)
+        self._refresh_font(kwargs['model'].cfg)
+
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
 
@@ -344,19 +348,59 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
         self.resized((1, 1))
 
+    def _refresh_font(self, cfg):
+        self.font_size = 17
+        self.font_file = None
+
+        if cfg:
+            config = cfg.config
+
+            if cfg.font_file:
+                font_file = os.path.expandvars(os.path.expanduser(cfg.font_file))
+
+                if not os.path.isabs(font_file):
+                    font_file = os.path.join('.', font_file)
+                    
+                if os.path.isfile(font_file):
+                    self.font_file = font_file
+
+            if cfg.font_size:
+                self.font_size = cfg.font_size
+                
+            if config is None:
+                return
+
+            if 'font' in config:
+                font_config = config['font']
+
+                if 'name' in font_config:
+                    self.font_name = font_config['name']
+
+                if 'font_file' in font_config and not cfg.font_file:
+                    font_file = os.path.expandvars(os.path.expanduser(font_config['font_file']))
+
+                    if not os.path.isabs(font_file):
+                        font_file = os.path.join('.', font_file)
+                    if os.path.isfile(font_file):
+                        self.font_file = font_file
+
+                if 'size' in font_config and not cfg.font_size:
+                    self.font_size = font_config['size']
+
     @lru_cache(1)
     def _get_font(self):
-        font_path = os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'fonts',
-                                     'wqy-microhei-mono.ttf'
-                                     #'NotoSansMonoCJKsc-Regular.otf'
-                                     #'YaHei Consolas Hybrid 1.12.ttf'
-                                     )
+        font_path = self.font_file
+
+        if not font_path:
+            stop_alert("render pygame unable to find a valid font file, please use --font_file or pymterm.json to set font file")
+            sys.exit(1)
+
         if use_freetype:
             font = pygame.freetype.Font(font_path,
-                                            self.font_size)
+                                                self.font_size)
         else:
             font = pygame.font.Font(font_path,
-                                        int(self.font_size))
+                                            int(self.font_size))
         return font
 
     def get_prefered_size(self):

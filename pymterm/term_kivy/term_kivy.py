@@ -69,14 +69,13 @@ class TermBoxLayout(BoxLayout):
             self.trigger_start_session()
 
 class TermTextInput(TerminalWidgetKivy):
-    def __init__(self, **kwargs):
-        super(TermTextInput, self).__init__(**kwargs)
+    def __init__(self, session, **kwargs):
+        super(TermTextInput, self).__init__(session, **kwargs)
 
         self.visible_rows = 1
         self.visible_cols = 1
         self.scroll_region = None
 
-        self.session = None
         self.keyboard_handled = False
 
     def keyboard_on_textinput(self, window, text):
@@ -233,7 +232,9 @@ class TerminalKivyApp(App):
 
         self.root_widget.term_panel.add_widget(ti)
 
-        term_widget = TermTextInput()
+        session = create_session(cfg, self.create_terminal(cfg))
+
+        term_widget = TermTextInput(session)
         term_widget.size_hint = (1, 1)
         term_widget.pos_hint = {'center_y':.5, 'center_x':.5}
 
@@ -241,10 +242,8 @@ class TerminalKivyApp(App):
         layout.term_widget = term_widget
 
         ti.term_widget = term_widget
-        ti.session = create_session(cfg, self.create_terminal(cfg))
+        ti.session = session
 
-        term_widget.session = ti.session
-        term_widget.tab_width = ti.session.get_tab_width()
         ti.session.term_widget = term_widget
         ti.session.terminal.term_widget = term_widget
 
