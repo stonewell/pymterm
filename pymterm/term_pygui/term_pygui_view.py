@@ -17,6 +17,7 @@ from GUI.StdFonts import application_font
 from GUI.Colors import rgb
 from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
+from GUI.Alerts import stop_alert, ask
 
 import GUI.Font
 
