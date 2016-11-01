@@ -30,12 +30,19 @@ font_name = ['Noto Sans Mono CJK SC',
 pc = pango.Context()
 pc.set_language(pango.Language("zh_CN.UTF-8"))
 
-font = pango.FontDescription(' '.join([font_name, str(26)]))
+font = pango.FontDescription(' '.join([font_name, str(15)]))
 
 context.translate(50,25)
 
+f_o = cairo.FontOptions()
+f_o.set_antialias(cairo.ANTIALIAS_NONE)
+f_o.set_hint_style(cairo.HINT_STYLE_SLIGHT)
+f_o.set_hint_metrics(cairo.HINT_METRICS_ON)
+
+context.set_font_options(f_o)
+
 p_c = pangocairo_context = pangocairo.CairoContext(context)
-pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+#pangocairo_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
 l = p_c.create_layout()
 l.set_font_description(font)
@@ -46,12 +53,18 @@ l.set_attributes(attrList)
 print l.get_pixel_extents(), l.get_pixel_size(), l.get_size(), font.get_size() / pango.SCALE, l.get_line(0).get_pixel_extents()
 
 context.set_source_rgb(0, 0, 0)
-context.rectangle(0, 0, 153, 41)
+ink, logic = l.get_pixel_extents()
+context.rectangle(*logic)
 context.stroke()
 pangocairo_context.update_layout(l)
 pangocairo_context.show_layout(l)
-l.set_text('abcd')
+l.set_text('gggggggg')
 pangocairo_context.update_layout(l)
+context.set_source_rgb(128, 0, 0)
+ink, logic = l.get_pixel_extents()
+context.rectangle(*logic)
+context.stroke()
+context.set_source_rgb(0, 0, 0)
 pangocairo_context.show_layout(l)
 
 

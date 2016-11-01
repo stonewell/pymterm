@@ -52,10 +52,10 @@ class SSHSession(Session):
                 time.sleep(.001)
 
         data.append(self.channel.recv(block_size))
-        wait()
+        #wait()
         while self.channel and self.channel.recv_ready():
             data.append(self.channel.recv(block_size))
-            wait()
+            #wait()
 
         return ''.join(data)
 
@@ -175,7 +175,7 @@ class SSHSession(Session):
                     else:
                         while True:
                             if stat.S_ISDIR(r_stat.st_mode):
-                                r_f = os.path.join(r_f, os.path.basename(l_f))
+                                r_f = '/'.join([r_f, os.path.basename(l_f)])
                                 r_stat = sftp.state(r_f)
                             elif stat.S_ISLNK(r_stat.st_mode):
                                 r_f = sftp.normalize(r_f)

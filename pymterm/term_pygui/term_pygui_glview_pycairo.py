@@ -242,12 +242,22 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
             cached_line_surf.cached = True
             line_context = cairo.Context(line_surf)
+
+            f_o = cairo.FontOptions()
+            f_o.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+            f_o.set_hint_style(cairo.HINT_STYLE_SLIGHT)
+            f_o.set_hint_metrics(cairo.HINT_METRICS_ON)
+            line_context.set_font_options(f_o)
+
             r,g,b,a = self._get_color(self.session.cfg.default_background_color)
             line_context.set_source_rgba(r, g, b, a)
             line_context.rectangle(0, 0, width, line_height)
             line_context.fill()
             line_p_context = pangocairo.CairoContext(line_context)
-            line_p_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
+            if sys.platform.startswith('win'):
+                line_p_context.set_antialias(cairo.ANTIALIAS_DEFAULT)
+            else:
+                line_p_context.set_antialias(cairo.ANTIALIAS_SUBPIXEL)
 
             def render_text(t, xxxx):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
@@ -287,7 +297,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
 
                 r, g, b, a = self._get_color(cur_f_color)
                 line_context.set_source_rgba(r, g, b, a)
-                line_context.move_to(xxxx, line_height - descent -pango.ASCENT(logic))
+                line_context.move_to(xxxx + pango.LBEARING(logic), line_height - descent -pango.ASCENT(logic))
                 line_p_context.update_layout(l)
                 line_p_context.show_layout(l)
 
@@ -461,7 +471,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
     def _get_line_height(self):
         f = self._get_font()
 
-        w, h = self._get_size(f, 'ABCDabcd')
+        w, h = self._get_size(f, SINGLE_WIDE_CHARACTERS)
 
         return h + 1
 
