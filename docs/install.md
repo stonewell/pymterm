@@ -7,6 +7,8 @@
      cd pygui && python setup.py install
      ```
  - Install dependencies
+   - Install libssl-dev on linux before using pip to install dependency
+  
  ```
  pip install paramiko appdirs pyopengl pyopengl-accelerate numpy functools32
  
@@ -16,10 +18,6 @@
    ```
    pip install pypiwin32
    
-   ```
-   - Linux
-   ```
-   pip install pygtk pycairo
    ```
    - Mac OSX
    ```
