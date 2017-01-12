@@ -1,4 +1,4 @@
- ## Create configuration file
+## Create configuration file
   - copy pymterm.json.template to pymterm.json
   - update the "/home/user/pymter" to where pymterm project is cloned
   - update name of font
