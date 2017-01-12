@@ -24,6 +24,10 @@ ssh library
  - functools32
  - pygtk(pango) pycairo
 
+## Install & Setup & Run
+ - [How to install pymterm on Linux/Mac/Windows](docs/install.md)
+ - [How to setup pymterm](docs/setup.md)
+ - [How to use pymterm](docs/usage.md)
    
 ## TODO
 - [X] UTF-8 handling
