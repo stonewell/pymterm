@@ -14,7 +14,7 @@
 
     "sessions":{
 	"session1":{
-	    "conn_str":"user@remoteserver1"
+	    "conn_str":"user@remoteserver1",
 	    "port":2222,
 	    "password":"1"
 	}
