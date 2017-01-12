@@ -23,7 +23,7 @@ optional arguments:
                         the terminal color theme
   -d, --debug           show debug information in log file and console
   -dd, --debug_more     show more debug information in log file and console
-  --config CONFIG       show more debug information in log file and console
+  --config CONFIG       use the give file as config file, otherwise will find pymterm.json in current directory as config file
   --render {cairo,pygame,native,kivy,console}
                         choose a render system
   --font_file FONT_FILE
