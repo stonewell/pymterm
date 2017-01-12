@@ -1,4 +1,4 @@
- '''
+```
  usage: pymterm [-h] [-s SESSION] [-p PORT] [-l LOG] [-t TERM_NAME]
                [--color_theme COLOR_THEME] [-d] [-dd] [--config CONFIG]
                [--render {cairo,pygame,native,kivy,console}]
@@ -33,4 +33,4 @@ optional arguments:
   --font_size FONT_SIZE
                         given a font size
   --session_type {ssh,pty}
-  '''
+```
