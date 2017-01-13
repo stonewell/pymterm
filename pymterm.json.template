@@ -3,9 +3,9 @@
 
     "font":{
 	"font_dir":"/home/user/pymterm/data/fonts",
-	"name":"",
-	"font_file":"",
-	"size":17
+	"name":"Monospace",
+	"font_file":"NotoSansMonoCJKsc-Regular.otf",
+	"size":14
     },
 
     "render":{
