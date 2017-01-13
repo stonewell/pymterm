@@ -38,3 +38,12 @@ optional arguments:
                         given a font size
   --session_type {ssh,pty}
 ```
+# Examples
+## Run as local terminal
+```
+python pymterm.py --session_type pty
+```
+## Connect to remote sever through ssh
+```
+python pymterm.py --session_type ssh user@remote
+```
