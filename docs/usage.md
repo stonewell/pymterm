@@ -38,6 +38,13 @@ optional arguments:
                         given a font size
   --session_type {ssh,pty}
 ```
+# Keyboard shortcuts
+```
+shift+Pgup scroll history up
+shift+Pgdown scroll history down
+ctrl+Ins copy
+shift+Ins paste
+```
 # Examples
 ## Run as local terminal
 ```
