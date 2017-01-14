@@ -61,3 +61,7 @@ class PtySession(Session):
         if self.channel and not self.stopped:
             buf = array.array('h', [row, col, h, w])
             fcntl.ioctl(self.channel, termios.TIOCSWINSZ, buf)
+
+    def on_status_line(self, mode, status_line):
+        pass
+

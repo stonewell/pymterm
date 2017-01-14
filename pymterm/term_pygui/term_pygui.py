@@ -221,8 +221,6 @@ class TerminalPyGUIApp(Application):
         if port:
             cfg.port = port
 
-        cfg.session_type = 'ssh'
-
         doc = self.make_new_document()
         doc.new_contents()
         doc.cfg = cfg
