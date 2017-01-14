@@ -202,7 +202,7 @@ class SessionConfig:
         return p
 
     def config_session(self):
-        if self.session_name and self.session_type == 'ssh':
+        if self.session_name:
             if not self.config or not 'sessions' in self.config or not self.session_name in self.config['sessions']:
                 raise ValueError("unable to find the session:{}".format(self.session_name))
 
@@ -223,6 +223,8 @@ class SessionConfig:
                 self.password = session['password']
             else:
                 self.password = None
+
+            self.session_type = 'ssh'
 
     def get_session_names(self):
         if not 'sessions' in self.config:
