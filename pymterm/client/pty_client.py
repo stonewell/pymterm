@@ -26,7 +26,6 @@ def start_client(session, cfg):
             shell = [shell]
 
         pid, master_fd = pty.fork()
-        master_fd = master_fd
         
         if pid == pty.CHILD:
             os.execlp(shell[0], *shell)
