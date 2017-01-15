@@ -28,8 +28,12 @@ class PtySession(Session):
         if self.stopped:
             return None
 
-        select.select([self.channel], [], [self.channel])
-
+        while True:
+            rlist, wlist, elist = select.select([self.channel], [], [self.channel], .5)
+            if len(rlist) > 0:
+                break
+            if self.stopped or len(elist) > 0:
+                return None
         return os.read(self.channel, block_size)
 
     def _stop_reader(self):
@@ -40,7 +44,7 @@ class PtySession(Session):
     def interactive_shell(self, channel):
         self.channel = channel
         self.oldflags = fcntl.fcntl(self.channel, fcntl.F_GETFL)
-		# make the PTY non-blocking
+	# make the PTY non-blocking
         fcntl.fcntl(self.channel, fcntl.F_SETFL, self.oldflags | os.O_NONBLOCK)
 
         self.resize_pty()

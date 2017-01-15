@@ -19,6 +19,7 @@ from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
 from GUI.GL import GLView, GLConfig
 from GUI.GLTextures import Texture as GTexture
+from GUI.Alerts import stop_alert
 
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
