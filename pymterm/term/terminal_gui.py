@@ -184,6 +184,13 @@ class TerminalGUI(Terminal):
 
         self.status_line.append(c)
 
+    def save_cursor(self):
+        self.saved_cursor = self.get_cursor()
+
+    def restore_cursor(self):
+        col, row = self.saved_cursor
+        self.set_cursor(col, row)
+        
     def get_cursor(self):
         if len(self.lines) <= self.get_rows():
             return (self.col, self.row)
