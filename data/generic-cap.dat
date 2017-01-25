@@ -28,5 +28,5 @@ generic-cap|generic ansi escape:\
 	enable_mode=\E[?%dh:\
 	disable_mode=\E[?%dl:\
 	enable_keypad_appkeys=\E=:\
-	disable_keypad_appkeys=\E>:
-	cursor_address=\E[%i%d;%df:\
+	disable_keypad_appkeys=\E>:\
+	cursor_address=\E[%i%d;%df:
