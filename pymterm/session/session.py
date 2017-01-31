@@ -23,29 +23,22 @@ class Session(object):
             self.terminal.report_error(msg)
 
     def _start_reader(self):
-        def read_term_data():
+        def __read_term_data():
             if self.cfg.load_data:
                 with open(self.cfg.load_data, 'rb') as f:
-                    count = 0
                     while True:
-                        print '1', count
                         data = f.read(4)
-                        print '2', count, ord(data[0]), ord(data[1]), ord(data[2]), ord(data[3])
                         if not data or len(data) != 4:
                             logging.getLogger('session').info("end of dump data, quit")
                             self.stop()
                             break
                         data_len = struct.unpack('!i', data)[0]
-                        print '4', count, data_len
                         data = f.read(data_len)
                         if not data or data_len != len(data):
                             logging.getLogger('session').info("end of dump data, quit")
                             self.stop()
                             break
-                        print '5', count
                         self.terminal.on_data(data)
-                        print '3', count
-                        count += 1
                     return
                 
             while True:
@@ -56,12 +49,17 @@ class Session(object):
                     break
 
                 if self.cfg.dump_data:
-                    with open(self.cfg.dump_data, 'w') as f:
-                        print len(data), [ord(x) for x in struct.pack('!i', len(data))]
+                    with open(self.cfg.dump_data, 'ab') as f:
                         f.write(struct.pack('!i', len(data)))
                         f.write(data)
                         f.flush()
                 self.terminal.on_data(data)
+
+        def read_term_data():
+            try:
+                __read_term_data()
+            except:
+                logging.getLogger('session').exception('read term data failed')
 
         self.reader_thread = reader_thread = threading.Thread(target=read_term_data)
         reader_thread.start()
@@ -79,8 +77,7 @@ class Session(object):
 
         self.stopped = True
 
-        if not self.cfg.load_data:
-            self._stop_reader()
+        self._stop_reader()
 
         self._wait_for_quit()
 
