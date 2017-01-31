@@ -35,9 +35,22 @@ class SessionConfig:
         self.font_file = args.font_file
         self.font_name = args.font_name
         self.font_size = args.font_size
+        self.dump_data = args.dump_data
+        self.load_data = args.load_data
 
         self.load_config()
 
+        if self.dump_data:
+            try:
+                f = open(self.dump_data, "w")
+                f.close()
+            except:
+                logging.exception("unable to create dump file")
+                raise ValueError('Unable to write dump data to file:{}'.format(self.dump_data))
+
+        if self.load_data and not os.access(self.load_data, os.R_OK):
+            raise ValueError('Unable to read dump data from file:{}'.format(self.load_data))
+        
         if args.render:
             self.render = args.render
         elif 'render' in self.config:

@@ -26,6 +26,8 @@ def args_parser():
     parser.add_argument('--font_file', type=str, default = None, help='provide a font file', required = False)
     parser.add_argument('--font_name', type=str, default = None, help='provide a font name', required = False)
     parser.add_argument('--font_size', type=int, default = None, help='given a font size', required = False)
+    parser.add_argument('--dump_data', type=str, default = None, help='dump all received data to given file path', required = False)
+    parser.add_argument('--load_data', type=str, default = None, help='load dumped data from give file path and use the data to fake terminal data', required = False)
 
     if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
