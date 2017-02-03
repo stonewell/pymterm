@@ -19,9 +19,8 @@ def set_attr_mode(attr, mode):
 def reserve(l, size, default=None):
     import copy
 
-    if size > len(l):
-        for i in range(len(l), size):
-            l.append(copy.deepcopy(default) if default is not None else None)
+    while size > len(l):
+        l.append(copy.deepcopy(default) if default is not None else None)
 
 def clone_attr(attr):
     return TextAttribute(attr.f_color, attr.b_color, attr.mode)

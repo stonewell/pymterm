@@ -186,9 +186,11 @@ class TerminalGUI(Terminal):
 
     def save_cursor(self, context):
         self.saved_cursor = self.get_cursor()
+        logging.getLogger('term_gui').debug('{} {} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, len(self.lines), self.get_rows(), self.get_cols()))
 
     def restore_cursor(self, context):
         col, row = self.saved_cursor
+        logging.getLogger('term_gui').debug('{} {} {}'.format( 'restore', row, col))
         self.set_cursor(col, row)
         
     def get_cursor(self):
@@ -204,7 +206,7 @@ class TerminalGUI(Terminal):
         else:
             self.row = row + len(self.lines) - self.get_rows()
 
-        logging.getLogger('term_gui').debug('termianl cursor:{}, {}'.format(self.col, self.row));
+        logging.getLogger('term_gui').debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
     def cursor_right(self, context):
         logging.getLogger('term_gui').debug('cursor right:{}, {}'.format(self.col, self.row));
@@ -352,8 +354,10 @@ class TerminalGUI(Terminal):
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
+        logging.getLogger('term_gui').debug('{} {} {} {}'.format( "begin", row, col, len(line_option)))
         reserve(line_option, col + 1, self.cur_line_option)
 
+        logging.getLogger('term_gui').debug('{} {} {} {}'.format( "end", row, col, len(line_option)))
         return line_option[col]
 
     def get_cur_option(self):

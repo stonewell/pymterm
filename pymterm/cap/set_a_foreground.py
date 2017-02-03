@@ -11,7 +11,7 @@ def handle(term, context, cap_turple):
 
     if increase:
         for idx in range(len(context.params)):
-            context.params[idx] -= 1
+            context.params[idx] -= 1 if context.params[idx] != 0 else 0
 
     if len(context.params) == 2:
         light = context.params[0] == 1
