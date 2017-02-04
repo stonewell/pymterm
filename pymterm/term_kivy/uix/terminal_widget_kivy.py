@@ -497,34 +497,7 @@ class TerminalWidgetKivy(FocusBehavior, Widget, TerminalWidget):
             config = self.session.cfg.config
             cfg = self.session.cfg
 
-            if cfg.font_file:
-                font_file = os.path.expandvars(os.path.expanduser(cfg.font_file))
-
-                if not os.path.isabs(font_file):
-                    font_file = os.path.join('.', font_file)
-                    
-                if os.path.isfile(font_file):
-                    self.font_name = font_file
-
-            if cfg.font_size:
-                self.font_size = cfg.font_size
-                
-            if config is None:
-                return
-        
-            if 'font' in config:
-                font_config = config['font']
-
-                if 'font_file' in font_config and not cfg.font_file:
-                    font_file = os.path.expandvars(os.path.expanduser(font_config['font_file']))
-
-                    if not os.path.isabs(font_file):
-                        font_file = os.path.join('.', font_file)
-                    if os.path.isfile(font_file):
-                        self.font_name = font_file
-
-                if 'size' in font_config and not cfg.font_size:
-                    self.font_size = font_config['size']
+            self.font_name, nouse_font_name, self.font_size = cfg.get_font_info()
     #
     # Properties
     #

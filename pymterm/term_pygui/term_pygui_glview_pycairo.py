@@ -385,29 +385,7 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
         return None
 
     def _refresh_font(self, cfg):
-        self.font_name = None
-        self.font_size = 17
-
-        if cfg:
-            config = cfg.config
-
-            if cfg.font_name:
-                self.font_name = cfg.font_name
-
-            if cfg.font_size:
-                self.font_size = cfg.font_size
-
-            if config is None:
-                return
-
-            if 'font' in config:
-                font_config = config['font']
-
-                if 'name' in font_config and not cfg.font_name:
-                    self.font_name = font_config['name']
-
-                if 'size' in font_config and not cfg.font_size:
-                    self.font_size = font_config['size']
+        self.font_file, self.font_name, self.font_size = cfg.get_font_info()
 
     @lru_cache(1)
     def _get_font(self):

@@ -50,7 +50,7 @@ class SessionConfig:
 
         if self.load_data and not os.access(self.load_data, os.R_OK):
             raise ValueError('Unable to read dump data from file:{}'.format(self.load_data))
-        
+
         if args.render:
             self.render = args.render
         elif 'render' in self.config:
@@ -244,3 +244,49 @@ class SessionConfig:
             return []
 
         return [name for name in self.config['sessions']]
+
+    def get_font_info(self):
+        font_size = 17
+        font_file = None
+        font_name = 'Monospace'
+        font_dir = None
+
+        def norm_font_file(f, f_dir = None):
+            f = os.path.expandvars(os.path.expanduser(f))
+            f_dir = os.path.expandvars(os.path.expanduser(f_dir)) if f_dir else None
+
+            if not os.path.isabs(f):
+                f = os.path.join(f_dir if f_dir else '.', f)
+
+            logging.info(f)
+            return f if os.path.isfile(f) else None
+
+        config = self.config
+
+        if config and 'font' in config:
+            font_config = config['font']
+
+            if 'name' in font_config:
+                font_name = font_config['name']
+
+            if 'font_file' in font_config:
+                font_file = font_config['font_file']
+
+            if 'size' in font_config:
+                font_size = font_config['size']
+
+            if 'font_dir' in font_config:
+                font_dir = font_config['font_dir']
+
+        if self.font_size:
+            font_size = self.font_size
+
+        if self.font_name:
+            font_name = self.font_name
+
+        if self.font_file:
+            font_file = self.font_file
+
+        font_file = norm_font_file(font_file, font_dir)
+        logging.info('font info:file=[{}], name=[{}], size={}'.format(font_file, font_name, font_size))
+        return (font_file, font_name, font_size)
