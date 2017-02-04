@@ -255,10 +255,12 @@ class SessionConfig:
             f = os.path.expandvars(os.path.expanduser(f))
             f_dir = os.path.expandvars(os.path.expanduser(f_dir)) if f_dir else None
 
+            if os.path.isfile(f):
+                return f
+
             if not os.path.isabs(f):
                 f = os.path.join(f_dir if f_dir else '.', f)
 
-            logging.info(f)
             return f if os.path.isfile(f) else None
 
         config = self.config
