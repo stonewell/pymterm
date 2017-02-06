@@ -45,16 +45,3 @@ def apply_color(cfg, color_table):
         if i < len(color_table):
             color_table[i] = parse_tango_color(TANGO_PALLETE[i])
 
-if __name__ == '__main__':
-    for i in range(len(TANGO_PALLETE)):
-        r, g, b, a = parse_tango_color(TANGO_PALLETE[i])
-
-        if i < 8:
-            print '"Colour{}"="{},{},{}"'.format(6 + 2 * i, r, g, b)
-        else:
-            print '"Colour{}"="{},{},{}"'.format(6 + 2 * (i - 8) + 1, r, g, b)
-    
-    r, g, b, a = parse_tango_color('323232323232')
-    print '"Colour{}"="{},{},{}"'.format(i, r, g, b)
-    r, g, b, a = parse_tango_color('eeeeeeeeecec')
-    print '"Colour{}"="{},{},{}"'.format(i, r, g, b)

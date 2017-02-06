@@ -252,6 +252,9 @@ class SessionConfig:
         font_dir = None
 
         def norm_font_file(f, f_dir = None):
+            if f is None:
+                return None
+            
             f = os.path.expandvars(os.path.expanduser(f))
             f_dir = os.path.expandvars(os.path.expanduser(f_dir)) if f_dir else None
 
