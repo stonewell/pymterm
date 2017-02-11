@@ -90,13 +90,28 @@ class PromptLoginAction(object):
     def execute(self):
         self.session.prompt_login(self.transport, self.username)
 
+def get_user_ssh_dir():
+    ssh_dir = os.path.expanduser('~/.ssh')
+
+    if os.path.isdir(ssh_dir):
+        return ssh_dir
+
+    ssh_dir = os.path.expanduser('~/ssh')
+    
+    return ssh_dir if os.path.isdir(ssh_dir) else None
+
 def build_auth_actions(session, t, username):
     key_files = {'id_rsa':'RSA', 'id_dsa':'DSS'}
     root_action = None
     cur_action = None
 
+    ssh_dir = get_user_ssh_dir()
+    
     for key_file in key_files:
-        path = os.path.join(os.environ['HOME'], '.ssh', key_file)
+        if not ssh_dir:
+            break
+        
+        path = os.path.join(ssh_dir, key_file)
 
         if not os.path.exists(path):
             continue
@@ -136,14 +151,17 @@ def start_client(session, cfg):
             session.report_error('*** SSH negotiation failed.')
             return
 
-        try:
-            keys = paramiko.util.load_host_keys(os.path.expanduser('~/.ssh/known_hosts'))
-        except IOError:
+        ssh_dir = get_user_ssh_dir()
+        if ssh_dir:
             try:
-                keys = paramiko.util.load_host_keys(os.path.expanduser('~/ssh/known_hosts'))
+                keys_file = os.path.join(ssh_dir, 'known_hosts')
+                keys = paramiko.util.load_host_keys(keys_file) if os.path.isfile(keys_file) else {}
             except IOError:
+                logging.getLogger('ssh_client').exception('unable to open host keys file:{}'.format(os.path.join(ssh_dir, 'known_hosts')))
                 session.report_error('*** Unable to open host keys file')
                 keys = {}
+        else:
+            keys = {}
 
         # check server's host key -- this is important.
         key = t.get_remote_server_key()
