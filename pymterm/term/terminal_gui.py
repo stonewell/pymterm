@@ -19,7 +19,7 @@ class TerminalGUI(Terminal):
         self.last_line_option_row = -1
         self.last_line_option_col = -1
         self.cur_line_option = TextAttribute(None, None, None)
-        self.saved_lines, self.saved_line_options, self.saved_cursor = [], [], (0, 0)
+        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), TextAttribute(None, None, None)
         self.bold_mode = False
         self.scroll_region = None
 
@@ -240,6 +240,7 @@ class TerminalGUI(Terminal):
         self.set_attributes(1 if light else 0, -2, color_idx)
 
     def origin_pair(self):
+        self.bold_mode = False
         self.set_attributes(-1, -1, -1)
 
     def clr_eol(self, context):
@@ -354,10 +355,8 @@ class TerminalGUI(Terminal):
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
-        logging.getLogger('term_gui').debug('{} {} {} {}'.format( "begin", row, col, len(line_option)))
         reserve(line_option, col + 1, self.cur_line_option)
 
-        logging.getLogger('term_gui').debug('{} {} {} {}'.format( "end", row, col, len(line_option)))
         return line_option[col]
 
     def get_cur_option(self):
@@ -517,13 +516,16 @@ class TerminalGUI(Terminal):
         self.save_line_option(TextAttribute([], [], mode))
 
     def enter_ca_mode(self, context):
-        self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode = self.lines, self.line_options, self.col, self.row, self.bold_mode
-        self.lines, self.line_options, self.col, self.row, self.bold_mode = [], [], 0, 0, False
+        self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, \
+          self.saved_cur_line_option = \
+          self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option
+        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option = \
+          [], [], 0, 0, False, TextAttribute(None, None, None)
         self.refresh_display()
 
     def exit_ca_mode(self, context):
-        self.lines, self.line_options, self.col, self.row, self.bold_mode = \
-            self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode
+        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option = \
+            self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, self.saved_cur_line_option
         self.refresh_display()
 
     def key_shome(self, context):

@@ -150,9 +150,9 @@ class SessionConfig:
             else:
                 shade = (i - 216) * 10 + 8
                 self.color_table.append([shade,
-                                                 shade,
-                                                 shade,
-                                                 0xFF])
+                                             shade,
+                                             shade,
+                                             0xFF])
         #load config
         if self.color_theme:
             from colour.color_manager import get_color_theme
