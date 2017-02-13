@@ -18,9 +18,9 @@ class TerminalWidget(object):
         logging.getLogger('term_widget').debug('default refresh do nothing')
         pass
 
-    def norm_text(self, text):
+    def norm_text(self, text, removeDoubleWidthPaddingChar = True):
         text = text.replace('\t', ' ' * self.tab_width)
-        text = text.replace('\000', '')
+        text = text.replace('\000', '' if removeDoubleWidthPaddingChar else '\000')
 
         return text
 

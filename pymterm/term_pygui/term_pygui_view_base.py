@@ -197,17 +197,22 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if cy >= len(l) or cy < 0:
             return 0, 0
 
-        text = self.norm_text(''.join(l[cy]))
+        text = self.norm_text(''.join(l[cy]), False)#reserve double width padding char to calculate width
+        width_before = 0
+
         for i in range(0, len(text)):
-            if self._get_col_width() * i + self._get_col_width() * 0.6 + padding_left > cx:
-                for ii in range(len(l[cy])):
-                    if l[cy][ii] == '\000':
-                        continue
-                    i -= 1
-                    if i < 0:
-                        while ii < len(l[cy]) and l[cy][ii] == '\000':
-                            ii += 1
-                        return ii, cy
+            if text[i] == '\000':
+                continue
+
+            self_width = self._get_col_width()
+
+            if i + 1 < len(text) and text[i + 1] == '\000':
+                self_width += self._get_col_width()
+
+            if width_before + self_width * 0.6 + padding_left > cx:
+                return i, cy
+
+            width_before += self_width
 
         return len(l[cy]), cy
 
@@ -246,3 +251,31 @@ class TerminalPyGUIViewBase(TerminalWidget):
         logging.getLogger('term_pygui').info('col_width:{}'.format(col_width))
 
         return col_width
+    
+    def get_prefered_size(self):
+        f = self._get_font()
+        w = int(self._get_col_width() * self.visible_cols + self.padding_x * 2 + 0.5)
+        h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
+
+        return (w, h)
+    
+    def _get_width(self, f = None, t = ''):
+        w, h = self._get_size(f, t)
+        return w
+
+    def _get_cache_key(self, line, line_option):
+        line_key = self._get_line_cache_key(line)
+        line_option_key = self._get_line_option_cache_key(line_option)
+
+        return '{}_{}'.format(line_key, line_option_key)
+
+    def _get_line_cache_key(self, line):
+        return repr(line)
+
+    def _get_line_option_cache_key(self, line_option):
+        return repr(line_option)
+
+    def _refresh_font(self, cfg):
+        self.font_file, self.font_name, self.font_size = cfg.get_font_info()
+
+

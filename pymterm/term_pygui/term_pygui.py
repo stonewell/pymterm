@@ -166,6 +166,7 @@ class TerminalPyGUIApp(Application):
                 logging.getLogger('term_pygui').info('using opengl pygame render')
                 return TerminalPyGUIView
             except:
+                logging.getLogger('term_pygui').exception('failed load opengl pygame render')
                 return None
 
         if render == 'native':

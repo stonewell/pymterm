@@ -36,7 +36,8 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
-from term_pygui_view_base import TerminalPyGUIViewBase
+from term_pygui_glview_base import TerminalPyGUIGLViewBase, _get_surf, TextureBase
+import term_pygui_glview_base
 
 import pygame
 from pygame.locals import *
@@ -49,307 +50,78 @@ try:
 except:
     use_freetype = False
     pygame.font.init()
-    logging.getLogger('term_pygui').exception('pygame initialize failed')
+    logging.getLogger('term_pygui').exception('pygame font initialize failed')
 
 from functools32 import lru_cache
 
-from GUI.GLTextures import Texture as GTexture
 
-class __cached_line_surf(object):
-    pass
+term_pygui_glview_base.create_line_surface = lambda w,h: pygame.Surface((w, h))
 
-@lru_cache(maxsize=1000)
-def _get_surf(k, width, line_height):
-    cached_line_surf = __cached_line_surf()
-    cached_line_surf.cached = False
-    cached_line_surf.surf = pygame.Surface((width, line_height))
-
-    return cached_line_surf
-
-class Texture(GTexture):
+class Texture(TextureBase):
     def __init__(self):
-        super(Texture, self).__init__(GL_TEXTURE_2D)
+        super(Texture, self).__init__()
 
-    def load_texture(self, data):
+    def _decode_texture_data(self, data):
+        w, h = data.get_size()
         texture_data = pygame.image.tostring(data, "RGBA", True)
-        self.w, self.h = data.get_size()
 
-        self.bind()
-
-        glPixelStorei(GL_UNPACK_ALIGNMENT,1)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, self.w,
-                     self.h, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                     texture_data)
-
-    def do_setup(self):
-        glMatrixMode(GL_PROJECTION)
-
-        glLoadIdentity()
-        glDisable(GL_DEPTH_TEST)
-        glDisable(GL_CULL_FACE)
-        glDisable(GL_LIGHTING)
-        glEnable(GL_TEXTURE_2D)
-        glEnable(GL_BLEND)
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        return w, h, texture_data, GL_RGBA
 
     def _pre_render(self):
         glRotatef(180, 1, 0, 0)
         glTranslate(-1, -1, 0)
         glScale(2.0/self.w, 2.0/self.h, 1)
 
-    def render(self):
-        self._pre_render()
-        self.bind()
-        self.draw(0, 0, self.h, self.w)
-
-    def draw(self, top, left, bottom, right):
-        glBegin(GL_QUADS)
-
-        # The top left of the image must be the indicated position
-        glTexCoord2f(0.0, 1.0)
-        glVertex2f(left, top)
-
-        glTexCoord2f(1.0, 1.0)
-        glVertex2f(right, top)
-
-        glTexCoord2f(1.0, 0.0)
-        glVertex2f(right, bottom)
-
-        glTexCoord2f(0.0, 0.0)
-        glVertex2f(left, bottom)
-
-        glEnd()
-
-#put View on right to make Base class method override happer
-#because python resolve method from left to right
-class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
+class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
     def __init__(self, **kwargs):
-        pf = GLConfig(double_buffer = True)
-        self._refresh_font(kwargs['model'].cfg)
-
-        TerminalPyGUIViewBase.__init__(self, **kwargs)
-        GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
-
-    def init_context(self):
-        glClearColor(0.0, 0.0, 0.0, 0.0)
+        TerminalPyGUIGLViewBase.__init__(self, **kwargs)
 
     def _get_texture(self):
         return Texture()
 
-    def render(self):
-        try:
-            self._draw()
-        except:
-            logging.getLogger('term_pygui').exception('draw failed')
-
-    def _draw(self):
-        width , height = self.size
-
+    def _create_canvas_texture(self, width, height):
         background = pygame.Surface((width, height))
         background.fill(self.session.cfg.default_background_color)
 
-        # Display some text
-        self._draw2(background)
+        # Display everything on background
+        self._draw_canvas(background)
 
-        texture = self._get_texture()
-        texture.load_texture(background)
-        texture.render()
-        texture.deallocate()
+        return background
 
-    def _draw2(self, v_surf):
-        x = self.padding_x
-        b_x = self.padding_x
-        y = self.padding_y
+    def _paint_line_surface(self, v_context, line_surf, x, y):
+        v_context.blit(line_surf, (x, y))
 
-        lines = [line[:] for line in self.lines]
-        line_options = [line_option[:] for line_option in self.line_options]
+    def _prepare_line_context(self, line_surf, w, h):
+        line_surf.fill(self.session.cfg.default_background_color)
+        return line_surf
 
-        c_col, c_row = self.term_cursor
+    def _layout_line_text(self, line_context, text_data, font, l, t, col_width, height, cur_f_color):
+        right_adjust = 0
+        if use_freetype:
+            text, text_pos = font.render(text_data, cur_f_color)
+            for turple in font.get_metrics(text_data):
+                if turple:
+                    right_adjust += turple[4]
+            text_pos.top = font.get_sized_ascender() - text_pos.top
+        else:
+            text = font.render(text_data, 1, cur_f_color)
+            text_pos = text.get_rect()
+            right_adjust = text_pos.width
+            text_pos.centery = line_surf.get_rect().centery
 
-        s_f, s_t = self.get_selection()
+        text_pos.left += l
+        right_adjust = right_adjust if right_adjust >= col_width else col_width
 
-        s_f_c, s_f_r = s_f
-        s_t_c, s_t_r = s_t
+        return right_adjust, self._get_line_height(), (text, text_pos)
 
+    def _fill_line_background(self, line_context, cur_b_color, l, t, w, h):
+        line_context.fill(cur_b_color, (l, t, w, h))
 
-        last_f_color = self.session.cfg.default_foreground_color
-        last_b_color = self.session.cfg.default_background_color
-        last_mode = 0
+    def _draw_layouted_line_text(self, context, layout, cur_f_color, l, t, w, h):
+        text, text_pos = layout
 
-        font = self._get_font();
-
-        line_height = self._get_line_height()
-        col_width = int(self._get_width(font, 'ABCDabcd') / 8)
-
-        width, height = self.size
-
-        for i in range(len(lines)):
-            x = b_x = self.padding_x
-            line = lines[i]
-            line_option = line_options[i] if i < len(line_options) else []
-
-            last_mode &= ~TextMode.CURSOR
-            last_mode &= ~TextMode.SELECTION
-
-            # temprary add cusor and selection mode
-            if self.cursor_visible and i == c_row:
-                reserve(line_option, c_col + 1, TextAttribute(None, None, None))
-                reserve(line, c_col + 1, ' ')
-                line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
-
-            if s_f != s_t:
-                if s_f_r == s_t_r and i == s_f_r:
-                    reserve(line_option, s_t_c, TextAttribute(None, None, None))
-                    for mm in range(s_f_c, s_t_c):
-                        line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                else:
-                    if i == s_f_r:
-                        reserve(line_option, len(line), TextAttribute(None, None, None))
-                        for mm in range(s_f_c, len(line)):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                    elif i == s_t_r:
-                        reserve(line_option, s_t_c, TextAttribute(None, None, None))
-                        for mm in range(0, s_t_c):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                    elif i > s_f_r and i < s_t_r:
-                        reserve(line_option, len(line), TextAttribute(None, None, None))
-                        for mm in range(len(line)):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-
-            col = 0
-            last_col = 0
-            text = ''
-            last_option = None
-
-            key = self._get_cache_key(line, line_option)
-            cached_line_surf = _get_surf(key, width, line_height)
-            line_surf = cached_line_surf.surf
-
-            if cached_line_surf.cached:
-                v_surf.blit(line_surf, (0, y))
-
-                y += line_height
-                continue
-
-            cached_line_surf.cached = True
-            line_surf.fill(self.session.cfg.default_background_color)
-
-            def render_text(t, xxxx):
-                cur_f_color, cur_b_color = last_f_color, last_b_color
-
-                if len(t) == 0:
-                    return xxxx
-
-                t = self.norm_text(t)
-
-                if len(t) == 0:
-                    return xxxx
-
-                if last_mode & TextMode.REVERSE:
-                    cur_f_color, cur_b_color = last_b_color, last_f_color
-
-                if last_mode & TextMode.CURSOR:
-                    cur_f_color, cur_b_color = cur_b_color, self.session.cfg.default_cursor_color
-
-                if last_mode & TextMode.SELECTION:
-                    cur_f_color = self._merge_color(cur_f_color, self.selection_color)
-                    cur_b_color = self._merge_color(cur_b_color, self.selection_color)
-
-                right_adjust = 0
-                if use_freetype:
-                    text, text_pos = font.render(t, cur_f_color)
-                    for turple in font.get_metrics(t):
-                        if turple:
-                            right_adjust += turple[4]
-                    text_pos.top = font.get_sized_ascender() - text_pos.top
-                else:
-                    text = font.render(t, 1, cur_f_color)
-                    text_pos = text.get_rect()
-                    right_adjust = text_pos.width
-                    text_pos.centery = line_surf.get_rect().centery
-
-                text_pos.left += xxxx
-                right_adjust = right_adjust if right_adjust >= col_width else col_width
-
-                if cur_b_color != self.session.cfg.default_background_color:
-                    line_surf.fill(cur_b_color, (xxxx, 0, right_adjust, self._get_line_height()))
-
-                line_surf.blit(text, text_pos)
-
-                return xxxx + right_adjust
-
-            for col in range(len(line_option)):
-                if line_option[col] is None:
-                    continue
-
-                if last_option == line_option[col]:
-                    continue
-
-                f_color, b_color, mode = line_option[col]
-
-                n_f_color, n_b_color, n_mode = last_f_color, last_b_color, last_mode
-
-                # foreground
-                if f_color and len(f_color) > 0:
-                    n_f_color = f_color
-                elif f_color is None:
-                    n_f_color = self.session.cfg.default_foreground_color
-
-                # background
-                if b_color and len(b_color) > 0:
-                    n_b_color = b_color
-                elif b_color is None:
-                    n_b_color = self.session.cfg.default_background_color
-
-                #mode
-                if mode is not None:
-                    n_mode = mode
-                else:
-                    n_mode &= ~TextMode.CURSOR
-                    n_mode &= ~TextMode.SELECTION
-
-                if (n_f_color, n_b_color, n_mode) == (last_f_color, last_b_color, last_mode):
-                    continue
-
-                if last_col < col:
-                    #b_x = render_text(''.join(line[last_col: col]), b_x)
-                    for r_col in range(last_col, col):
-                        render_text(line[r_col], b_x)
-                        b_x += col_width
-
-                last_col = col
-                last_option = line_option[col]
-                last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
-
-            if last_col < len(line):
-                #b_x = render_text(''.join(line[last_col:]), b_x)
-                for r_col in range(last_col, len(line)):
-                    render_text(line[r_col], b_x)
-                    b_x += col_width
-
-            v_surf.blit(line_surf, (0, y))
-
-            y += line_height
-
-    def setup_menus(self, m):
-        GLView.setup_menus(self, m)
-        super(TerminalPyGUIGLView, self).setup_menus(m)
-
-    def viewport_changed(self):
-        width, height = self.size
-
-        if width <= 0 or height <= 0:
-            return
-
-        GLView.viewport_changed(self)
-
-        self.resized((1, 1))
-
-    def _refresh_font(self, cfg):
-        self.font_file, self.font_name, self.font_size = cfg.get_font_info()
+        context.blit(text, text_pos)
 
     @lru_cache(1)
     def _get_font(self):
@@ -366,18 +138,6 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             font = pygame.font.Font(font_path,
                                             int(self.font_size))
         return font
-
-    def get_prefered_size(self):
-        f = self._get_font()
-        w = self._get_width(f, 'ABCDabcd')
-        w = int(w / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
-        h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
-
-        return (w, h)
-
-    def _get_width(self, f = None, t = ''):
-        w, h = self._get_size(f, t)
-        return w
 
     @lru_cache(200)
     def _get_size(self, f = None, t = ''):
@@ -404,15 +164,3 @@ class TerminalPyGUIGLView(TerminalPyGUIViewBase, GLView):
             return f.get_sized_height() + 1
         else:
             return f.get_linesize() + 1
-
-    def _get_cache_key(self, line, line_option):
-        line_key = self._get_line_cache_key(line)
-        line_option_key = self._get_line_option_cache_key(line_option)
-
-        return '{}_{}'.format(line_key, line_option_key)
-
-    def _get_line_cache_key(self, line):
-        return repr(line)
-
-    def _get_line_option_cache_key(self, line_option):
-        return repr(line_option)
