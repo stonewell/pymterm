@@ -246,7 +246,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
             cached_line_surf.cached = True
             line_context = self._prepare_line_context(line_surf, width, line_height)
 
-            def render_text(t, xxxx):
+            def render_text(t, xxxx, wide_char):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
 
                 if len(t) == 0:
@@ -270,7 +270,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
                 t_w, t_h, layout = self._layout_line_text(line_context, t, font, xxxx, 0, col_width, line_height, cur_f_color)
 
                 if cur_b_color != self.session.cfg.default_background_color:
-                    self._fill_line_background(line_context, cur_b_color, xxxx, 0, t_w, t_h)
+                    self._fill_line_background(line_context, cur_b_color, xxxx, 0, t_w + col_width if wide_char else 0, t_h)
 
                 self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx, 0, t_w, t_h)
 
@@ -310,9 +310,11 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
                     continue
 
                 if last_col < col:
-                    #b_x = render_text(''.join(line[last_col: col]), b_x)
                     for r_col in range(last_col, col):
-                        render_text(line[r_col], b_x)
+                        wide_char = False
+                        if r_col + 1 < len(line):
+                            wide_char = line[r_col + 1] == '\000'
+                        render_text(line[r_col], b_x, wide_char)
                         b_x += col_width
 
                 last_col = col
@@ -320,9 +322,12 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
-                #b_x = render_text(''.join(line[last_col:]), b_x)
                 for r_col in range(last_col, len(line)):
-                    render_text(line[r_col], b_x)
+                    wide_char = False
+                    if r_col + 1 < len(line):
+                        wide_char = line[r_col + 1] == '\000'
+                        
+                    render_text(line[r_col], b_x, wide_char)
                     b_x += col_width
 
             self._paint_line_surface(v_context, line_surf, 0, y)
