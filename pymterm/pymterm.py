@@ -76,7 +76,7 @@ def pymterm_main():
     else:
         from term_pygui.term_pygui import TerminalPyGUIApp
         TerminalPyGUIApp(cfg).start()
-
+        
 if __name__ == '__main__':
     pymterm_main()
     os._exit(0)
