@@ -270,7 +270,9 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
                 t_w, t_h, layout = self._layout_line_text(line_context, t, font, xxxx, 0, col_width, line_height, cur_f_color)
 
                 if cur_b_color != self.session.cfg.default_background_color:
-                    self._fill_line_background(line_context, cur_b_color, xxxx, 0, t_w + col_width if wide_char else 0, t_h)
+                    self._fill_line_background(line_context, cur_b_color, xxxx, 0,
+                                                   max(t_w, col_width * 2 if wide_char else col_width),
+                                                   t_h)
 
                 self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx, 0, t_w, t_h)
 
