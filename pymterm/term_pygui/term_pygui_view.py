@@ -75,6 +75,8 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
         canvas.fillcolor = self._get_color(self.session.cfg.default_background_color)
         canvas.fill_frame_rect(update_rect)
 
+        col_width = int(self._get_col_width())
+        
         for i in range(len(lines)):
             x = b_x = self.padding_x
             line = lines[i]
@@ -84,8 +86,9 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
             last_mode &= ~TextMode.SELECTION
 
             # temprary add cusor and selection mode
-            if self.cursor_visible and i == c_row and c_col < len(line):
+            if self.cursor_visible and i == c_row:
                 reserve(line_option, c_col + 1, TextAttribute(None, None, None))
+                reserve(line, c_col + 1, ' ')
                 line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
 
             if s_f != s_t:
@@ -112,7 +115,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
             text = ''
             last_option = None
 
-            def render_text(t, xxxx):
+            def render_text(t, xxxx, wide_char):
                 cur_f_color, cur_b_color = last_f_color, last_b_color
 
                 if len(t) == 0:
@@ -140,7 +143,9 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
                 right = xxxx + self._get_width(canvas.font, t)
                 if cur_b_color != self.session.cfg.default_background_color:
-                    canvas.fill_frame_rect((xxxx, y, right, y + self._get_line_height()))
+                    canvas.fill_frame_rect((xxxx, y,
+                                                max(right, xxxx + (col_width * 2 if wide_char else col_width)),
+                                                y + self._get_line_height()))
 
                 canvas.moveto(xxxx, y + canvas.font.ascent)
                 canvas.show_text(t)
@@ -183,18 +188,26 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
                     continue
 
                 if last_col < col:
-                    b_x = render_text(''.join(line[last_col: col]), b_x)
+                    #b_x = render_text(''.join(line[last_col: col]), b_x)
+                    for r_col in range(last_col, col):
+                        wide_char = False
+                        if r_col + 1 < len(line):
+                            wide_char = line[r_col + 1] == '\000'
+                        render_text(line[r_col], b_x, wide_char)
+                        b_x += col_width
 
                 last_col = col
                 last_option = line_option[col]
                 last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
 
             if last_col < len(line):
-                b_x = render_text(''.join(line[last_col:]), b_x)
-
-            if self.cursor_visible and i == c_row and c_col >= len(line):
-                last_mode |= TextMode.CURSOR
-                b_x = render_text(' ', b_x)
+                #b_x = render_text(''.join(line[last_col:]), b_x)
+                for r_col in range(last_col, len(line)):
+                    wide_char = False
+                    if r_col + 1 < len(line):
+                        wide_char = line[r_col + 1] == '\000'
+                    render_text(line[r_col], b_x, wide_char)
+                    b_x += col_width
 
             y += self._get_line_height()
 
@@ -209,9 +222,6 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _setup_canvas(self, canvas):
         canvas.set_font(self._get_font())
 
-    def _refresh_font(self, cfg):
-        self.font_file, self.font_name, self.font_size = cfg.get_font_info()
-
     @lru_cache(1)
     def _get_font(self):
         font_name = self.font_name
@@ -223,22 +233,11 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
         return GUI.Font(family=font_name,
                         size=self.font_size)
 
-    def get_prefered_size(self):
-        f = self._get_font()
-        w = int(self._get_width(f, 'ABCDabcd') / 8 * self.visible_cols + self.padding_x * 2 + 0.5)
-        h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
-
-        return (w, h)
-
     @lru_cache(200)
-    def _get_width(self, f = None, t = ''):
+    def _get_size(self, f = None, t = ''):
         if f is None:
             f = self._get_font()
 
         w = f.width(t)
-        return w
+        return w, f.line_height
 
-    def _get_line_height(self):
-        f = self._get_font()
-
-        return f.line_height

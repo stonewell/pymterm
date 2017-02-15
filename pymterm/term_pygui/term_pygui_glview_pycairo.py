@@ -201,14 +201,6 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
         return l
 
-    @lru_cache(1)
-    def _get_line_height(self):
-        f = self._get_font()
-
-        w, h = self._get_size(f, SINGLE_WIDE_CHARACTERS)
-
-        return h + 1
-
     def _get_color(self, rgba):
         r, g, b, a = map(lambda x: float(x) / 255, rgba)
 

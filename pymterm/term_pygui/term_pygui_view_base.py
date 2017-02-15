@@ -279,3 +279,11 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self.font_file, self.font_name, self.font_size = cfg.get_font_info()
 
 
+    @lru_cache(1)
+    def _get_line_height(self):
+        f = self._get_font()
+
+        w, h = self._get_size(f, SINGLE_WIDE_CHARACTERS)
+
+        return h + 1
+    

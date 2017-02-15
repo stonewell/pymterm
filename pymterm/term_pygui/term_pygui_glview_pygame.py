@@ -149,18 +149,9 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
             for turple in f.get_metrics(t):
                 width += turple[4]
 
-            return (width, self._get_line_height())
+            return (width, f.get_sized_height())
         else:
             text = f.render(t, 1, (0,0,0,0))
             text_pos = text.get_rect()
 
-        return (text_pos.width, text_pos.height)
-
-    @lru_cache(1)
-    def _get_line_height(self):
-        f = self._get_font()
-
-        if use_freetype:
-            return f.get_sized_height() + 1
-        else:
-            return f.get_linesize() + 1
+        return (text_pos.width, f.get_linesize())

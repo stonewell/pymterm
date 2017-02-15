@@ -61,7 +61,7 @@ class TextureBase(GTexture):
 
     def load_texture(self, data):
         self.w, self.h, texture_data, gl_color_format = self._decode_texture_data(data)
-        
+
         self.bind()
 
         glPixelStorei(GL_UNPACK_ALIGNMENT,1)
@@ -84,7 +84,7 @@ class TextureBase(GTexture):
 
     def _pre_render(self):
         pass
-    
+
     def render(self):
         self._pre_render()
         self.bind()
@@ -113,7 +113,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
     def __init__(self, **kwargs):
         pf = GLConfig(double_buffer = True)
         self._refresh_font(kwargs['model'].cfg)
-        
+
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         GLView.__init__(self, pf, size=self.get_prefered_size(), **kwargs)
 
@@ -135,7 +135,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
         texture.load_texture(canvas)
         texture.render()
         texture.deallocate()
-            
+
     def setup_menus(self, m):
         GLView.setup_menus(self, m)
         super(TerminalPyGUIGLViewBase, self).setup_menus(m)
@@ -167,7 +167,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
 
     def _draw_layouted_line_text(self, line_context, layout, cur_f_color, l, t, w, h):
         pass
-    
+
     def _draw_canvas(self, v_context):
         x = self.padding_x
         b_x = self.padding_x
@@ -328,7 +328,7 @@ class TerminalPyGUIGLViewBase(TerminalPyGUIViewBase, GLView):
                     wide_char = False
                     if r_col + 1 < len(line):
                         wide_char = line[r_col + 1] == '\000'
-                        
+
                     render_text(line[r_col], b_x, wide_char)
                     b_x += col_width
 
