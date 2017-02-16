@@ -212,16 +212,15 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('cursor right:{}, {}'.format(self.col, self.row));
         if self.col < self.get_cols() - 1:
             self.col += 1
-            line = self.get_cur_line()
-            if line[self.col] == '\000':
-                self.col += 1
         self.refresh_display()
+        logging.getLogger('term_gui').debug('after cursor right:{}, {}'.format(self.col, self.row));
 
     def cursor_left(self, context):
         logging.getLogger('term_gui').debug('cursor left:{}, {}'.format(self.col, self.row));
         if self.col > 0:
             self.col -= 1
         self.refresh_display()
+        logging.getLogger('term_gui').debug('after cursor left:{}, {}'.format(self.col, self.row));
 
     def cursor_down(self, context):
         self.parm_down_cursor(context)
