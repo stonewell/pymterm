@@ -156,6 +156,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
     @lru_cache(1)
     def _get_font(self):
+        font_map = pangocairo.cairo_font_map_get_default()
         font_name = self.font_name
 
         if not font_name:
@@ -167,7 +168,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         if not font:
             font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
         else:
-            font.set_size(int(self.font_size) * pango.SCALE)
+            font.set_size(int(float(self.font_size) * pango.SCALE * 72 / font_map.get_resolution()))
 
         return font
 
