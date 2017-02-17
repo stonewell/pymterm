@@ -31,6 +31,7 @@ from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
 from term_pygui_view_base import TerminalPyGUIViewBase
+import term_pygui_view_base
 
 from functools32 import lru_cache
 
@@ -40,7 +41,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
     def __init__(self, **kwargs):
         self._refresh_font(kwargs['model'].cfg)
-        
+
         TerminalPyGUIViewBase.__init__(self, **kwargs)
         View.__init__(self, **kwargs)
 
@@ -53,163 +54,47 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _draw(self, canvas, update_rect):
         self._setup_canvas(canvas)
 
-        x = self.padding_x
-        b_x = self.padding_x
-        y = self.padding_y
-
-        lines = [line[:] for line in self.lines]
-        line_options = [line_option[:] for line_option in self.line_options]
-
-        c_col, c_row = self.term_cursor
-
-        s_f, s_t = self.get_selection()
-
-        s_f_c, s_f_r = s_f
-        s_t_c, s_t_r = s_t
-
-
-        last_f_color = self.session.cfg.default_foreground_color
-        last_b_color = self.session.cfg.default_background_color
-        last_mode = 0
-
         canvas.fillcolor = self._get_color(self.session.cfg.default_background_color)
-        canvas.fill_frame_rect(update_rect)
+        width, height = self.size
+        canvas.fill_frame_rect((0, 0, width, height))
 
-        col_width = int(self._get_col_width())
-        
-        for i in range(len(lines)):
-            x = b_x = self.padding_x
-            line = lines[i]
-            line_option = line_options[i] if i < len(line_options) else []
+        term_pygui_view_base.create_line_surface = lambda w,h: canvas
 
-            last_mode &= ~TextMode.CURSOR
-            last_mode &= ~TextMode.SELECTION
+        self._draw_canvas(canvas)
 
-            # temprary add cusor and selection mode
-            if self.cursor_visible and i == c_row:
-                reserve(line_option, c_col + 1, TextAttribute(None, None, None))
-                reserve(line, c_col + 1, ' ')
-                line_option[c_col] = set_attr_mode(line_option[c_col], TextMode.CURSOR)
+    def _paint_line_surface(self, v_context, line_surf, x, y):
+        pass
 
-            if s_f != s_t:
-                if s_f_r == s_t_r and i == s_f_r:
-                    reserve(line_option, s_t_c, TextAttribute(None, None, None))
-                    for mm in range(s_f_c, s_t_c):
-                        line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                else:
-                    if i == s_f_r:
-                        reserve(line_option, len(line), TextAttribute(None, None, None))
-                        for mm in range(s_f_c, len(line)):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                    elif i == s_t_r:
-                        reserve(line_option, s_t_c, TextAttribute(None, None, None))
-                        for mm in range(0, s_t_c):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
-                    elif i > s_f_r and i < s_t_r:
-                        reserve(line_option, len(line), TextAttribute(None, None, None))
-                        for mm in range(len(line)):
-                            line_option[mm] = set_attr_mode(line_option[mm], TextMode.SELECTION)
+    def _prepare_line_context(self, line_surf, x, y, width, height):
+        return (line_surf, x, y, width, height)
 
-            col = 0
-            last_col = 0
-            text = ''
-            last_option = None
+    def _layout_line_text(self, context, text, font, left, top, layout_width, layout_height, cur_f_color):
+        canvas, x, y, width, height = context
 
-            def render_text(t, xxxx, wide_char):
-                cur_f_color, cur_b_color = last_f_color, last_b_color
+        return (self._get_width(canvas.font, text), layout_height, text)
 
-                if len(t) == 0:
-                    return xxxx
+    def _fill_line_background(self, line_context, cur_b_color, l, t, w, h):
+        canvas, x, y, width, height = line_context
+        tmp_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
+        tmp_p_c, canvas.pencolor = canvas.pencolor, self._get_color(cur_b_color)
 
-                t = self.norm_text(t)
+        canvas.fill_frame_rect((x + l, y + t,
+                                    x + l + w,
+                                    y + t + h))
+        canvas.fillcolor,canvas.pencolor = tmp_c, tmp_p_c
 
-                if len(t) == 0:
-                    return xxxx
+    def _draw_layouted_line_text(self, line_context, layout, cur_f_color, l, t, w, h):
+        canvas, x, y, width, height = line_context
 
-                if last_mode & TextMode.REVERSE:
-                    cur_f_color, cur_b_color = last_b_color, last_f_color
+        tmp_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
+        tmp_p_c, canvas.pencolor = canvas.pencolor, self._get_color(cur_f_color)
+        canvas.moveto(x + l, y + t + canvas.font.ascent)
+        canvas.show_text(layout)
 
-                if last_mode & TextMode.CURSOR:
-                    cur_f_color, cur_b_color = cur_b_color, self.session.cfg.default_cursor_color
+        canvas.textcolor, canvas.pencolor = tmp_c, tmp_p_c
 
-                if last_mode & TextMode.SELECTION:
-                    cur_f_color = self._merge_color(cur_f_color, self.selection_color)
-                    cur_b_color = self._merge_color(cur_b_color, self.selection_color)
-
-                tmp_t_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
-                tmp_b_c, canvas.backcolor = canvas.backcolor, self._get_color(cur_b_color)
-                tmp_f_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
-                tmp_p_c, canvas.pencolor = canvas.pencolor, canvas.backcolor
-
-                right = xxxx + self._get_width(canvas.font, t)
-                if cur_b_color != self.session.cfg.default_background_color:
-                    canvas.fill_frame_rect((xxxx, y,
-                                                max(right, xxxx + (col_width * 2 if wide_char else col_width)),
-                                                y + self._get_line_height()))
-
-                canvas.moveto(xxxx, y + canvas.font.ascent)
-                canvas.show_text(t)
-
-                canvas.textcolor, canvas.backcolor, canvas.fillcolor, canvas.pencolor = tmp_t_c, tmp_b_c, tmp_f_c, tmp_p_c
-
-                return right
-
-            for col in range(len(line_option)):
-                if line_option[col] is None:
-                    continue
-
-                if last_option == line_option[col]:
-                    continue
-
-                f_color, b_color, mode = line_option[col]
-
-                n_f_color, n_b_color, n_mode = last_f_color, last_b_color, last_mode
-
-                # foreground
-                if f_color and len(f_color) > 0:
-                    n_f_color = f_color
-                elif f_color is None:
-                    n_f_color = self.session.cfg.default_foreground_color
-
-                # background
-                if b_color and len(b_color) > 0:
-                    n_b_color = b_color
-                elif b_color is None:
-                    n_b_color = self.session.cfg.default_background_color
-
-                #mode
-                if mode is not None:
-                    n_mode = mode
-                else:
-                    n_mode &= ~TextMode.CURSOR
-                    n_mode &= ~TextMode.SELECTION
-
-                if (n_f_color, n_b_color, n_mode) == (last_f_color, last_b_color, last_mode):
-                    continue
-
-                if last_col < col:
-                    #b_x = render_text(''.join(line[last_col: col]), b_x)
-                    for r_col in range(last_col, col):
-                        wide_char = False
-                        if r_col + 1 < len(line):
-                            wide_char = line[r_col + 1] == '\000'
-                        render_text(line[r_col], b_x, wide_char)
-                        b_x += col_width
-
-                last_col = col
-                last_option = line_option[col]
-                last_f_color, last_b_color, last_mode = n_f_color, n_b_color, n_mode
-
-            if last_col < len(line):
-                #b_x = render_text(''.join(line[last_col:]), b_x)
-                for r_col in range(last_col, len(line)):
-                    wide_char = False
-                    if r_col + 1 < len(line):
-                        wide_char = line[r_col + 1] == '\000'
-                    render_text(line[r_col], b_x, wide_char)
-                    b_x += col_width
-
-            y += self._get_line_height()
+    def _do_cache(self):
+        return False
 
     def setup_menus(self, m):
         View.setup_menus(self, m)
@@ -240,4 +125,3 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
         w = f.width(t)
         return w, f.line_height
-

@@ -36,8 +36,8 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
-from term_pygui_glview_base import TerminalPyGUIGLViewBase, _get_surf, TextureBase
-import term_pygui_glview_base
+from term_pygui_glview_base import TerminalPyGUIGLViewBase, TextureBase
+import term_pygui_view_base
 
 import pygame
 from pygame.locals import *
@@ -54,8 +54,7 @@ except:
 
 from functools32 import lru_cache
 
-
-term_pygui_glview_base.create_line_surface = lambda w,h: pygame.Surface((w, h))
+term_pygui_view_base.create_line_surface = lambda w,h: pygame.Surface((w, h))
 
 class Texture(TextureBase):
     def __init__(self):
@@ -92,11 +91,11 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
     def _paint_line_surface(self, v_context, line_surf, x, y):
         v_context.blit(line_surf, (x, y))
 
-    def _prepare_line_context(self, line_surf, w, h):
+    def _prepare_line_context(self, line_surf, x, y, w, h):
         line_surf.fill(self.session.cfg.default_background_color)
         return line_surf
 
-    def _layout_line_text(self, line_context, text_data, font, l, t, col_width, height, cur_f_color):
+    def _layout_line_text(self, line_context, text_data, font, l, t, width, height, cur_f_color):
         right_adjust = 0
         if use_freetype:
             text, text_pos = font.render(text_data, cur_f_color)
@@ -111,7 +110,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
             text_pos.centery = line_surf.get_rect().centery
 
         text_pos.left += l
-        right_adjust = right_adjust if right_adjust >= col_width else col_width
+        right_adjust = right_adjust if right_adjust >= width else width
 
         return right_adjust, self._get_line_height(), (text, text_pos)
 

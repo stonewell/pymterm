@@ -44,13 +44,13 @@ import term_pygui_key_translate
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
 
-from term_pygui_glview_base import TerminalPyGUIGLViewBase, _get_surf, TextureBase
+from term_pygui_glview_base import TerminalPyGUIGLViewBase, TextureBase
 from term_pygui_view_base import SINGLE_WIDE_CHARACTERS
-import term_pygui_glview_base
+import term_pygui_view_base
 
 from functools32 import lru_cache
 
-term_pygui_glview_base.create_line_surface = lambda w,h: cairo.ImageSurface(cairo.FORMAT_ARGB32, int(w), int(h))
+term_pygui_view_base.create_line_surface = lambda w,h: cairo.ImageSurface(cairo.FORMAT_ARGB32, int(w), int(h))
 
 class Texture(TextureBase):
     def __init__(self):
@@ -85,7 +85,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
         return background_surf
 
-    def _prepare_line_context(self, line_surf, width, height):
+    def _prepare_line_context(self, line_surf, x, y, width, height):
         line_context = cairo.Context(line_surf)
 
         f_o = cairo.FontOptions()
@@ -110,7 +110,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         v_context.set_source_surface(line_surf, x, y)
         v_context.paint()
 
-    def _layout_line_text(self, context, text, font, l, t, col_width, h, cur_f_color):
+    def _layout_line_text(self, context, text, font, left, top, width, line_height, cur_f_color):
         line_context, line_p_context = context
 
         l = line_p_context.create_layout()
@@ -119,9 +119,9 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         line_p_context.update_layout(l)
 
         t_w, t_h = l.get_pixel_size()
-        t_w = t_w if t_w >= col_width else col_width
+        t_w = t_w if t_w >= width else width
 
-        return t_w, self._get_line_height(), l
+        return t_w, line_height, l
 
     def _fill_line_background(self, context, cur_b_color, l, t, w, h):
         line_context, line_p_context = context
