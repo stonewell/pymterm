@@ -384,17 +384,20 @@ class TerminalPyGUIViewBase(TerminalWidget):
             text = ''
             last_option = None
 
-            key = self._get_cache_key(line, line_option)
-            cached_line_surf = _get_surf(key, width, line_height)
-            line_surf = cached_line_surf.surf
+            if self._do_cache():
+                key = self._get_cache_key(line, line_option)
+                cached_line_surf = _get_surf(key, width, line_height)
+                line_surf = cached_line_surf.surf
 
-            if cached_line_surf.cached:
-                self._paint_line_surface(v_context, line_surf, 0, y)
+                if cached_line_surf.cached:
+                    self._paint_line_surface(v_context, line_surf, 0, y)
 
-                y += line_height
-                continue
+                    y += line_height
+                    continue
 
-            cached_line_surf.cached = self._do_cache()
+                cached_line_surf.cached = self._do_cache()
+            else:
+                line_surf = create_line_surface(width, line_height)
 
             line_context = self._prepare_line_context(line_surf, x, y, width, line_height)
 
