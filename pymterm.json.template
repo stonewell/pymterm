@@ -1,5 +1,8 @@
 {
     "termcap_dir":"/home/user/pymterm/data",
+    "use_system_ssh_config":true,
+    "use_ssh_config":"global_ssh_config_file_path",
+    "send_envs":["key1=vaue1", "key2", "key3=value3"],
 
     "font":{
 	"font_dir":"/home/user/pymterm/data/fonts",
@@ -14,6 +17,9 @@
 
     "sessions":{
 	"session1":{
+	    "use_system_ssh_config":true,
+	    "use_ssh_config":"my_ssh_config_file_path",
+	    "send_envs":["key1=vaue1", "key2", "key3=value3"],
 	    "conn_str":"user@remoteserver1",
 	    "port":2222,
 	    "password":"1"

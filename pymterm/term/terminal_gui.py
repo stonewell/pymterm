@@ -744,7 +744,7 @@ class TerminalGUI(Terminal):
             self.term_widget.copy_to_clipboard(data)
 
         if len(data) > 0:
-            self.session.send(data)
+            self.session.send(data.encode('utf-8'))
 
     def copy_data(self):
         data = self.get_selection_text()

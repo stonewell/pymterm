@@ -28,6 +28,8 @@ def args_parser():
     parser.add_argument('--font_size', type=int, default = None, help='given a font size', required = False)
     parser.add_argument('--dump_data', type=str, default = None, help='dump all received data to given file path', required = False)
     parser.add_argument('--load_data', type=str, default = None, help='load dumped data from give file path and use the data to fake terminal data', required = False)
+    parser.add_argument('--send_env', metavar='[key=value|key]', type=str, action='append', dest='send_envs', help='send the evnviroment variables to the remote system, value should be key=value or key format', required = False)
+    parser.add_argument('--use_ssh_config', metavar='[ssh config path]', type=str, nargs='?', help='use open ssh config file to do ssh connection, if no file given system default configuration file will be used', const='__pymterm_use_sys_default_config_file__', required = False)
 
     if not platform.is_windows():
         parser.add_argument('--session_type', choices=['ssh', 'pty'], default='ssh')
@@ -76,7 +78,9 @@ def pymterm_main():
     else:
         from term_pygui.term_pygui import TerminalPyGUIApp
         TerminalPyGUIApp(cfg).start()
-        
+
 if __name__ == '__main__':
+    import locale
+    locale.setlocale(locale.LC_ALL, '')
     pymterm_main()
     os._exit(0)

@@ -37,6 +37,8 @@ class SessionConfig:
         self.font_size = args.font_size
         self.dump_data = args.dump_data
         self.load_data = args.load_data
+        self.send_envs = args.send_envs
+        self.use_ssh_config = args.use_ssh_config
 
         self.load_config()
 
@@ -254,7 +256,7 @@ class SessionConfig:
         def norm_font_file(f, f_dir = None):
             if f is None:
                 return None
-            
+
             f = os.path.expandvars(os.path.expanduser(f))
             f_dir = os.path.expandvars(os.path.expanduser(f_dir)) if f_dir else None
 
@@ -295,3 +297,122 @@ class SessionConfig:
         font_file = norm_font_file(font_file, font_dir)
         logging.info('font info:file=[{}], name=[{}], size={}'.format(font_file, font_name, font_size))
         return (font_file, font_name, font_size)
+
+    def load_send_envs(self, send_envs):
+        keys, vars = [], {}
+
+        if not send_envs:
+            return (keys, vars)
+
+        for env in send_envs:
+            if '=' in env:
+                parts=env.split('=')
+                vars[parts[0]] = '='.join(parts[1:])
+            else:
+                keys.append(env)
+
+        return (keys, vars)
+
+    def read_ssh_config_file(self, config_file, hostname):
+        files = []
+
+        if config_file == '__pymterm_use_sys_default_config_file__':
+            files.extend(['~/.ssh/ssh_config', '/etc/ssh/ssh_config'])
+        else:
+            files.append(config_file)
+
+        for file_path in files:
+            fp = os.path.expandvars(os.path.expanduser(file_path))
+
+            if os.access(fp, os.R_OK):
+                import paramiko
+                try:
+                    ssh_config = paramiko.SSHConfig()
+                    with open(fp) as f:
+                        ssh_config.parse(f)
+
+                    return ssh_config.lookup(hostname)
+                except:
+                    logging.exception('read ssh_config file failed:{}'.format(fp))
+
+        return None
+
+    def get_ssh_config(self, session, hostname):
+        ssh_config = None
+
+        if self.use_ssh_config:
+            ssh_config = self.read_ssh_config_file(self.use_ssh_config, hostname)
+
+        if not ssh_config and session:
+            if 'use_ssh_config' in session:
+                ssh_config = self.read_ssh_config_file(session['use_ssh_config'], hostname)
+
+            if not ssh_config and 'use_system_ssh_config' in session and session['use_system_ssh_config']:
+                ssh_config = self.read_ssh_config_file('__pymterm_use_sys_default_config_file__', hostname)
+
+        if not ssh_config:
+            if 'use_ssh_config' in self.config:
+                ssh_config = self.read_ssh_config_file(self.config['use_ssh_config'], hostname)
+
+            if not ssh_config and 'use_system_ssh_config' in self.config and self.config['use_system_ssh_config']:
+                ssh_config = self.read_ssh_config_file('__pymterm_use_sys_default_config_file__', hostname)
+
+        return ssh_config
+
+    def get_envs(self, keys):
+        import fnmatch
+
+        envs = {}
+
+        for key in os.environ:
+            for key2 in keys:
+                if fnmatch.fnmatch(key, key2):
+                    envs[key] = os.environ[key]
+
+        return envs
+
+    def get_conn_info(self):
+        if not self.hostname or len(self.hostname) == 0:
+            return ({}, None) #envs, proxy command
+
+        envs = {}
+        proxy_command = None
+
+        session = None
+
+        if (self.session_name
+                and self.config
+                and 'sessions' in self.config
+                and self.session_name in self.config['sessions']):
+            session = self.config['sessions'][self.session_name]
+
+        ssh_config = self.get_ssh_config(session, self.hostname)
+
+        if ssh_config:
+            if  'proxycommand' in ssh_config:
+                proxy_command = ssh_config['proxycommand']
+
+            if 'sendenv' in ssh_config:
+                keys, vars = self.load_send_envs(ssh_config['sendenv'].split(' '))
+                envs.update(self.get_envs(keys))
+                envs.update(vars)
+
+        #global envs
+        if 'send_envs' in self.config:
+            keys, vars = self.load_send_envs(self.config['send_envs'])
+            envs.update(self.get_envs(keys))
+            envs.update(vars)
+
+        #session envs
+        if session and 'send_envs' in session:
+            keys, vars = self.load_send_envs(session['send_envs'])
+            envs.update(self.get_envs(keys))
+            envs.update(vars)
+
+        #cmd envs
+        if self.send_envs:
+            keys, vars = self.load_send_envs(self.send_envs)
+            envs.update(self.get_envs(keys))
+            envs.update(vars)
+
+        return (envs, proxy_command)

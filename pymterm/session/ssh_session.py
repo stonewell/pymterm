@@ -31,10 +31,15 @@ class SSHSession(Session):
 
         # now connect
         try:
-            self.sock = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((hostname, port))
+            envs, proxy_command = self.cfg.get_conn_info()
 
-            return sock
+            if proxy_command:
+                self.sock = paramiko.ProxyCommand(proxy_command)
+            else:
+                self.sock = sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect((hostname, port))
+
+            return self.sock
         except Exception as e:
             logging.getLogger('session').exception("connect to %s@%s:%d failed." % (username, hostname, port))
             self.report_error("connect to %s@%s:%d failed." % (username, hostname, port))
@@ -81,6 +86,14 @@ class SSHSession(Session):
 
         logging.getLogger('ssh_session').debug('get_pty, term={}, cols={}, rows={}'.format(self.cfg.term_name, cols, rows))
         chan.get_pty(term=self.cfg.term_name, width=cols, height = rows)
+
+        envs, proxy_command = self.cfg.get_conn_info()
+
+        logging.getLogger('ssh_session').error('using proxy_command:{}, env:{}'.format(proxy_command, envs))
+
+        for key in envs:
+            chan.set_environment_variable(key, envs[key])
+
         chan.invoke_shell()
         self._start_reader()
 
