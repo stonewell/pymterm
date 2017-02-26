@@ -1,6 +1,3 @@
-import os
-import sys
-
 def bisearch(ucs, tbl, max):
     min = 0
 

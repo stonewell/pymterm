@@ -1,17 +1,9 @@
-import base64
 from binascii import hexlify
 import getpass
 import logging
 import os
-import select
-import socket
-import sys
-import time
-import traceback
 
 import paramiko
-from paramiko.py3compat import input
-
 
 def agent_auth(transport, username):
     """
@@ -136,7 +128,6 @@ def build_auth_actions(session, t, username):
 def start_client(session, cfg):
     username = cfg.username
     hostname = cfg.hostname
-    port = cfg.port
 
     try:
         sock = session._connect()

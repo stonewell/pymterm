@@ -1,8 +1,8 @@
-import os
-import imp
-import sys
-import unknown_cap
 import logging
+import sys
+
+import unknown_cap
+
 
 def get_cap_handler(name):
     logging.getLogger('cap_manager').debug("cap:{}".format(name))

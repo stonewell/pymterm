@@ -1,14 +1,5 @@
-import base64
-from binascii import hexlify
-import getpass
 import logging
-import os
-import select
-import socket
 from subprocess import Popen, PIPE, STDOUT
-import sys
-import time
-import traceback
 
 
 def start_client(session, cfg):
@@ -23,7 +14,7 @@ def start_client(session, cfg):
         p = Popen(cmd,
                   stdin=PIPE, stdout=PIPE, stderr=STDOUT, shell=False)
         session.interactive_shell(p)
-    except Exception as e:
+    except:
         logging.getLogger('pipe_client').exception('pipe client caught exception:')
         try:
             if p:

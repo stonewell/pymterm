@@ -1,6 +1,7 @@
 from GUI.GStdMenus import build_menus, \
     fundamental_cmds, help_cmds, pref_cmds, file_cmds, print_cmds, edit_cmds
 
+
 file_cmds += 'new_window_cmd'
 file_cmds += 'open_session_cmd'
 file_cmds += 'transfer_file_cmd'

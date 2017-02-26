@@ -1,17 +1,15 @@
 import logging
 import os
-import select
 import socket
+import stat
 import sys
 import threading
 import time
-import traceback
-import stat
 
 import client.ssh_client
+import paramiko
 from session import Session
 
-import paramiko
 
 class SSHSession(Session):
     def __init__(self, cfg, terminal):
@@ -40,7 +38,7 @@ class SSHSession(Session):
                 sock.connect((hostname, port))
 
             return self.sock
-        except Exception as e:
+        except:
             logging.getLogger('session').exception("connect to %s@%s:%d failed." % (username, hostname, port))
             self.report_error("connect to %s@%s:%d failed." % (username, hostname, port))
 

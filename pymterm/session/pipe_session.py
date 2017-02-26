@@ -1,18 +1,9 @@
 import logging
 import msvcrt
-import os
-import select
-import socket
-import sys
-import threading
-import time
-import traceback
 
 import pywintypes
 import win32event
 import win32file
-import win32pipe
-import winerror
 
 import client.pipe_client
 from session import Session

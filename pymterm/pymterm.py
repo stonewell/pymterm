@@ -6,6 +6,7 @@ import sys
 import cross_platform as platform
 import session_config
 
+
 def unhandled_exception(exctype, value, tb):
     logging.error('unknown error happening', exc_info=(exctype, value, tb))
 
@@ -45,7 +46,7 @@ def pymterm_main():
     try:
         sys.argv = sys.argv[:1]
         cfg = session_config.SessionConfig(args)
-    except(ValueError) as e:
+    except:
         logging.exception('load configuration failed')
         args_parser().print_help()
         sys.exit(1)
@@ -71,7 +72,7 @@ def pymterm_main():
             LabelBase.register(f_name, font_path)
 
         from term_kivy.term_kivy import TerminalKivyApp
-        from kivy.logger import Logger
+        #from kivy.logger import Logger
         #Logger.setLevel(logging.ERROR)
 
         TerminalKivyApp(cfg).start()

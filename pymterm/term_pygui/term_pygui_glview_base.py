@@ -1,41 +1,39 @@
 #coding=utf-8
+import array
 import logging
 import os
 import select
 import socket
+import string
 import sys
+import threading
 import time
 import traceback
-import string
-import threading
-import array
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, TabView
-from GUI import application
-from GUI.Files import FileType
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
-from GUI.Colors import rgb
-from GUI.Files import FileType, DirRef, FileRef
 from GUI import FileDialogs
+from GUI import application
+from GUI.Alerts import stop_alert
+from GUI.Colors import rgb
+from GUI.Files import FileType
+from GUI.Files import FileType, DirRef, FileRef
 from GUI.GL import GLView, GLConfig
 from GUI.GLTextures import Texture as GTexture
-from GUI.Alerts import stop_alert
-
+from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
+from OpenGL.GL import *
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
-from OpenGL.GL import *
 from OpenGL.GLU import *
-
 import cap.cap_manager
 from session import create_session
+from term import TextAttribute, TextMode, set_attr_mode, reserve
+import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-import term.term_keyboard
-import term_pygui_key_translate
-from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
-
+import term_pygui_key_translate
 from term_pygui_view_base import TerminalPyGUIViewBase, SINGLE_WIDE_CHARACTERS
+
 
 class TextureBase(GTexture):
     def __init__(self):

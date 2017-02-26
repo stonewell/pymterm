@@ -1,12 +1,6 @@
 import logging
-import os
-import sys
-
 
 def handle(term, context, cap_turple):
-    light = False
-    color_idx = 0
-
     cap_name, increase = cap_turple
 
     if increase:

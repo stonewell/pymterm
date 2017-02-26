@@ -1,10 +1,5 @@
 import logging
 import os
-import select
-import socket
-import sys
-import time
-import traceback
 
 import cap.cap_manager
 import parse_termdata

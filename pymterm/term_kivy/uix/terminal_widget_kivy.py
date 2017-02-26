@@ -1,8 +1,7 @@
-import os
-
 from collections import namedtuple
 import logging
 from os import environ
+import os
 import re
 import sys
 from weakref import ref
@@ -29,9 +28,9 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.utils import boundary, platform
 from kivy.utils import escape_markup
-
 from term import TextAttribute, TextMode
 from term.terminal_widget import TerminalWidget
+
 
 Cache_register = Cache.register
 Cache_append = Cache.append

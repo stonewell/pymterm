@@ -1,5 +1,6 @@
 import logging
 
+
 class TerminalWidget(object):
     def __init__(self, **kwargs):
         super(TerminalWidget, self).__init__()

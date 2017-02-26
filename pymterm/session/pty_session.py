@@ -1,13 +1,6 @@
 import array
-import logging
 import os
-import pty
 import select
-import socket
-import sys
-import threading
-import time
-import traceback
 
 import client.pty_client
 import fcntl
@@ -44,7 +37,7 @@ class PtySession(Session):
     def interactive_shell(self, channel):
         self.channel = channel
         self.oldflags = fcntl.fcntl(self.channel, fcntl.F_GETFL)
-	# make the PTY non-blocking
+	    # make the PTY non-blocking
         fcntl.fcntl(self.channel, fcntl.F_SETFL, self.oldflags | os.O_NONBLOCK)
 
         self.resize_pty()
@@ -58,8 +51,6 @@ class PtySession(Session):
 
     def send(self, data):
         if self.channel and not self.stopped:
-            channel = self.channel
-
             while data != '':
                 select.select([], [self.channel], [self.channel])
                 n = os.write(self.channel, data)

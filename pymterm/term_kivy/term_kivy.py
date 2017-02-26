@@ -6,6 +6,7 @@ import sys
 import time
 import traceback
 
+import cap.cap_manager
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -18,15 +19,13 @@ from kivy.uix.label import Label
 from kivy.uix.spinner import Spinner, SpinnerOption
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
 from kivy.uix.textinput import TextInput
-
-import cap.cap_manager
 from session import create_session
-from term.terminal_gui import TerminalGUI
 import term.term_keyboard
-
+from term.terminal_gui import TerminalGUI
 from uix.term_kivy_login import prompt_login as pl
 from uix.term_kivy_password import prompt_password as pp
 from uix.terminal_widget_kivy import TerminalWidgetKivy
+
 
 Builder.load_file(os.path.join(os.path.dirname(__file__), 'term_kivy.kv'))
 

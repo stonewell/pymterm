@@ -1,7 +1,3 @@
-import os
-import sys
-
-
 TANGO_PALLETE = [
     '2e2e34343636',
     'cccc00000000',

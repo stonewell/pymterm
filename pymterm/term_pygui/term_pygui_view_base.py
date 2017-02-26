@@ -3,34 +3,32 @@ import logging
 import os
 import select
 import socket
+import string
 import sys
+import threading
 import time
 import traceback
-import string
-import threading
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
+from GUI import FileDialogs
+from GUI import Task
 from GUI import application
+from GUI.Colors import rgb
 from GUI.Files import FileType
+from GUI.Files import FileType, DirRef, FileRef
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
-from GUI.Colors import rgb
-from GUI.Files import FileType, DirRef, FileRef
-from GUI import FileDialogs
-
-from GUI import Task
-
 import cap.cap_manager
+from functools32 import lru_cache
 from session import create_session
+from term import TextAttribute, TextMode, set_attr_mode, reserve
+import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-import term.term_keyboard
-import term_pygui_key_translate
-from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
+import term_pygui_key_translate
 
-from functools32 import lru_cache
 
 SINGLE_WIDE_CHARACTERS =	\
 					" !\"#$%&'()*+,-./" \

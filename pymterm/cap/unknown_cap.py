@@ -1,7 +1,4 @@
 import logging
-import os
-import sys
-
 
 def handle(term, context, cap_turple):
     cap_name, increase_params = cap_turple

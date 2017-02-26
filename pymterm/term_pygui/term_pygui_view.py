@@ -3,37 +3,34 @@ import logging
 import os
 import select
 import socket
+import string
 import sys
 import time
 import traceback
-import string
 
 from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
+from GUI import FileDialogs
 from GUI import application
+from GUI.Alerts import stop_alert, ask
+from GUI.Colors import rgb
 from GUI.Files import FileType
+from GUI.Files import FileType, DirRef, FileRef
+import GUI.Font
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
-from GUI.Colors import rgb
-from GUI.Files import FileType, DirRef, FileRef
-from GUI import FileDialogs
-from GUI.Alerts import stop_alert, ask
-
-import GUI.Font
-
 import cap.cap_manager
+from functools32 import lru_cache
 from session import create_session
+from term import TextAttribute, TextMode, set_attr_mode, reserve
+import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-import term.term_keyboard
-import term_pygui_key_translate
-from term import TextAttribute, TextMode, set_attr_mode, reserve
 from term_menu import basic_menus
-
+import term_pygui_key_translate
 from term_pygui_view_base import TerminalPyGUIViewBase
 import term_pygui_view_base
 
-from functools32 import lru_cache
 
 #put View on right to make Base class method override happer
 #because python resolve method from left to right

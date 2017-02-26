@@ -1,9 +1,10 @@
 import getpass
+import json
 import logging
 import logging.config
 import os
 import sys
-import json
+
 
 GUI_RENDERS = ["cairo", "pygame", "native"]
 RENDERS = GUI_RENDERS + ["kivy", "console"]
@@ -199,7 +200,7 @@ class SessionConfig:
         with open(config_path) as f:
             self.config = json.load(f)
 
-    def find_config(f, p):
+    def find_config(self, p):
         if os.path.exists(p):
             return p
 
@@ -299,19 +300,19 @@ class SessionConfig:
         return (font_file, font_name, font_size)
 
     def load_send_envs(self, send_envs):
-        keys, vars = [], {}
+        keys, _vars = [], {}
 
         if not send_envs:
-            return (keys, vars)
+            return (keys, _vars)
 
         for env in send_envs:
             if '=' in env:
                 parts=env.split('=')
-                vars[parts[0]] = '='.join(parts[1:])
+                _vars[parts[0]] = '='.join(parts[1:])
             else:
                 keys.append(env)
 
-        return (keys, vars)
+        return (keys, _vars)
 
     def read_ssh_config_file(self, config_file, hostname):
         files = []
@@ -393,26 +394,26 @@ class SessionConfig:
                 proxy_command = ssh_config['proxycommand']
 
             if 'sendenv' in ssh_config:
-                keys, vars = self.load_send_envs(ssh_config['sendenv'].split(' '))
+                keys, _vars = self.load_send_envs(ssh_config['sendenv'].split(' '))
                 envs.update(self.get_envs(keys))
-                envs.update(vars)
+                envs.update(_vars)
 
         #global envs
         if 'send_envs' in self.config:
-            keys, vars = self.load_send_envs(self.config['send_envs'])
+            keys, _vars = self.load_send_envs(self.config['send_envs'])
             envs.update(self.get_envs(keys))
-            envs.update(vars)
+            envs.update(_vars)
 
         #session envs
         if session and 'send_envs' in session:
-            keys, vars = self.load_send_envs(session['send_envs'])
+            keys, _vars = self.load_send_envs(session['send_envs'])
             envs.update(self.get_envs(keys))
-            envs.update(vars)
+            envs.update(_vars)
 
         #cmd envs
         if self.send_envs:
-            keys, vars = self.load_send_envs(self.send_envs)
+            keys, _vars = self.load_send_envs(self.send_envs)
             envs.update(self.get_envs(keys))
-            envs.update(vars)
+            envs.update(_vars)
 
         return (envs, proxy_command)

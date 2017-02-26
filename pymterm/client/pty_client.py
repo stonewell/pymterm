@@ -1,15 +1,6 @@
-import base64
-from binascii import hexlify
-import getpass
 import logging
 import os
 import pty
-import select
-import socket
-import sys
-import time
-import traceback
-
 
 def start_client(session, cfg):
     master_fd = None
@@ -31,7 +22,7 @@ def start_client(session, cfg):
             os.execlp(shell[0], *shell)
 
         session.interactive_shell(master_fd)
-    except Exception as e:
+    except:
         logging.getLogger('pty_client').exception('pty client caught exception:')
         try:
             if master_fd:

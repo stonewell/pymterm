@@ -1,6 +1,3 @@
-import os
-import sys
-
 
 def handle(term, context, cap_turple):
 	cap_name, increase = cap_turple

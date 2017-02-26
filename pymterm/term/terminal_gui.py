@@ -1,8 +1,11 @@
 import logging
+import sys
 
-from terminal import Terminal
 from term import TextAttribute, TextMode, reserve, clone_attr
 from term_char_width import char_width
+from terminal import Terminal
+
+
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
@@ -61,7 +64,7 @@ class TerminalGUI(Terminal):
         line = self.get_cur_line()
 
         self.get_cur_option()
-        line_option = self.get_cur_line_option()
+        self.get_cur_line_option()
 
         #take care utf_8
         self.remain_buffer.append(c)

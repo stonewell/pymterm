@@ -1,7 +1,3 @@
-import os
-import sys
-
-
 foreground = 'c5c8c6'
 background = '1d1f21'
 cursorColor = 'c5c8c6'
