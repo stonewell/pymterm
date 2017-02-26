@@ -1,22 +1,6 @@
 #coding=utf-8
-import array
 import logging
-import os
-import select
-import socket
-import string
-import sys
-import threading
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, TabView
-from GUI import FileDialogs
-from GUI import application
-from GUI.Alerts import stop_alert
-from GUI.Colors import rgb
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
 from GUI.GL import GLView, GLConfig
 from GUI.GLTextures import Texture as GTexture
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect

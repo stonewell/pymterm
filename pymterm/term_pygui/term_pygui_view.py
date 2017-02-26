@@ -3,16 +3,8 @@ import logging
 import sys
 
 from GUI import View
-from GUI import FileDialogs
-from GUI import application
-from GUI.Alerts import stop_alert, ask
-from GUI.Colors import rgb
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
+from GUI.Alerts import stop_alert
 import GUI.Font
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
-from GUI.StdColors import black, red, blue
-from GUI.StdFonts import application_font
 from functools32 import lru_cache
 
 import cap.cap_manager
@@ -21,8 +13,6 @@ from term import TextAttribute, TextMode, set_attr_mode, reserve
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-from term_menu import basic_menus
-import term_pygui_key_translate
 from term_pygui_view_base import TerminalPyGUIViewBase
 import term_pygui_view_base
 

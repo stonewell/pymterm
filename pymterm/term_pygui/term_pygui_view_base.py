@@ -248,7 +248,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
         return col_width
 
     def get_prefered_size(self):
-        f = self._get_font()
         w = int(self._get_col_width() * self.visible_cols + self.padding_x * 2 + 0.5)
         h = int(self._get_line_height() * self.visible_rows + self.padding_y * 2 + 0.5)
 
