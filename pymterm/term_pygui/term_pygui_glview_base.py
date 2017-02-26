@@ -24,6 +24,7 @@ from OpenGL.GL import *
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
 from OpenGL.GLU import *
+
 import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve

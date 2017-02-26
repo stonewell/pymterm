@@ -19,6 +19,7 @@ from GUI import TextField
 from GUI import application
 from GUI.Alerts import stop_alert, ask
 from GUI.Files import FileType, DirRef, FileRef
+
 import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve

@@ -2,14 +2,8 @@
 import json
 import logging
 import os
-import select
-import socket
-import string
-import sys
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
+from GUI import Application, Document, Window, TabView
 from GUI import FileDialogs
 from GUI import ModalDialog, Label, Button
 from GUI import RadioGroup, RadioButton
@@ -17,7 +11,8 @@ from GUI import Task
 from GUI import TextField
 from GUI import application
 from GUI.Alerts import stop_alert, ask
-from GUI.Files import FileType, DirRef, FileRef
+from GUI.Files import DirRef, FileRef
+
 import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve
@@ -26,8 +21,6 @@ from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
 from term_menu import basic_menus
 from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDialog
-import term_pygui_key_translate
-
 
 padding = 10
 file_types = None

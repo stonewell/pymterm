@@ -1,5 +1,6 @@
 import logging
 
+
 def translate_key(term, keycode, text, modifiers):
     result = []
     handled = False

@@ -1,42 +1,23 @@
 #coding=utf-8
 import logging
-import os
-import select
-import socket
-import string
 import sys
-import threading
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, TabView
-from GUI import FileDialogs
-from GUI import application
-from GUI.Alerts import stop_alert, ask
-from GUI.Colors import rgb
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
-import GUI.Font
-from GUI.GL import GLView, GLConfig
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
-from GUI.StdColors import black, red, blue
-from GUI.StdFonts import application_font
+from GUI.Alerts import stop_alert
 from OpenGL.GL import *
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
 from OpenGL.GLU import *
-import cap.cap_manager
 from functools32 import lru_cache
 import pygame
 from pygame.locals import *
+
+import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-from term_menu import basic_menus
 from term_pygui_glview_base import TerminalPyGUIGLViewBase, TextureBase
-import term_pygui_key_translate
 import term_pygui_view_base
 
 

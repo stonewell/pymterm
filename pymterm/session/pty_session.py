@@ -1,11 +1,11 @@
 import array
+import fcntl
 import os
 import select
+import termios
 
 import client.pty_client
-import fcntl
 from session import Session
-import termios
 
 
 class PtySession(Session):

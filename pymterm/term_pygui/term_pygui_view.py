@@ -1,14 +1,8 @@
 #coding=utf-8
 import logging
-import os
-import select
-import socket
-import string
 import sys
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
+from GUI import View
 from GUI import FileDialogs
 from GUI import application
 from GUI.Alerts import stop_alert, ask
@@ -19,8 +13,9 @@ import GUI.Font
 from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from GUI.StdColors import black, red, blue
 from GUI.StdFonts import application_font
-import cap.cap_manager
 from functools32 import lru_cache
+
+import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 import term.term_keyboard

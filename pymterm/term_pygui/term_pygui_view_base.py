@@ -1,32 +1,19 @@
 #coding=utf-8
 import logging
-import os
-import select
-import socket
 import string
-import sys
 import threading
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, View, TabView
-from GUI import FileDialogs
 from GUI import Task
 from GUI import application
 from GUI.Colors import rgb
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
-from GUI.StdColors import black, red, blue
-from GUI.StdFonts import application_font
-import cap.cap_manager
 from functools32 import lru_cache
+
+import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-from term_menu import basic_menus
 import term_pygui_key_translate
 
 
@@ -154,13 +141,11 @@ class TerminalPyGUIViewBase(TerminalWidget):
             logging.getLogger('term_pygui').debug('on size done: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
 
     def _calculate_visible_rows(self, h):
-        f = self._get_font()
         self.visible_rows = int(h / self._get_line_height())
         if self.visible_rows <= 0:
             self.visible_rows = 1
 
     def _calculate_visible_cols(self, w):
-        f = self._get_font()
         self.visible_cols = int(w / self._get_col_width())
 
         if self.visible_cols <= 0:
@@ -199,7 +184,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
         padding_left = self.padding_x
         padding_top = self.padding_y
         l = self.lines
-        f = self._get_font()
         dy = self._get_line_height()
         cx = x
         cy = y - padding_top

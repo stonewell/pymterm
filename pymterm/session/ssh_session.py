@@ -6,8 +6,9 @@ import sys
 import threading
 import time
 
-import client.ssh_client
 import paramiko
+
+import client.ssh_client
 from session import Session
 
 

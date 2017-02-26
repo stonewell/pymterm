@@ -6,7 +6,6 @@ import sys
 import time
 import traceback
 
-import cap.cap_manager
 from kivy.app import App
 from kivy.clock import Clock
 from kivy.core.window import Window
@@ -19,6 +18,8 @@ from kivy.uix.label import Label
 from kivy.uix.spinner import Spinner, SpinnerOption
 from kivy.uix.tabbedpanel import TabbedPanel, TabbedPanelHeader
 from kivy.uix.textinput import TextInput
+
+import cap.cap_manager
 from session import create_session
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI

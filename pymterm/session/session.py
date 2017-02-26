@@ -2,6 +2,7 @@ import logging
 import struct
 import threading
 
+
 class Session(object):
     def __init__(self, cfg, terminal):
         self.cfg = cfg

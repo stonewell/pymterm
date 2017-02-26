@@ -1,12 +1,11 @@
 import logging
 import msvcrt
 
+import client.pipe_client
 import pywintypes
+from session import Session
 import win32event
 import win32file
-
-import client.pipe_client
-from session import Session
 
 
 class PipeSession(Session):

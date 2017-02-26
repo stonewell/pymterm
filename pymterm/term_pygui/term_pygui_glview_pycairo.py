@@ -1,42 +1,23 @@
 #coding=utf-8
-import array
 import logging
-import numpy
-import os
-import select
-import socket
-import string
 import sys
-import threading
-import time
-import traceback
 
-from GUI import Application, ScrollableView, Document, Window, Cursor, rgb, TabView
-from GUI import FileDialogs
-from GUI import application
 from GUI.Alerts import stop_alert
-from GUI.Colors import rgb
-from GUI.Files import FileType
-from GUI.Files import FileType, DirRef, FileRef
-from GUI.GL import GLView, GLConfig
-from GUI.GLTextures import Texture as GTexture
-from GUI.Geometry import pt_in_rect, offset_rect, rects_intersect
 from OpenGL.GL import *
 from OpenGL.GL import glClearColor, glClear, glBegin, glColor3f, glVertex2i, glEnd, \
     GL_COLOR_BUFFER_BIT, GL_TRIANGLES
 from OpenGL.GLU import *
-import cap.cap_manager
 from functools32 import lru_cache
 import pango
 import pangocairo
+
+import cap.cap_manager
 from session import create_session
 from term import TextAttribute, TextMode, set_attr_mode, reserve
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-from term_menu import basic_menus
 from term_pygui_glview_base import TerminalPyGUIGLViewBase, TextureBase
-import term_pygui_key_translate
 from term_pygui_view_base import SINGLE_WIDE_CHARACTERS
 import term_pygui_view_base
 
@@ -46,9 +27,6 @@ try:
 except:
     logging.exception('cairo not found')
     import gtk.cairo as cairo
-
-
-
 
 term_pygui_view_base.create_line_surface = lambda w,h: cairo.ImageSurface(cairo.FORMAT_ARGB32, int(w), int(h))
 

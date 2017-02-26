@@ -28,6 +28,7 @@ from kivy.uix.label import Label
 from kivy.uix.widget import Widget
 from kivy.utils import boundary, platform
 from kivy.utils import escape_markup
+
 from term import TextAttribute, TextMode
 from term.terminal_widget import TerminalWidget
 

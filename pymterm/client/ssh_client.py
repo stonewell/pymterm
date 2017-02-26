@@ -5,6 +5,7 @@ import os
 
 import paramiko
 
+
 def agent_auth(transport, username):
     """
     Attempt to authenticate to the given transport using any of the private

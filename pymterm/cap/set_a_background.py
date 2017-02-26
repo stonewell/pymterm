@@ -1,5 +1,6 @@
 import logging
 
+
 def handle(term, context, cap_turple):
     light = False
     color_idx = 0
