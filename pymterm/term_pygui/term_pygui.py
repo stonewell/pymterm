@@ -199,6 +199,14 @@ class TerminalPyGUIApp(Application):
         m.new_window_cmd.enabled = 1
         m.open_session_cmd.enabled = 1
 
+        win = self.get_target_window()
+        close_tab_enabled = False
+        if win and win.tabview:
+            tab_view = win.tabview
+            close_tab_enabled = tab_view.selected_index >= 0
+
+        m.close_tab_cmd.enabled = 1 if close_tab_enabled else 0
+
     def _create_view(self, doc):
         return self._cls_view(model=doc)
 
@@ -260,7 +268,7 @@ class TerminalPyGUIApp(Application):
         view = session.term_widget
 
         win.tabview.remove_item(view)
-        
+
     def _create_new_tab(self, win, view):
         win.tabview.add_item(view)
 
@@ -287,6 +295,20 @@ class TerminalPyGUIApp(Application):
 
     def new_window_cmd(self):
         self.connect_to()
+
+    def close_tab_cmd(self):
+        win = self.get_target_window()
+        tab_view = win.tabview
+
+        if tab_view.selected_index < 0:
+            return
+
+        view = tab_view.items[tab_view.selected_index]
+
+        if view.session.stopped:
+            tab_view.remove_item(view)
+        else:
+            view.session.stop()
 
     def new_cmd(self):
         self.connect_to(win = self.get_target_window())
