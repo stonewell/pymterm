@@ -251,12 +251,24 @@ class TerminalPyGUIApp(Application):
         win.show()
         view.become_target()
 
+    def _on_session_stop(self, session):
+        if not session.window or not session.term_widget:
+            logging.getLogger('term_pygui').warn('invalid session, window:{}, term_widget:{}'.format(session.window, session.term_widget))
+            return
+
+        win = session.window
+        view = session.term_widget
+
+        win.tabview.remove_item(view)
+        
     def _create_new_tab(self, win, view):
         win.tabview.add_item(view)
 
         cfg = view.model.cfg
         session = create_session(cfg, self.create_terminal(cfg))
+        session.on_session_stop = self._on_session_stop
         session.term_widget = view
+        session.window = win
         session.terminal.term_widget = view
         view.session = session
         view.tab_width = session.get_tab_width()

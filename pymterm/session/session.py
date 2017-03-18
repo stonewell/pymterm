@@ -10,6 +10,7 @@ class Session(object):
         self.terminal.session = self
         self.reader_thread = None
         self.stopped = True
+        self.on_session_stop = None
 
     def report_error(self, msg):
         logging.getLogger('session').error(msg)
@@ -35,7 +36,7 @@ class Session(object):
                             break
                         self.terminal.on_data(data)
                     return
-                
+
             while True:
                 data = self._read_data(4096)
                 if not data:
@@ -75,6 +76,9 @@ class Session(object):
         self._stop_reader()
 
         self._wait_for_quit()
+
+        if self.on_session_stop:
+            self.on_session_stop(self)
 
     def _stop_reader(self):
         pass
