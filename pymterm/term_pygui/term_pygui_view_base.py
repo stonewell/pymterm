@@ -71,9 +71,10 @@ class TerminalPyGUIViewBase(TerminalWidget):
         return r
 
     def __refresh(self):
-        logging.getLogger('term_pygui').debug('refresh called')
-        self.invalidate()
-        self.update()
+        if self.session and not self.session.stopped:
+            logging.getLogger('term_pygui').debug('refresh called')
+            self.invalidate()
+            self.update()
 
     def refresh(self):
         self._refresh_task.start()

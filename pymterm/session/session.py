@@ -56,6 +56,7 @@ class Session(object):
                 __read_term_data()
             except:
                 logging.getLogger('session').exception('read term data failed')
+                self.stop()
 
         self.reader_thread = reader_thread = threading.Thread(target=read_term_data)
         reader_thread.start()
