@@ -23,6 +23,7 @@ def basic_menus(session_items, substitutions = {}, include = None, exclude = Non
     _file_menu_items = [
         ("New Tab/^T",   'new_cmd'),
         ("Close Tab/^D",   'close_tab_cmd'),
+        "-",
         ("New Window/^N",  'new_window_cmd'),
         ("Close/^W",    'close_cmd'),
         "-",

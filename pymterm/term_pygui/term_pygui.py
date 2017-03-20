@@ -259,6 +259,28 @@ class TerminalPyGUIApp(Application):
         win.show()
         view.become_target()
 
+    def _remove_session_tab(self, win, view):
+        selected_index = win.tabview.selected_index
+        count = len(win.tabview.items)
+
+        if selected_index < 0 or selected_index >= count:
+            return
+
+        win.tabview.remove_item(view)
+
+        count = len(win.tabview.items)
+
+        win.tabview.selected_index = -1
+
+        if count == 0:
+            win.close_cmd()
+            application()._check_for_no_windows()
+        elif selected_index < count and selected_index >= 0:
+            win.tabview.selected_index = selected_index
+        else:
+            win.tabview.selected_index = count - 1
+
+
     def _on_session_stop(self, session):
         if not session.window or not session.term_widget:
             logging.getLogger('term_pygui').warn('invalid session, window:{}, term_widget:{}'.format(session.window, session.term_widget))
@@ -267,7 +289,7 @@ class TerminalPyGUIApp(Application):
         win = session.window
         view = session.term_widget
 
-        win.tabview.remove_item(view)
+        self._remove_session_tab(win, view)
 
     def _create_new_tab(self, win, view):
         win.tabview.add_item(view)
@@ -306,7 +328,7 @@ class TerminalPyGUIApp(Application):
         view = tab_view.items[tab_view.selected_index]
 
         if view.session.stopped:
-            tab_view.remove_item(view)
+            self._remove_session_tab(win, view)
         else:
             view.session.stop()
 
@@ -341,9 +363,10 @@ class TerminalPyGUIDoc(Document):
 
 class TermTabView(TabView):
     def tab_changed(self, tab_index):
-        v = self.items[tab_index]
 
-        v.become_target()
+        if tab_index >= 0 and tab_index < len(self.items):
+            v = self.items[tab_index]
+            v.become_target()
 
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
