@@ -398,10 +398,9 @@ class TerminalPyGUIDoc(Document):
 
 class TermTabView(TabView):
     def tab_changed(self, tab_index):
-
         if tab_index >= 0 and tab_index < len(self.items):
             v = self.items[tab_index]
-            v.become_target()
+            self.__focus_task = Task(lambda:v.become_target(), .01)
 
 class TerminalPyGUI(TerminalGUI):
     def __init__(self, cfg):
