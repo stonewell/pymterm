@@ -4,6 +4,8 @@ from GUI.GStdMenus import build_menus, \
 
 file_cmds += 'new_window_cmd'
 file_cmds += 'close_tab_cmd'
+file_cmds += 'next_tab_cmd'
+file_cmds += 'prev_tab_cmd'
 file_cmds += 'open_session_cmd'
 file_cmds += 'transfer_file_cmd'
 
@@ -23,6 +25,8 @@ def basic_menus(session_items, substitutions = {}, include = None, exclude = Non
     _file_menu_items = [
         ("New Tab/^T",   'new_cmd'),
         ("Close Tab/^D",   'close_tab_cmd'),
+        ("Next Tab/@\t",   'next_tab_cmd'),
+        ("Prev Tab/@^\t",   'prev_tab_cmd'),
         "-",
         ("New Window/^N",  'new_window_cmd'),
         ("Close/^W",    'close_cmd'),

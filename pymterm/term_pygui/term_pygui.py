@@ -132,6 +132,12 @@ class LoginDialog(ModalDialog):
             last_dir = result.dir
             self.txt_key_file.text = result.path
 
+class TermWindow(Window):
+    def key_down(self, event):
+        Window.key_down(self, event)
+
+        logging.error('window key down:{}'.format(event))
+
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
         Application.__init__(self)
@@ -201,11 +207,14 @@ class TerminalPyGUIApp(Application):
 
         win = self.get_target_window()
         close_tab_enabled = False
+
         if win and win.tabview:
             tab_view = win.tabview
             close_tab_enabled = tab_view.selected_index >= 0
 
         m.close_tab_cmd.enabled = 1 if close_tab_enabled else 0
+        m.next_tab_cmd.enabled = True
+        m.prev_tab_cmd.enabled = True
 
     def _create_view(self, doc):
         return self._cls_view(model=doc)
@@ -247,7 +256,7 @@ class TerminalPyGUIApp(Application):
         view = self._create_view(document)
         w, h = view.get_prefered_size()
 
-        win = Window(bounds = (0, 0, w + 10, h + 50), document = document)
+        win = TermWindow(bounds = (0, 0, w + 10, h + 50), document = document)
         win.tabview = tabview = TermTabView()
         win.auto_position = False
 
@@ -317,6 +326,32 @@ class TerminalPyGUIApp(Application):
 
     def new_window_cmd(self):
         self.connect_to()
+
+    def next_tab_cmd(self):
+        self._change_cur_tab(1)
+
+    def prev_tab_cmd(self):
+        self._change_cur_tab(-1)
+
+    def _change_cur_tab(self, step):
+        win = self.get_target_window()
+        tab_view = win.tabview
+        count = len(tab_view.items)
+
+        if count == 0:
+            return
+
+        selected_index = 0 if tab_view.selected_index < 0 else tab_view.selected_index
+
+        new_index = selected_index + step
+
+        if new_index < 0:
+            new_index = count - 1
+        elif new_index >= count:
+            new_index = 0
+
+        if new_index != selected_index:
+            tab_view.selected_index = new_index
 
     def close_tab_cmd(self):
         win = self.get_target_window()
