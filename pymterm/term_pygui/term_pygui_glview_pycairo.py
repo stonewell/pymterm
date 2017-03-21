@@ -146,7 +146,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         if not font:
             font = pango.FontDescription(' '.join([font_name, str(self.font_size)]))
         else:
-            font.set_size(int(float(self.font_size) * pango.SCALE * 72 / font_map.get_resolution()))
+            font.set_size(int(float(self.font_size) * pango.SCALE * 72 / font_map.get_resolution()) + 1)
 
         return font
 
