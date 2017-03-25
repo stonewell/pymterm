@@ -243,6 +243,7 @@ class TerminalGUI(Terminal):
 
     def origin_pair(self):
         self.bold_mode = False
+        self.set_mode(0)
         self.set_attributes(-1, -1, -1)
 
     def clr_eol(self, context):
