@@ -133,10 +133,9 @@ class LoginDialog(ModalDialog):
             self.txt_key_file.text = result.path
 
 class TermWindow(Window):
-    def key_down(self, event):
-        Window.key_down(self, event)
-
-        logging.error('window key down:{}'.format(event))
+    def __init__(self, *args, **kwargs):
+        Window.__init__(self, *args, **kwargs)
+        self._generic_tabbing = False
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):
@@ -397,6 +396,10 @@ class TerminalPyGUIDoc(Document):
 
 
 class TermTabView(TabView):
+    def __init__(self, *args, **kwargs):
+        TabView.__init__(self, *args, **kwargs)
+        self._generic_tabbing = False
+        
     def tab_changed(self, tab_index):
         if tab_index >= 0 and tab_index < len(self.items):
             v = self.items[tab_index]
