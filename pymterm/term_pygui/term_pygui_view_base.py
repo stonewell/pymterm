@@ -454,6 +454,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
                 if last_col < col:
                     for r_col in range(last_col, col):
+                        if r_col >= len(line):
+                            continue
+
                         wide_char = False
                         if r_col + 1 < len(line):
                             wide_char = line[r_col + 1] == '\000'
