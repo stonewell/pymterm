@@ -135,7 +135,6 @@ class LoginDialog(ModalDialog):
 class TermWindow(Window):
     def __init__(self, *args, **kwargs):
         Window.__init__(self, *args, **kwargs)
-        self._generic_tabbing = False
 
 class TerminalPyGUIApp(Application):
     def __init__(self, cfg):

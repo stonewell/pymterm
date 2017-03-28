@@ -95,12 +95,12 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if e.shift:
             modifiers.append('shift')
 
-        logging.getLogger('term_pygui').info('view key_down:{}'.format(e))
-        logging.getLogger('term_pygui').info('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
+        logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
+        logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
         if self.session.terminal.process_key(keycode,
                                              text,
                                              modifiers):
-            logging.getLogger('term_pygui').info(' processed by term_gui')
+            logging.getLogger('term_pygui').debug(' processed by term_gui')
             return
 
         v, handled = term.term_keyboard.translate_key(self.session.terminal,
@@ -115,7 +115,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         elif text:
             self.session.send(text)
 
-        logging.getLogger('term_pygui').info(' - translated %r, %d' % (v, handled))
+        logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
