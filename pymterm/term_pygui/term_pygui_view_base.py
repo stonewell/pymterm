@@ -133,7 +133,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         w -= self.padding_x * 2
         h -= self.padding_y * 2
-        h -= (self._get_line_height() / 3)
 
         self._calculate_visible_rows(h)
         self._calculate_visible_cols(w)
