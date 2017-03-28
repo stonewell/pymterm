@@ -1,8 +1,0 @@
-2017-03-24 16:40:37 INFO     session         end of socket, quit
-2017-03-24 16:40:41 INFO     OpenGL.acceleratesupport OpenGL_accelerate module loaded
-2017-03-24 16:40:41 INFO     OpenGL.arrays.arraydatatype Using accelerated ArrayDatatype
-2017-03-24 16:40:41 INFO     term_pygui      using opengl cairo/pango render
-2017-03-24 16:40:41 INFO     root            font info:file=[None], name=[SourceCode Pro Light], size=14
-2017-03-24 16:40:41 INFO     term_pygui      col_width:11
-2017-03-24 16:40:41 INFO     terminal        load term cap data file:/home/stone/Work/personal/pymterm/pymterm/term/../../data/generic-cap.dat
-2017-03-24 16:40:41 INFO     terminal        load term cap data file:/home/stone/Work/personal/pymterm/pymterm/term/../../data/xterm-256color.dat
