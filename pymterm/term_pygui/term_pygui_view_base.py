@@ -158,9 +158,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         application().set_clipboard(data.encode('utf-8'))
 
     def paste_from_clipboard(self):
-        a = [chr(ord(c)) for c in application().get_clipboard()]
-        s = ''.join(a).decode('utf-8')
-        return s
+        return application().get_clipboard().decode('utf-8')
 
     def mouse_down(self, event):
         self.become_target()
