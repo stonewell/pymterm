@@ -29,4 +29,10 @@ generic-cap|generic ansi escape:\
 	disable_mode=\E[?%dl:\
 	enable_keypad_appkeys=\E=:\
 	disable_keypad_appkeys=\E>:\
-	cursor_address=\E[%i%d;%df:
+	cursor_address=\E[%i%d;%df:\
+	enter_alt_charset_mode_british=\E(A:\
+	enter_alt_charset_mode_g1=\E)0:\
+	enter_alt_charset_mode_g1_british=\E)A:\
+	exit_alt_charset_mode_g1_british=\E)B:\
+	shift_in_to_charset_mode_g0=\017:\
+	shift_out_to_charset_mode_g1=\016:

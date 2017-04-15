@@ -4,7 +4,9 @@ import sys
 from term import TextAttribute, TextMode, reserve, clone_attr
 from term_char_width import char_width
 from terminal import Terminal
+from charset_mode import translate_char, translate_char_british
 
+default_line_option = TextAttribute(None, None, TextMode.STDOUT)
 
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
@@ -21,8 +23,8 @@ class TerminalGUI(Terminal):
 
         self.last_line_option_row = -1
         self.last_line_option_col = -1
-        self.cur_line_option = TextAttribute(None, None, None)
-        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), TextAttribute(None, None, None)
+        self.cur_line_option = default_line_option
+        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), default_line_option
         self.bold_mode = False
         self.scroll_region = None
 
@@ -32,6 +34,15 @@ class TerminalGUI(Terminal):
 
         self.status_line = []
         self.status_line_mode = 0
+
+        self.charset_modes_translate = [None, None]
+        self.charset_mode = 0
+
+    def _translate_char(self, c):
+        if self.charset_modes_translate[self.charset_mode]:
+            return self.charset_modes_translate[self.charset_mode](c)
+        else:
+            return c
 
     def get_line(self, row):
         reserve(self.lines, row + 1, [])
@@ -76,6 +87,9 @@ class TerminalGUI(Terminal):
             return
 
         self.remain_buffer = []
+
+        #translate g0, g1 charset
+        c = self._translate_char(c)
 
         w = char_width(c)
 
@@ -135,6 +149,8 @@ class TerminalGUI(Terminal):
         else:
             reserve(line, self.col + len(c), ' ')
             reserve(line_option, self.col + len(c), None)
+            if self.cfg.debug_more:
+                logging.getLogger('term_gui').debug(u'save buffer option:{},{},{},option={}, {}'.format(self.col, self.row, c, line_option[self.col], self.cur_line_option))
             line[self.col] = c[0]
             line_option[self.col] = clone_attr(self.cur_line_option)
             self.col += 1
@@ -195,7 +211,7 @@ class TerminalGUI(Terminal):
         col, row = self.saved_cursor
         logging.getLogger('term_gui').debug('{} {} {}'.format( 'restore', row, col))
         self.set_cursor(col, row)
-        
+
     def get_cursor(self):
         if len(self.lines) <= self.get_rows():
             return (self.col, self.row)
@@ -258,11 +274,11 @@ class TerminalGUI(Terminal):
             line[i] = ' '
 
         for i in range(begin, len(line_option)):
-            line_option[i] = TextAttribute(None, None, None)
-            
+            line_option[i] = default_line_option
+
         self.refresh_display()
 
-    def delete_chars(self, count):
+    def delete_chars(self, count, overwrite = False):
         line = self.get_cur_line()
         begin = self.col
         line_option = self.get_cur_line_option()
@@ -270,18 +286,22 @@ class TerminalGUI(Terminal):
         if line[begin] == '\000':
             begin -= 1
 
-        for i in range(begin, len(line)):
-            if i + count < len(line):
+        end = len(line) if not overwrite or begin + count > len(line) else begin + count
+
+        for i in range(begin, end):
+            if not overwrite and i + count < len(line):
                 line[i] = line[i + count]
             else:
                 line[i] = ' '
 
+        end = len(line_option) if not overwrite or begin + count > len(line_option) else begin + count
+
         for i in range(begin, len(line_option)):
-            if i + count < len(line_option):
+            if not overwrite and i + count < len(line_option):
                 line_option[i] = line_option[i + count]
             else:
-                line_option[i] = TextAttribute(None, None, None)
-                
+                line_option[i] = default_line_option
+
         self.refresh_display()
 
     def refresh_display(self):
@@ -325,6 +345,16 @@ class TerminalGUI(Terminal):
         fore_color = None
         back_color = None
 
+        text_mode = None
+        if mode & 1:
+            self.bold_mode = True
+        if mode & (1 << 7):
+            text_mode = TextMode.REVERSE
+        if mode & (1 << 21) or mode & (1 << 22):
+            self.bold_mode = False
+        if mode & (1 << 27):
+            text_mode = TextMode.STDOUT
+
         if f_color_idx >= 0:
             logging.getLogger('term_gui').debug('set fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             fore_color = self.get_color(mode, f_color_idx)
@@ -346,7 +376,7 @@ class TerminalGUI(Terminal):
         else:
             back_color = []
 
-        self.save_line_option(TextAttribute(fore_color, back_color, None))
+        self.save_line_option(TextAttribute(fore_color, back_color, text_mode))
 
     def get_line_option(self, row):
         reserve(self.line_options, row + 1, [])
@@ -358,7 +388,7 @@ class TerminalGUI(Terminal):
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
-        reserve(line_option, col + 1, self.cur_line_option)
+        reserve(line_option, col + 1, default_line_option)
 
         return line_option[col]
 
@@ -405,7 +435,7 @@ class TerminalGUI(Terminal):
                 line[i] = ' '
 
             for i in range(len(line_option)):
-                line_option[i] = TextAttribute(None, None, None)
+                line_option[i] = default_line_option
         self.refresh_display()
 
     def parm_right_cursor(self, context):
@@ -454,7 +484,7 @@ class TerminalGUI(Terminal):
 
             if self.row <= end:
                 self.line_options = self.line_options[:self.row] + self.line_options[self.row + 1: end + 1] + [self.create_new_line_option()] + self.line_options[end + 1:]
-                
+
         self.refresh_display()
 
     def get_scroll_region(self):
@@ -523,7 +553,7 @@ class TerminalGUI(Terminal):
           self.saved_cur_line_option = \
           self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option
         self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option = \
-          [], [], 0, 0, False, TextAttribute(None, None, None)
+          [], [], 0, 0, False, default_line_option
         self.refresh_display()
 
     def exit_ca_mode(self, context):
@@ -581,7 +611,34 @@ class TerminalGUI(Terminal):
         self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
+        self.charset_modes_translate[0] = None
         self.exit_standout_mode(context)
+        logging.getLogger('term_gui').error('exit alt:{} {}'.format(' at ', self.get_cursor()))
+
+    def enter_alt_charset_mode(self, context):
+        self.charset_modes_translate[0] = translate_char
+        logging.getLogger('term_gui').error('enter alt:{} {}'.format(' at ', self.get_cursor()))
+
+    def enter_alt_charset_mode_british(self, context):
+        self.charset_modes_translate[0] = translate_char_british
+
+    def enter_alt_charset_mode_g1(self, context):
+        self.charset_modes_translate[1] = translate_char
+
+    def enter_alt_charset_mode_g1_british(self, context):
+        self.charset_modes_translate[1] = translate_char_british
+
+    def exit_alt_charset_mode_g1_british(self, context):
+        self.charset_modes_translate[1] = None
+        self.exit_standout_mode(context)
+
+    def shift_in_to_charset_mode_g0(self, context):
+        self.charset_mode = 0
+        self.refresh_display()
+
+    def shift_out_to_charset_mode_g1(self, context):
+        self.charset_mode = 1
+        self.refresh_display()
 
     def enable_mode(self, context):
         logging.getLogger('term_gui').debug('enable mode:{}'.format(context.params))

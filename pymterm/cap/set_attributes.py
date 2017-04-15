@@ -16,7 +16,7 @@ def handle(term, context, cap_turple):
         if v == 0:
             #reset
             term.origin_pair()
-        elif v >= 1 and v <= 8:
+        elif v >= 1 and v <= 29:
             #mode
             if mode < 0:
                 mode = 0
