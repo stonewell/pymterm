@@ -296,7 +296,7 @@ class TerminalGUI(Terminal):
 
         end = len(line_option) if not overwrite or begin + count > len(line_option) else begin + count
 
-        for i in range(begin, len(line_option)):
+        for i in range(begin, end):
             if not overwrite and i + count < len(line_option):
                 line_option[i] = line_option[i + count]
             else:
