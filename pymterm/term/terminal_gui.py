@@ -613,11 +613,11 @@ class TerminalGUI(Terminal):
     def exit_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = None
         self.exit_standout_mode(context)
-        logging.getLogger('term_gui').error('exit alt:{} {}'.format(' at ', self.get_cursor()))
+        logging.getLogger('term_gui').debug('exit alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = translate_char
-        logging.getLogger('term_gui').error('enter alt:{} {}'.format(' at ', self.get_cursor()))
+        logging.getLogger('term_gui').debug('enter alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode_british(self, context):
         self.charset_modes_translate[0] = translate_char_british
