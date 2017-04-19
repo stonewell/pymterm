@@ -263,6 +263,7 @@ class TerminalGUI(Terminal):
         self.dim_mode = False
         self.set_mode(0)
         self.set_attributes(-1, -1, -1)
+        logging.getLogger('term_gui').debug('2. reset bold mode')
 
     def clr_eol(self, context):
         line = self.get_cur_line()
@@ -325,17 +326,15 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('meta_on')
 
     def get_color(self, mode, idx):
-        if mode < 0:
-            color_set = 0
-        else:
-            color_set = mode & 1
+        color_set = 0
 
         if self.bold_mode:
             color_set = 1
 
-        color_set = 1
-
+        logging.getLogger('term_gui').debug('bold mode:{}, mode:{}, index:{}'.format(self.bold_mode, mode, idx))
+        
         color = None
+        
         if idx < 8:
             color = self.cfg.get_color(color_set * 8 + idx)
         elif idx < 16:
@@ -348,6 +347,7 @@ class TerminalGUI(Terminal):
 
         if color and self.dim_mode:
             color = map(lambda x: int(float(x) * 2 / 3), color)
+            
         return color
 
     def set_attributes(self, mode, f_color_idx, b_color_idx):
@@ -355,17 +355,20 @@ class TerminalGUI(Terminal):
         back_color = None
 
         text_mode = None
-        if mode & 1:
-            self.bold_mode = True
-        if mode & (1 << 2):
-            self.dim_mode = True
-        if mode & (1 << 7):
-            text_mode = TextMode.REVERSE
-        if mode & (1 << 21) or mode & (1 << 22):
-            self.bold_mode = False
-            self.dim_mode = False
-        if mode & (1 << 27):
-            text_mode = TextMode.STDOUT
+        
+        if (mode > 0):
+            if mode & 1:
+                self.bold_mode = True
+            if mode & (1 << 2):
+                self.dim_mode = True
+            if mode & (1 << 7):
+                text_mode = TextMode.REVERSE
+            if mode & (1 << 21) or mode & (1 << 22):
+                self.bold_mode = False
+                self.dim_mode = False
+                logging.getLogger('term_gui').debug('1 reset bold mode')
+            if mode & (1 << 27):
+                text_mode = TextMode.STDOUT
 
         if f_color_idx >= 0:
             logging.getLogger('term_gui').debug('set fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
@@ -625,11 +628,11 @@ class TerminalGUI(Terminal):
     def exit_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = None
         self.exit_standout_mode(context)
-        logging.getLogger('term_gui').error('exit alt:{} {}'.format(' at ', self.get_cursor()))
+        logging.getLogger('term_gui').debug('exit alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = translate_char
-        logging.getLogger('term_gui').error('enter alt:{} {}'.format(' at ', self.get_cursor()))
+        logging.getLogger('term_gui').debug('enter alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode_british(self, context):
         self.charset_modes_translate[0] = translate_char_british

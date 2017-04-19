@@ -162,6 +162,8 @@ class SessionConfig:
             color_theme = get_color_theme(self.color_theme)
             if color_theme:
                 color_theme.apply_color(self, self.color_table)
+                self.default_foreground_color = self.color_table[7]
+                self.default_background_color = self.color_table[0]
 
     def get_color(self, idx):
         return self.color_table[idx]
