@@ -26,6 +26,7 @@ class TerminalGUI(Terminal):
         self.cur_line_option = default_line_option
         self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), default_line_option
         self.bold_mode = False
+        self.dim_mode = False
         self.scroll_region = None
 
         self.view_history_begin = None
@@ -259,6 +260,7 @@ class TerminalGUI(Terminal):
 
     def origin_pair(self):
         self.bold_mode = False
+        self.dim_mode = False
         self.set_mode(0)
         self.set_attributes(-1, -1, -1)
 
@@ -331,15 +333,22 @@ class TerminalGUI(Terminal):
         if self.bold_mode:
             color_set = 1
 
+        color_set = 1
+
+        color = None
         if idx < 8:
-            return self.cfg.get_color(color_set * 8 + idx)
+            color = self.cfg.get_color(color_set * 8 + idx)
         elif idx < 16:
-            return self.cfg.get_color(idx)
+            color = self.cfg.get_color(idx)
         elif idx < 256:
-            return self.cfg.get_color(idx)
+            color = self.cfg.get_color(idx)
         else:
             logging.getLogger('term_gui').error('not implemented color:{} mode={}'.format(idx, mode))
             sys.exit(1)
+
+        if color and self.dim_mode:
+            color = map(lambda x: int(float(x) * 2 / 3), color)
+        return color
 
     def set_attributes(self, mode, f_color_idx, b_color_idx):
         fore_color = None
@@ -348,10 +357,13 @@ class TerminalGUI(Terminal):
         text_mode = None
         if mode & 1:
             self.bold_mode = True
+        if mode & (1 << 2):
+            self.dim_mode = True
         if mode & (1 << 7):
             text_mode = TextMode.REVERSE
         if mode & (1 << 21) or mode & (1 << 22):
             self.bold_mode = False
+            self.dim_mode = False
         if mode & (1 << 27):
             text_mode = TextMode.STDOUT
 
@@ -549,16 +561,16 @@ class TerminalGUI(Terminal):
         self.save_line_option(TextAttribute([], [], mode))
 
     def enter_ca_mode(self, context):
-        self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, \
+        self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, self.saved_dim_mode, \
           self.saved_cur_line_option = \
-          self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option
-        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option = \
-          [], [], 0, 0, False, default_line_option
+          self.lines, self.line_options, self.col, self.row, self.bold_mode, self.dim_mode, self.cur_line_option
+        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.dim_mode, self.cur_line_option = \
+          [], [], 0, 0, False, False, default_line_option
         self.refresh_display()
 
     def exit_ca_mode(self, context):
-        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.cur_line_option = \
-            self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, self.saved_cur_line_option
+        self.lines, self.line_options, self.col, self.row, self.bold_mode, self.dim_mode, self.cur_line_option = \
+            self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row, self.saved_bold_mode, self.saved_dim_mode, self.saved_cur_line_option
         self.refresh_display()
 
     def key_shome(self, context):
