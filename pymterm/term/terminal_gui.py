@@ -324,6 +324,9 @@ class TerminalGUI(Terminal):
 
     def get_color(self, mode, idx):
         color_set = 0
+
+        if self.bold_mode:
+            color_set = 1
             
         if idx < 8:
             return self.cfg.get_color(color_set * 8 + idx)
