@@ -323,8 +323,7 @@ class TerminalGUI(Terminal):
         logging.getLogger('term_gui').debug('meta_on')
 
     def get_color(self, mode, idx):
-        if mode < 0:
-            color_set = 0
+        color_set = 0
             
         if idx < 8:
             return self.cfg.get_color(color_set * 8 + idx)
