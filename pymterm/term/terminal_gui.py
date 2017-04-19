@@ -1,7 +1,7 @@
 import logging
 import sys
 
-from term import TextAttribute, TextMode, reserve, clone_attr, get_default_line_option, DEFAULT_FG_COLOR_IDX, DEFAULT_BG_COLOR_IDX
+from term import TextAttribute, TextMode, reserve, clone_attr, get_default_text_attribute, DEFAULT_FG_COLOR_IDX, DEFAULT_BG_COLOR_IDX
 from term_char_width import char_width
 from terminal import Terminal
 from charset_mode import translate_char, translate_char_british
@@ -21,8 +21,8 @@ class TerminalGUI(Terminal):
 
         self.last_line_option_row = -1
         self.last_line_option_col = -1
-        self.cur_line_option = get_default_line_option()
-        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), get_default_line_option()
+        self.cur_line_option = get_default_text_attribute()
+        self.saved_lines, self.saved_line_options, self.saved_cursor, self.saved_cur_line_option = [], [], (0, 0), get_default_text_attribute()
         self.scroll_region = None
 
         self.view_history_begin = None
@@ -271,7 +271,7 @@ class TerminalGUI(Terminal):
             line[i] = ' '
 
         for i in range(begin, len(line_option)):
-            line_option[i] = get_default_line_option()
+            line_option[i] = get_default_text_attribute()
 
         self.refresh_display()
 
@@ -297,7 +297,7 @@ class TerminalGUI(Terminal):
             if not overwrite and i + count < len(line_option):
                 line_option[i] = line_option[i + count]
             else:
-                line_option[i] = get_default_line_option()
+                line_option[i] = get_default_text_attribute()
 
         self.refresh_display()
 
@@ -366,7 +366,7 @@ class TerminalGUI(Terminal):
 
     def get_option_at(self, row, col):
         line_option = self.get_line_option(row)
-        reserve(line_option, col + 1, get_default_line_option())
+        reserve(line_option, col + 1, get_default_text_attribute())
 
         return line_option[col]
 
@@ -396,7 +396,7 @@ class TerminalGUI(Terminal):
                 line[i] = ' '
 
             for i in range(len(line_option)):
-                line_option[i] = get_default_line_option()
+                line_option[i] = get_default_text_attribute()
         self.refresh_display()
 
     def parm_right_cursor(self, context):
@@ -510,7 +510,7 @@ class TerminalGUI(Terminal):
         self.saved_lines, self.saved_line_options, self.saved_col, self.saved_row,           self.saved_cur_line_option = \
           self.lines, self.line_options, self.col, self.row, self.cur_line_option
         self.lines, self.line_options, self.col, self.row, self.cur_line_option = \
-          [], [], 0, 0, get_default_line_option()
+          [], [], 0, 0, get_default_text_attribute()
         self.refresh_display()
 
     def exit_ca_mode(self, context):
@@ -843,4 +843,4 @@ class TerminalGUI(Terminal):
         if attr.has_mode(TextMode.CURSOR):
             f_color, b_color = b_color, self.cfg.default_cursor_color
 
-       return (f_color, b_color)
+        return (f_color, b_color)

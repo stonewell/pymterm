@@ -41,7 +41,7 @@ DEFAULT_BG_COLOR_IDX = 257
 
 class TextAttribute(object):
     def __init__(self, f_color_idx, b_color_idx, mode = 0):
-        super().__init__()
+        super.__init__()
 
         self._f_color_idx = f_color_idx
         self._b_color_idx = b_color_idx

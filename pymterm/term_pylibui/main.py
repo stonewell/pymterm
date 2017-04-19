@@ -3,15 +3,8 @@ import json
 import logging
 import os
 
-from GUI import Application, Document, Window, TabView
-from GUI import FileDialogs
-from GUI import ModalDialog, Label, Button
-from GUI import RadioGroup, RadioButton
-from GUI import Task
-from GUI import TextField
-from GUI import application
-from GUI.Alerts import stop_alert, ask
-from GUI.Files import DirRef, FileRef
+from pylibui.core import App
+from pylibui.controls import Window, Tab, OpenGLArea
 
 import cap.cap_manager
 from session import create_session
@@ -20,123 +13,15 @@ import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
 from term_menu import basic_menus
-from term_pygui_file_transfer import FileTransferDialog, FileTransferProgressDialog
+from file_transfer import FileTransferDialog, FileTransferProgressDialog
 
 padding = 10
-file_types = None
-last_dir = DirRef(path = os.path.abspath(os.path.expanduser("~/.ssh")))
-
-class PasswordDialog(ModalDialog):
-    def __init__(self, action, **kwargs):
-        title = 'Password'
-
-        self._action = action
-
-        lbl_text = action.get_pass_desc()
-
-        ModalDialog.__init__(self, title=title)
-
-        label = Label(lbl_text)
-        self.txt_passwd = TextField(multiline = False, password = True)
-
-        self.ok_button = Button("Connect", action = "ok", enabled = True, style = 'default')
-        self.cancel_button = Button("Cancel", enabled = True, style = 'cancel', action='cancel')
-
-        self.place(label, left = padding, top = padding)
-        self.place(self.txt_passwd, left = padding, top = label + padding,
-                   right= label.right if label.right > 260 else 260)
-
-        self.place(self.cancel_button, top = self.txt_passwd + padding, right = self.txt_passwd.right)
-        self.place(self.ok_button, top = self.txt_passwd + padding, right = self.cancel_button - padding)
-        self.shrink_wrap(padding = (padding, padding))
-
-    def ok(self):
-        if len(self.txt_passwd.text) == 0:
-            return
-        self._action.password = self.txt_passwd.text
-        self.dismiss(True)
-        self._action.execute()
-
-    def cancel(self):
-        self.dismiss(False)
-
-        if self._action.next_action:
-            self._action.next_action.execute()
-
-class LoginDialog(ModalDialog):
-
-    def __init__(self, session, transport,  **kwargs):
-        title = 'Login'
-
-        self._session = session
-        self._transport = transport
-
-        if 'title' in kwargs:
-            title = kwargs['title']
-
-        ModalDialog.__init__(self, title=title)
-
-        label = Label('Key File:')
-        btn_rsa = RadioButton(title='RSA', value = 'RSA')
-        btn_dss = RadioButton(title='DSS', value = 'DSS')
-        self.key_file_group = key_file_group = RadioGroup(items = [btn_rsa, btn_dss])
-        key_file_group.value = 'RSA'
-        self.txt_key_file = txt_key_file = TextField(multiline = False, password = False)
-        btn_browse_file = Button('Browse', action='choose_key_file', enabled = True)
-
-        lbl_login = Label('Login')
-        self.txt_login = TextField(multiline = False, password = False)
-
-        if 'username' in kwargs:
-            self.txt_login.text = kwargs['username']
-
-        lbl_passwd = Label('Password')
-        self.txt_passwd = TextField(multiline = False, password = True)
-
-        self.ok_button = Button("Connect", action = "ok", enabled = True, style = 'default')
-        self.cancel_button = Button("Cancel", enabled = True, style = 'cancel', action='cancel')
-
-        self.place(label, left = padding, top = padding)
-        self.place(btn_rsa, left = label + padding, top = padding)
-        self.place(btn_dss, left = btn_rsa + padding, top = padding)
-        self.place(txt_key_file, left = padding, top = btn_rsa + padding, right = 240)
-        self.place(btn_browse_file, left = txt_key_file, top = txt_key_file.top)
-
-        self.place(lbl_login, left = padding, top = txt_key_file + padding)
-        self.place(self.txt_login, left = padding, top = lbl_login + padding, right = btn_browse_file.right)
-
-        self.place(lbl_passwd, left = padding, top = self.txt_login + padding)
-        self.place(self.txt_passwd, left = padding, top = lbl_passwd + padding, right = btn_browse_file.right)
-
-        self.place(self.cancel_button, top = self.txt_passwd + padding, right = btn_browse_file.right)
-        self.place(self.ok_button, top = self.txt_passwd + padding, right = self.cancel_button - padding)
-        self.shrink_wrap(padding = (padding, padding))
-
-    def ok(self):
-        if self._session.try_login(self._transport,
-                                self.txt_key_file.text,
-                                self.key_file_group.value,
-                                self.txt_login.text,
-                                self.txt_passwd.text):
-            self.dismiss(True)
-
-    def cancel(self):
-        self.dismiss(False)
-
-    def choose_key_file(self):
-        global last_dir
-        result = FileDialogs.request_old_file("Open SSH key File:",
-            default_dir = last_dir, file_types = file_types)
-
-        if isinstance(result, FileRef):
-            last_dir = result.dir
-            self.txt_key_file.text = result.path
 
 class TermWindow(Window):
     def __init__(self, *args, **kwargs):
         Window.__init__(self, *args, **kwargs)
 
-class TerminalPyGUIApp(Application):
+class TerminalApp(App):
     def __init__(self, cfg):
         Application.__init__(self)
 
@@ -149,31 +34,31 @@ class TerminalPyGUIApp(Application):
     def _try_import_render(self, render):
         if render == 'cairo':
             try:
-                from term_pygui_glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
-                logging.getLogger('term_pygui').info('using opengl cairo/pango render')
+                from glview_pycairo import TerminalPyGUIGLView as TerminalPyGUIView
+                logging.getLogger('term_pylibui').info('using opengl cairo/pango render')
                 return TerminalPyGUIView
             except:
-                logging.getLogger('term_pygui').exception('failed load opengl cairo render')
+                logging.getLogger('term_pylibui').exception('failed load opengl cairo render')
                 return None
 
         if render == 'pygame':
             try:
-                from term_pygui_glview_pygame import TerminalPyGUIGLView as TerminalPyGUIView
-                logging.getLogger('term_pygui').info('using opengl pygame render')
+                from glview_pygame import TerminalPyGUIGLView as TerminalPyGUIView
+                logging.getLogger('term_pylibui').info('using opengl pygame render')
                 return TerminalPyGUIView
             except:
-                logging.getLogger('term_pygui').exception('failed load opengl pygame render')
+                logging.getLogger('term_pylibui').exception('failed load opengl pygame render')
                 return None
 
         if render == 'native':
             try:
-                from term_pygui_view import TerminalPyGUIView as TerminalPyGUIView
-                logging.getLogger('term_pygui').info('using native pygui render')
+                from view import TerminalPyGUIView as TerminalPyGUIView
+                logging.getLogger('term_pylibui').info('using native pygui render')
                 return TerminalPyGUIView
             except:
                 return None
 
-        logging.getLogger('term_pygui').info('unsupported render:{}'.format(render))
+        logging.getLogger('term_pylibui').info('unsupported render:{}'.format(render))
         return None
 
     def _select_view_render(self):
@@ -191,32 +76,15 @@ class TerminalPyGUIApp(Application):
             if _cls_view:
                 return _cls_view
 
-        logging.getLogger('term_pygui').error("unable to find a valid render")
+        logging.getLogger('term_pylibui').error("unable to find a valid render")
 
         stop_alert("unable to find a valid render, supported render:{}".format(self.cfg.renders))
 
     def get_application_name(self):
         return  'Multi-Tab Terminal Emulator in Python & pyGUI'
 
-    def setup_menus(self, m):
-        Application.setup_menus(self, m)
-        m.paste_cmd.enabled = application().query_clipboard()
-        m.new_window_cmd.enabled = 1
-        m.open_session_cmd.enabled = 1
-
-        win = self.get_target_window()
-        close_tab_enabled = False
-
-        if win and win.tabview:
-            tab_view = win.tabview
-            close_tab_enabled = tab_view.selected_index >= 0
-
-        m.close_tab_cmd.enabled = 1 if close_tab_enabled else 0
-        m.next_tab_cmd.enabled = True
-        m.prev_tab_cmd.enabled = True
-
-    def _create_view(self, doc):
-        return self._cls_view(model=doc)
+    def _create_view(self):
+        return self._cls_view()
 
     def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
         cfg = self.cfg.clone()
@@ -291,7 +159,7 @@ class TerminalPyGUIApp(Application):
 
     def _on_session_stop(self, session):
         if not session.window or not session.term_widget:
-            logging.getLogger('term_pygui').warn('invalid session, window:{}, term_widget:{}'.format(session.window, session.term_widget))
+            logging.getLogger('term_pylibui').warn('invalid session, window:{}, term_widget:{}'.format(session.window, session.term_widget))
             return
 
         win = session.window
@@ -431,11 +299,11 @@ class TerminalPyGUI(TerminalGUI):
                 context = json.loads(status_line[len('PYMTERM_STATUS_CMD='):])
                 self.__status_cmd_task = Task(lambda:self.process_status_cmd(context), .01)
             except:
-                logging.getLogger('term_pygui').exception('invalid status cmd found')
+                logging.getLogger('term_pylibui').exception('invalid status cmd found')
 
     def process_status_cmd(self, context):
         if not 'ACTION' in context:
-            logging.getLogger('term_pygui').warn('action not found in status cmd')
+            logging.getLogger('term_pylibui').warn('action not found in status cmd')
             return
 
         action = context['ACTION'].upper()
@@ -456,7 +324,7 @@ class TerminalPyGUI(TerminalGUI):
             result = FileDialogs.request_new_file("Choose location to save download file:",
                 default_dir = last_dir, default_name = base_name)
         else:
-            logging.getLogger('term_pygui').warn('action not valid:{} in status cmd'.format(action))
+            logging.getLogger('term_pylibui').warn('action not valid:{} in status cmd'.format(action))
             return
 
         if not isinstance(result, FileRef):

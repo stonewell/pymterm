@@ -1,7 +1,9 @@
 import hotshot, hotshot.stats
 import pymterm.pymterm
 import os
+import sys
 
+sys.path.append('pymterm')
 log_file = 'pymterm.prof'
 prof = hotshot.Profile(log_file)
 prof.runcall(pymterm.pymterm.pymterm_main)

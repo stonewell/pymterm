@@ -51,4 +51,3 @@ def apply_color(cfg, color_table):
     for i in range(len(COLOR_PALLETE)):
         if i < len(color_table):
             color_table[i] = parse_color(COLOR_PALLETE[i])
-     

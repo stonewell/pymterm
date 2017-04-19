@@ -13,6 +13,7 @@ import pangocairo
 
 import cap.cap_manager
 from session import create_session
+from term import TextAttribute, TextMode, reserve
 import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
@@ -28,8 +29,6 @@ except:
     import gtk.cairo as cairo
 
 term_pygui_view_base.create_line_surface = lambda w,h: cairo.ImageSurface(cairo.FORMAT_ARGB32, int(w), int(h))
-
-_layout_cache = {}
 
 class Texture(TextureBase):
     def __init__(self):
@@ -92,17 +91,10 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
     def _layout_line_text(self, context, text, font, left, top, width, line_height, cur_f_color):
         line_context, line_p_context = context
 
-        key = repr(font) + ":" + repr(text)
-
-        l = None
-        if key in _layout_cache:
-            l = _layout_cache[key]
-        else:
-            l = line_p_context.create_layout()
-            l.set_font_description(font)
-            l.set_text(text)
-            line_p_context.update_layout(l)
-            _layout_cache[key] = l
+        l = line_p_context.create_layout()
+        l.set_font_description(font)
+        l.set_text(text)
+        line_p_context.update_layout(l)
 
         t_w, t_h = l.get_pixel_size()
         t_w = t_w if t_w >= width else width
