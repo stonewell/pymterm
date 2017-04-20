@@ -332,6 +332,11 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
             last_option = get_default_text_attribute()
 
+            #clean up temp cursor and selection mode
+            for op in line_option:
+                op.unset_mode(TextMode.CURSOR)
+                op.unset_mode(TextMode.SELECTION)
+
             # temprary add cusor and selection mode
             if self.cursor_visible and i == c_row:
                 reserve(line_option, c_col + 1, get_default_text_attribute())
