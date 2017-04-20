@@ -84,8 +84,8 @@ class TextAttribute(object):
         return (self._f_color_idx == attr._f_color_idx and
                     self._b_color_idx == attr._b_color_idx and
                     self._mode == attr._mode)
-    
-    def __str__(self):
+
+    def to_print_str(self):
         m = 'bold:{}, dim:{}, selection:{}, reverse:{}, cursor:{}, default:{}'.format(
             self.has_mode(TextMode.BOLD),
             self.has_mode(TextMode.DIM),
@@ -96,6 +96,9 @@ class TextAttribute(object):
 
         return ','.join([str(self.get_fg_idx()), str(self.get_bg_idx()), m])
     
+    def __str__(self):
+        return ''.join([str(self.get_fg_idx()), str(self.get_bg_idx()), hex(self._mode)])
+
 def get_default_text_attribute():
     return TextAttribute(DEFAULT_FG_COLOR_IDX,
                              DEFAULT_BG_COLOR_IDX,

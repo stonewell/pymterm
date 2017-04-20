@@ -270,11 +270,10 @@ class TerminalPyGUIViewBase(TerminalWidget):
         return repr(line)
 
     def _get_line_option_cache_key(self, line_option):
-        return repr(line_option)
+        return '|'.join(map(str, line_option))
 
     def _refresh_font(self, cfg):
         self.font_file, self.font_name, self.font_size = cfg.get_font_info()
-
 
     @lru_cache(1)
     def _get_line_height(self):
