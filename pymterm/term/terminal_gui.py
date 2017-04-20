@@ -145,7 +145,7 @@ class TerminalGUI(Terminal):
                 line_option.insert(self.col + 1, clone_attr(self.cur_line_option))
         else:
             reserve(line, self.col + len(c), ' ')
-            reserve(line_option, self.col + len(c), None)
+            reserve(line_option, self.col + len(c), get_default_text_attribute())
             if self.cfg.debug_more:
                 logging.getLogger('term_gui').debug(u'save buffer option:{},{},{},option={}, {}'.format(self.col, self.row, c, line_option[self.col], self.cur_line_option))
             line[self.col] = c[0]
@@ -249,10 +249,10 @@ class TerminalGUI(Terminal):
         self.refresh_display()
 
     def set_foreground(self, light, color_idx):
-        self.set_attributes(1 if light else 0, color_idx, -2)
+        self.set_attributes(1 if light else -1, color_idx, -2)
 
     def set_background(self, light, color_idx):
-        self.set_attributes(1 if light else 0, -2, color_idx)
+        self.set_attributes(1 if light else -1, -2, color_idx)
 
     def origin_pair(self):
         self.cur_line_option.reset_mode()
@@ -324,9 +324,9 @@ class TerminalGUI(Terminal):
         back_color = None
 
         text_mode = None
-        
+
         if (mode > 0):
-            if mode & 1:
+            if mode & (1 << 1):
                 self.cur_line_option.set_mode(TextMode.BOLD)
             if mode & (1 << 2):
                 self.cur_line_option.set_mode(TextMode.DIM)
@@ -339,23 +339,26 @@ class TerminalGUI(Terminal):
                 self.cur_line_option.unset_mode(TextMode.REVERSE)
         elif mode == 0:
             self.cur_line_option.reset_mode()
+            logging.getLogger('term_gui').debug('reset mode')
 
         if f_color_idx >= 0:
-            logging.getLogger('term_gui').debug('set fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             self.cur_line_option.set_fg_idx(f_color_idx)
+            logging.getLogger('term_gui').debug('set fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
         elif f_color_idx == -1:
             #reset fore color
-            logging.getLogger('term_gui').debug('reset fore color:{} {} {}'.format(f_color_idx, ' at ', self.get_cursor()))
             self.cur_line_option.reset_fg_idx()
+            logging.getLogger('term_gui').debug('reset fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
 
         if b_color_idx >= 0:
-            logging.getLogger('term_gui').debug('set back color:{} {} {}'.format(b_color_idx, ' at ', self.get_cursor()))
+            logging.getLogger('term_gui').debug('set back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
             self.cur_line_option.set_bg_idx(b_color_idx)
         elif b_color_idx == -1:
             #reset back color
-            logging.getLogger('term_gui').debug('reset back color:{} {} {}'.format(b_color_idx, ' at ', self.get_cursor()))
+            logging.getLogger('term_gui').debug('reset back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
             self.cur_line_option.reset_bg_idx()
 
+        logging.getLogger('term_gui').debug('set attribute:{}'.format(self.cur_line_option))
+        
     def get_line_option(self, row):
         reserve(self.line_options, row + 1, [])
 
@@ -524,6 +527,7 @@ class TerminalGUI(Terminal):
 
     def enter_bold_mode(self, context):
         self.cur_line_option.set_mode(TextMode.BOLD)
+        logging.getLogger('term_gui').debug('set bold mode:attr={}'.format(self.cur_line_option))
 
     def keypad_xmit(self, context):
         logging.getLogger('term_gui').debug('keypad transmit mode')
@@ -810,30 +814,31 @@ class TerminalGUI(Terminal):
         self.session.on_status_line(mode, status_line)
 
     def determin_colors(self, attr):
+        logging.getLogger('term_gui').debug('determin_colors:attr={}'.format(attr))
         def _get_color(idx):
             color = None
-        
+
             if idx < 8:
-                color = self.cfg.get_color(8 if attr.has_mode(TextMode.BOLD) else 0  + idx)
+                color = self.cfg.get_color(8 + idx if attr.has_mode(TextMode.BOLD) else idx)
             elif idx < 16:
                 color = self.cfg.get_color(idx)
             elif idx < 256:
                 color = self.cfg.get_color(idx)
             elif idx == DEFAULT_FG_COLOR_IDX:
                 color = self.cfg.default_foreground_color
-            elif idx == DEFAULT_GG_COLOR_IDX:
+            elif idx == DEFAULT_BG_COLOR_IDX:
                 color = self.cfg.default_background_color
             else:
                 logging.getLogger('term_gui').error('not implemented color:{} mode={}'.format(idx, mode))
                 sys.exit(1)
 
-            if attr.has_mode(TextModel.DIM):
+            if attr.has_mode(TextMode.DIM):
                 color = map(lambda x: int(float(x) * 2 / 3), color)
             return color
-        
+
         f_color = _get_color(attr.get_fg_idx())
         b_color = _get_color(attr.get_bg_idx())
-        
+
         if attr.has_mode(TextMode.REVERSE):
             f_color, b_color = b_color, f_color
 
@@ -843,4 +848,5 @@ class TerminalGUI(Terminal):
         if attr.has_mode(TextMode.CURSOR):
             f_color, b_color = b_color, self.cfg.default_cursor_color
 
+        logging.getLogger('term_gui').debug('determin_colors:attr={},f={},b={}'.format(attr, map(hex, f_color), map(hex, b_color)))
         return (f_color, b_color)

@@ -41,23 +41,26 @@ DEFAULT_BG_COLOR_IDX = 257
 
 class TextAttribute(object):
     def __init__(self, f_color_idx, b_color_idx, mode = 0):
-        super.__init__()
+        super(TextAttribute, self).__init__()
 
         self._f_color_idx = f_color_idx
         self._b_color_idx = b_color_idx
         self._mode = mode
 
     def set_mode(self, text_mode):
-        setBit(self._mode, text_mode)
+        self._mode = setBit(self._mode, text_mode)
 
     def reset_mode(self):
         self._mode = 0
-        
+
+    def get_mode(self):
+        return self._mode
+    
     def unset_mode(self, text_mode):
-        clearBit(self._mode, text_mode)
+        self._mode = clearBit(self._mode, text_mode)
 
     def has_mode(self, text_mode):
-        return testBit(self._mode, text_mode)
+        return testBit(self._mode, text_mode) != 0
 
     def set_fg_idx(self, fg_idx):
         self._f_color_idx = fg_idx
@@ -69,7 +72,7 @@ class TextAttribute(object):
         self._b_color_idx = bg_idx
 
     def reset_bg_idx(self):
-        self._b_color_idx = DEBAULT_BG_COLOR_IDX
+        self._b_color_idx = DEFAULT_BG_COLOR_IDX
 
     def get_fg_idx(self):
         return self._f_color_idx
@@ -81,11 +84,22 @@ class TextAttribute(object):
         return (self._f_color_idx == attr._f_color_idx and
                     self._b_color_idx == attr._b_color_idx and
                     self._mode == attr._mode)
+    
+    def __str__(self):
+        m = 'bold:{}, dim:{}, selection:{}, reverse:{}, cursor:{}, default:{}'.format(
+            self.has_mode(TextMode.BOLD),
+            self.has_mode(TextMode.DIM),
+            self.has_mode(TextMode.SELECTION),
+            self.has_mode(TextMode.REVERSE),
+            self.has_mode(TextMode.CURSOR),
+            self.has_mode(TextMode.STDOUT))
 
+        return ','.join([str(self.get_fg_idx()), str(self.get_bg_idx()), m])
+    
 def get_default_text_attribute():
     return TextAttribute(DEFAULT_FG_COLOR_IDX,
                              DEFAULT_BG_COLOR_IDX,
                              0)
 def clone_attr(attr):
-    return TextAttribute(attr.f_color, attr.b_color, attr.mode)
+    return TextAttribute(attr.get_fg_idx(), attr.get_bg_idx(), attr.get_mode())
 

@@ -401,6 +401,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
                 self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx, 0, t_w, t_h)
 
+                if last_option.has_mode(TextMode.BOLD):
+                    self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx + 1, 1, t_w, t_h)
+                    
                 return xxxx + t_w
 
             for col in range(len(line_option)):

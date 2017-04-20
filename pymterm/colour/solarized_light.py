@@ -26,14 +26,23 @@ COLOR_PALLETE = [
     S_magenta,
     S_cyan,
     S_base2,
-    S_orange,
-    S_base03,
-    S_base01,
-    S_base00,
-    S_base0,
-    S_violet,
-    S_base1,
-    S_base3
+    
+    S_base02,
+    S_red,
+    S_green,
+    S_yellow,
+    S_blue,
+    S_magenta,
+    S_cyan,
+    S_base2,
+    ## S_base03,
+    ## S_orange,
+    ## S_base01,
+    ## S_base00,
+    ## S_base0,
+    ## S_violet,
+    ## S_base1,
+    ## S_base3
     ]
 
 def parse_color(c):

@@ -21,10 +21,7 @@ def handle(term, context, cap_turple):
             if mode < 0:
                 mode = 0
 
-            if v == 1:
-                mode |= 1
-            else:
-                mode |= (1 << v)
+            mode |= (1 << v)
         elif v == 39:
             #reset foreground
             f_color_idx = -1
