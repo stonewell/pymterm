@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Pymterm Terminal
+Comment=Use the command line
+Exec=env TERM=xterm-256color python /home/stone/test/pymterm/pymterm/pymterm.py --session_type pty -l /home/stone/pymterm.log
+Icon=utilities-terminal
+Type=Application

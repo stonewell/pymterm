@@ -259,9 +259,23 @@ class TerminalGUI(Terminal):
         self.cur_line_option.reset_fg_idx()
         self.cur_line_option.reset_bg_idx()
 
+    def clr_line(self, context):
+        line = self.get_cur_line()
+        line_option = self.get_cur_line_option()
+        self.get_cur_option()
+
+        for i in range(len(line)):
+            line[i] = ' '
+
+        for i in range(len(line_option)):
+            line_option[i] = get_default_text_attribute()
+
+        self.refresh_display()
+
     def clr_eol(self, context):
         line = self.get_cur_line()
         line_option = self.get_cur_line_option()
+        self.get_cur_option()
 
         begin = self.col
         if line[begin] == '\000':
@@ -271,6 +285,24 @@ class TerminalGUI(Terminal):
             line[i] = ' '
 
         for i in range(begin, len(line_option)):
+            line_option[i] = get_default_text_attribute()
+
+        self.refresh_display()
+
+    def clr_bol(self, context):
+        line = self.get_cur_line()
+        line_option = self.get_cur_line_option()
+
+        self.get_cur_option()
+
+        end = self.col
+        if end + 1 < len(line) and line[end + 1] == '\000':
+            end = end + 1
+
+        for i in range(end + 1):
+            line[i] = ' '
+
+        for i in range(end + 1):
             line_option[i] = get_default_text_attribute()
 
         self.refresh_display()
@@ -358,7 +390,7 @@ class TerminalGUI(Terminal):
             self.cur_line_option.reset_bg_idx()
 
         logging.getLogger('term_gui').debug('set attribute:{}'.format(self.cur_line_option))
-        
+
     def get_line_option(self, row):
         reserve(self.line_options, row + 1, [])
 

@@ -8,10 +8,10 @@ class Cap:
         self.flags = {}
         self.cmds = {}
         self.control_data_start_state = ControlDataState()
-        
+
 def parse_cap(cap_str):
     cap = Cap()
-    
+
     for field in cap_str.split(':'):
         if len(field) == 0:
             continue
@@ -32,7 +32,7 @@ class ControlDataParserContext:
 
     def push_param(self, param):
         self.params.append(param)
-        
+
 class ControlDataState:
     def __init__(self):
         self.cap_name = {}
@@ -67,14 +67,14 @@ class ControlDataState:
 
         if str_match in self.cap_name:
             return self.cap_name[str_match]
-        
+
         for k in sorted(self.cap_name, key=lambda v: str(v.count('*')) + v):
             if k.find('*') < 0:
                 if k == str_match:
                     return self.cap_name[k]
                 else:
                     continue
-            
+
             re_str = k.replace(',**','(,[0-9]+)?')
             re_str = re_str.replace('**','([0-9]+)?')
             re_str = re_str.replace('*', '[0-9]+')
@@ -84,7 +84,7 @@ class ControlDataState:
                 return self.cap_name[k]
 
         return None
-            
+
 
 class DigitState(ControlDataState):
     def __init__(self):
@@ -95,7 +95,7 @@ class DigitState(ControlDataState):
 
     def handle(self, context, cc):
         c = cc.upper()
-        
+
         if c in self.digits[:self.digit_base]:
             self.value = self.value * self.digit_base + self.digits.index(c) if self.value else self.digits.index(c)
 
@@ -105,7 +105,7 @@ class DigitState(ControlDataState):
                 context.push_param(self.value)
                 self.value = None
             return ControlDataState.handle(self, context, cc)
-        
+
 class CapStringValue:
     def __init__(self):
         self.padding = 0.0
@@ -117,11 +117,11 @@ class CapStringValue:
 
     def __repr__(self):
         return self.__str__()
-                
+
 def parse_padding(value):
     padding = 0.0
     pos = 0
-    
+
     if value[0].isdigit():
         padding_chars = []
         has_dot = False
@@ -142,7 +142,7 @@ def parse_padding(value):
             else:
                 break
         #end for
-        
+
         try:
             padding = 0.0
             if padding_chars[-1] == '*':
@@ -158,28 +158,28 @@ def build_parser_state_machine(cap_str_value, start_state):
     value = cap_str_value.value
 
     pos = 0
-    
+
     cur_state = start_state
     repeat_state = None
     repeat_char = None
     is_repeat_state = False
     repeat_enter_state = None
-    
+
     increase_param = False
     is_digit_state = False
     digit_base = 10
     params = []
     cap_value = []
-    
+
     while pos <len(value):
         c = value[pos]
-        
+
         if c == '\\':
             pos += 1
 
             if pos >= len(value):
                 raise ValueError("Unterminaled str")
-            
+
             c = value[pos]
             if c == 'E':
                 c = chr(0x1B)
@@ -195,7 +195,7 @@ def build_parser_state_machine(cap_str_value, start_state):
                     raise ValueError("Invalid repeat state:" + str(pos) + "," + value)
 
                 cur_state.add_state(repeat_char, repeat_state)
-                
+
                 repeat_char = None
                 repeat_state = None
                 is_repeat_state = False
@@ -211,7 +211,7 @@ def build_parser_state_machine(cap_str_value, start_state):
 
                 if not c.isdigit():
                     pos -= 1
-                    
+
                 c = chr(v)
             else:
                 raise ValueError("unknown escape string:" + c + "," + str(pos) + "," + value)
@@ -220,14 +220,14 @@ def build_parser_state_machine(cap_str_value, start_state):
 
             if pos >= len(value):
                 raise ValueError("Unterminaled str")
-            
+
             c = chr(ord(value[pos]) - ord('A') + 1)
         elif c == '%':
             pos += 1
 
             if pos >= len(value):
                 raise ValueError("Unterminaled str")
-            
+
             c = value[pos]
 
             if c == '%':
@@ -253,9 +253,10 @@ def build_parser_state_machine(cap_str_value, start_state):
                     c = value[pos]
 
             if not c.isdigit():
-                pos -= 1
                 #restore the last digit
-                c = value[pos]
+                pos -= 1
+                #include all digit char into cap_value
+                c = str(v)
 
             #save the params
             params.append(str(v))
@@ -291,14 +292,14 @@ def build_parser_state_machine(cap_str_value, start_state):
             repeat_enter_state = None
 
         is_digit_state = False
-            
+
         pos += 1
 
     return (cur_state, params, increase_param, ''.join(cap_value))
-                
+
 def parse_str_cap(field, start_state):
     cap_str_value = CapStringValue()
-    
+
     parts = field.split('=')
 
     cap_str_value.name = parts[0]
@@ -306,7 +307,7 @@ def parse_str_cap(field, start_state):
 
     #padding
     pos, cap_str_value.padding = parse_padding(value)
-                
+
     #build the parser state machine
     value = cap_str_value.value = value[pos:]
 
@@ -319,7 +320,7 @@ def parse_str_cap(field, start_state):
 
         if (e_name != cap_str_value.name) or (e_inc_param != increase_param):
             raise ValueError('same parameter for different cap name:[' + cap_name_key + '],' + cap_str_value.name)
-    
+
     cap_state.cap_name[cap_name_key] = (cap_str_value.name, increase_param)
 
     return {parts[0]:cap_str_value}
@@ -330,7 +331,7 @@ if __name__ == '__main__':
 
     cap1 = cap = parse_cap(cap_str)
     print cap.flags, cap.cmds
-    
+
     cap = parse_cap(":cm=1.3*\E")
     print cap.flags, cap.cmds
 
@@ -342,11 +343,11 @@ if __name__ == '__main__':
     state = cap1.control_data_start_state
     next_state = None
 
-    def try_parse(v):    
+    def try_parse(v):
         state = cap1.control_data_start_state
         next_state = None
         context.params = []
-        
+
         for c in v:
             next_state = state.handle(context, c)
 
@@ -373,7 +374,3 @@ if __name__ == '__main__':
 
     try_parse('\x1B[?1h\x1B=\x1B')
     try_parse('\x1B[?1034h\x1B=\x1B')
-        
-        
-        
-

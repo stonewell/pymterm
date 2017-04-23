@@ -76,7 +76,5 @@ def translate_key(term, keycode, text, modifiers):
     if 'alt' in modifiers and text and len(result) == 1 and result[0] == '\x1b':
         logging.getLogger('term_keyboard').debug('reset single alt key handled to False')
         handled = False
-        
+
     return (''.join(result), handled)
-            
-        

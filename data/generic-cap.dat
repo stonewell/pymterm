@@ -10,6 +10,7 @@ generic-cap|generic ansi escape:\
 	clr_eos=\E[%dJ:\
 	clr_eos=\E[%d;J:\
 	clr_eol=\E[0K:\
+	clr_line=\E[2K:\
 	client_report_version=\E[>c:\
 	client_report_version=\E[>0c:\
 	cursor_end=\E[4~:\
@@ -27,6 +28,8 @@ generic-cap|generic ansi escape:\
 	reset_text_cursor_color=\E]112:\
 	enable_mode=\E[?%dh:\
 	disable_mode=\E[?%dl:\
+	save_mode=\E[?%ds:\
+	restore_mode=\E[?%dr:\
 	enable_keypad_appkeys=\E=:\
 	disable_keypad_appkeys=\E>:\
 	cursor_address=\E[%i%d;%df:\
