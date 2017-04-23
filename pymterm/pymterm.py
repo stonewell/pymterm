@@ -19,7 +19,7 @@ def args_parser():
     parser.add_argument('-p', '--port', type=int, help='port of host to connect to', required = False)
     parser.add_argument('-l', '--log', type=str, help='logging file path', required = False)
     parser.add_argument('-t', '--term_name', choices=['xterm-256color'], help='the terminal type name', default='xterm-256color', required = False)
-    parser.add_argument('--color_theme', choices=['tango', 'solarized_dark', 'solarized_light', 'terminal'], help='the terminal color theme, default is tango', default='tango', required = False)
+    parser.add_argument('--color_theme', choices=['tango', 'solarized_dark', 'solarized_light', 'terminal', 'zenburn', 'zenburn_2'], help='the terminal color theme, default is tango', default='tango', required = False)
     parser.add_argument('-d', '--debug', action="store_true", help='show debug information in log file and console', required = False)
     parser.add_argument('-dd', '--debug_more', action="store_true", help='show more debug information in log file and console', required = False)
     parser.add_argument('--config', type=str, help='use the give file as config file, otherwise will find pymterm.json in save directory with pymterm.py or pymterm directory in user config directroy or parent directory of pymterm.py as config file', required = False)
