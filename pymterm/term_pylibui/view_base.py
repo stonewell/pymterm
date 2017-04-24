@@ -260,11 +260,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
         w, h = self._get_size(f, t)
         return w
 
-    def _get_cache_key(self, line, line_option):
-        line_key = self._get_line_cache_key(line)
-        line_option_key = self._get_line_option_cache_key(line_option)
-
-        return '{}_{}'.format(line_key, line_option_key)
+    def _get_cache_key(self, line):
+        return line.get_hash_value()
 
     def _get_line_cache_key(self, line):
         return repr(line)

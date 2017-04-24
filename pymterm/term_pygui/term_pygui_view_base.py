@@ -58,7 +58,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self._refresh_task = Task(self.__refresh, .02, False, False)
 
         TerminalWidget.__init__(self, **kwargs)
-        
+
         self._generic_tabbing = False
 
     def _get_color(self, color_spec):
@@ -260,17 +260,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
         w, h = self._get_size(f, t)
         return w
 
-    def _get_cache_key(self, line, line_option):
-        line_key = self._get_line_cache_key(line)
-        line_option_key = self._get_line_option_cache_key(line_option)
-
-        return '{}_{}'.format(line_key, line_option_key)
-
-    def _get_line_cache_key(self, line):
-        return repr(line)
-
-    def _get_line_option_cache_key(self, line_option):
-        return '|'.join(map(str, line_option))
+    def _get_cache_key(self, line):
+        return line.get_hash_value()
 
     def _refresh_font(self, cfg):
         self.font_file, self.font_name, self.font_size = cfg.get_font_info()
@@ -307,8 +298,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         b_x = self.padding_x
         y = self.padding_y
 
-        lines = [line[:] for line in self.lines]
-        line_options = [line_option[:] for line_option in self.line_options]
+        lines = self.lines
 
         c_col, c_row = self.term_cursor
 
@@ -328,46 +318,41 @@ class TerminalPyGUIViewBase(TerminalWidget):
         for i in range(len(lines)):
             x = b_x = self.padding_x
             line = lines[i]
-            line_option = line_options[i] if i < len(line_options) else []
-
-            last_option = get_default_text_attribute()
 
             #clean up temp cursor and selection mode
-            for op in line_option:
-                op.unset_mode(TextMode.CURSOR)
-                op.unset_mode(TextMode.SELECTION)
+            for cell in line.get_cells():
+                cell.get_attr().unset_mode(TextMode.CURSOR)
+                cell.get_attr().unset_mode(TextMode.SELECTION)
 
             # temprary add cusor and selection mode
             if self.cursor_visible and i == c_row:
-                reserve(line_option, c_col + 1, get_default_text_attribute())
-                reserve(line, c_col + 1, ' ')
-                line_option[c_col].set_mode(TextMode.CURSOR)
+                line.alloc_cells(c_col + 1)
+                line.get_cell(c_col).get_attr().set_mode(TextMode.CURSOR)
 
             if s_f != s_t:
                 if s_f_r == s_t_r and i == s_f_r:
-                    reserve(line_option, s_t_c, get_default_text_attribute())
+                    line.alloc_cells(s_t_c)
                     for mm in range(s_f_c, s_t_c):
-                        line_option[mm].set_mode(TextMode.SELECTION)
+                        line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
                 else:
                     if i == s_f_r:
-                        reserve(line_option, len(line), get_default_text_attribute())
-                        for mm in range(s_f_c, len(line)):
-                            line_option[mm].set_mode(TextMode.SELECTION)
+                        line.alloc_cells(s_f_c + 1)
+                        for mm in range(s_f_c, len(line.get_cells())):
+                            line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
                     elif i == s_t_r:
-                        reserve(line_option, s_t_c, get_default_text_attribute())
+                        line.alloc_cells(s_t_c)
                         for mm in range(0, s_t_c):
-                            line_option[mm].set_mode(TextMode.SELECTION)
+                            line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
                     elif i > s_f_r and i < s_t_r:
-                        reserve(line_option, len(line), get_default_text_attribute())
-                        for mm in range(len(line)):
-                            line_option[mm].set_mode(TextMode.SELECTION)
+                        for cell in line:
+                            cell.get_attr().set_mode(TextMode.SELECTION)
 
             col = 0
             last_col = 0
             text = ''
 
             if self._do_cache():
-                key = self._get_cache_key(line, line_option)
+                key = self._get_cache_key(line)
                 cached_line_surf = _get_surf(key, width, line_height)
                 line_surf = cached_line_surf.surf
 
@@ -383,7 +368,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
             line_context = self._prepare_line_context(line_surf, x, y, width, line_height)
 
-            def render_text(t, xxxx, wide_char):
+            def render_text(xxxx, cell):
+                t = cell.get_char()
+
                 if len(t) == 0:
                     return xxxx
 
@@ -392,7 +379,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
                 if len(t) == 0:
                     return xxxx
 
-                cur_f_color, cur_b_color = self.session.terminal.determin_colors(last_option)
+                cur_f_color, cur_b_color = self.session.terminal.determin_colors(cell.get_attr())
+
+                wide_char = cell.is_widechar()
 
                 t_w, t_h, layout = self._layout_line_text(line_context, t, font,
                                                               xxxx, y, col_width * 2 if wide_char else col_width, line_height,
@@ -405,40 +394,16 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
                 self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx, 0, t_w, t_h)
 
-                if last_option.has_mode(TextMode.BOLD):
+                if cell.get_attr().has_mode(TextMode.BOLD):
                     self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx + 1, 1, t_w, t_h)
-                    
+
                 return xxxx + t_w
 
-            for col in range(len(line_option)):
-                if line_option[col] is None:
-                    continue
+            for cell in line.get_cells():
+                if cell.need_draw():
+                    render_text(b_x, cell)
 
-                if last_option.equals(line_option[col]):
-                    continue
-
-                if last_col < col:
-                    for r_col in range(last_col, col):
-                        if r_col >= len(line):
-                            continue
-
-                        wide_char = False
-                        if r_col + 1 < len(line):
-                            wide_char = line[r_col + 1] == '\000'
-                        render_text(line[r_col], b_x, wide_char)
-                        b_x += col_width
-
-                last_col = col
-                last_option = line_option[col]
-
-            if last_col < len(line):
-                for r_col in range(last_col, len(line)):
-                    wide_char = False
-                    if r_col + 1 < len(line):
-                        wide_char = line[r_col + 1] == '\000'
-
-                    render_text(line[r_col], b_x, wide_char)
-                    b_x += col_width
+                b_x += col_width
 
             self._paint_line_surface(v_context, line_surf, 0, y)
 
