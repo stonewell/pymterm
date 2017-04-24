@@ -479,11 +479,13 @@ class TerminalGUI(Terminal):
           self.lines, self.col, self.row, self.cur_line_option
         self.lines, self.col, self.row, self.cur_line_option = \
           [], 0, 0, get_default_text_attribute()
+        self.term_widget.cancel_selection()
         self.refresh_display()
 
     def exit_ca_mode(self, context):
         self.lines, self.col, self.row, self.cur_line_option = \
             self.saved_lines, self.saved_col, self.saved_row, self.saved_cur_line_option
+        self.term_widget.cancel_selection()
         self.refresh_display()
 
     def key_shome(self, context):

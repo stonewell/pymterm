@@ -52,13 +52,15 @@ class TextAttribute(object):
         self.get_hash_value()
 
     def need_calc_hash(self):
-        return not (self._hashed_value == (self._f_color_idx, self._b_color_idx, self._mode))
+        return not (self._hashed_value[0] == self._f_color_idx and
+                        self._hashed_value[1] == self._b_color_idx and
+                        self._hashed_value[2] == self._mode)
 
     def get_hash_value(self):
         if not self.need_calc_hash():
             return self._hash
 
-        self._hashed_vlaue = (self._f_color_idx, self._b_color_idx, self._mode)
+        self._hashed_value = (self._f_color_idx, self._b_color_idx, self._mode)
         self._hash = str(self)
 
         return self._hash
@@ -201,7 +203,7 @@ class Line(object):
     def alloc_cells(self, cols, fit=False):
         reserve(self._cells, cols, Cell())
 
-        if fit and len(self._cells) > cols:
+        if fit and self.cell_count() > cols:
             self._cells = self._cells[:cols]
 
     def insert_cell(self, col, cell):
@@ -211,18 +213,20 @@ class Line(object):
         self.alloc_cells(col + 1)
         return self._cells[col]
 
-    def get_text(self, begin_col = 0, end_col = -1):
-        if end_col < 0 or end_col > len(self.cells):
-            end_col = len(self.cells)
+    def get_text(self, begin_col = 0, end_col = -1, raw = False):
+        if end_col < 0 or end_col > self.cell_count():
+            end_col = self.cell_count()
         if begin_col < 0:
             begin_col = 0
-        if begin_col > len(self.cells):
-            begin_col = len(self.cells)
+        if begin_col > self.cell_count():
+            begin_col = self.cell_count()
 
         if begin_col >= end_col:
             return ''
 
-        return ''.join(map(lambda x: x.get_char(), line[begin_col:end_col])).replace('\000', '')
+        raw_text = ''.join([self._cells[i].get_char() for i in range(begin_col, end_col)])
+        
+        return raw_text if raw else raw_text.replace('\000', '')
 
     def get_cells(self):
         return self._cells

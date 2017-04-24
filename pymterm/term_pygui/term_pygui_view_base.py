@@ -195,7 +195,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if cy >= len(l) or cy < 0:
             return 0, 0
 
-        text = self.norm_text(''.join(l[cy]), False)#reserve double width padding char to calculate width
+        text = self.norm_text(l[cy].get_text(raw=True), False)#reserve double width padding char to calculate width
         width_before = 0
 
         for i in range(0, len(text)):
@@ -212,10 +212,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
             width_before += self_width
 
-        return len(l[cy]), cy
-
-    def _merge_color(self, c1, c2):
-        return [c1[i] * c2[i] for i in range(len(c1))]
+        return l[cy].cell_count(), cy
 
     def setup_menus(self, m):
         if self.session and self.session.terminal:
