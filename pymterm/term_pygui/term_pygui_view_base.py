@@ -15,7 +15,7 @@ import term.term_keyboard
 from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
 import term_pygui_key_translate
-
+import pymterm
 
 SINGLE_WIDE_CHARACTERS =	\
 					" !\"#$%&'()*+,-./" \
@@ -74,7 +74,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
     def __refresh(self):
         if self.session and not self.session.stopped:
-            logging.getLogger('term_pygui').debug('refresh called')
+            if pymterm.debug_log:
+                logging.getLogger('term_pygui').debug('refresh called')
             self.invalidate()
             self.update()
 
@@ -95,12 +96,15 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if e.shift:
             modifiers.append('shift')
 
-        logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
-        logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
+        if pymterm.debug_log:
+            logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
+            logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
+            
         if self.session.terminal.process_key(keycode,
                                              text,
                                              modifiers):
-            logging.getLogger('term_pygui').debug(' processed by term_gui')
+            if pymterm.debug_log:
+                logging.getLogger('term_pygui').debug(' processed by term_gui')
             return
 
         v, handled = term.term_keyboard.translate_key(self.session.terminal,
@@ -115,7 +119,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
         elif text:
             self.session.send(text)
 
-        logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
+        if pymterm.debug_log:
+            logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
@@ -137,11 +142,13 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self._calculate_visible_rows(h)
         self._calculate_visible_cols(w)
 
-        logging.getLogger('term_pygui').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
+        if pymterm.debug_log:
+            logging.getLogger('term_pygui').debug('on size: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
         if self.session:
             self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
             self.session.terminal.resize_terminal()
-            logging.getLogger('term_pygui').debug('on size done: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
+            if pymterm.debug_log:
+                logging.getLogger('term_pygui').debug('on size done: cols={} rows={} width={} height={} size={} pos={}'.format(self.visible_cols, self.visible_rows, w, h, self.size, self.position))
 
     def _calculate_visible_rows(self, h):
         self.visible_rows = int(h / self._get_line_height())
@@ -170,9 +177,11 @@ class TerminalPyGUIViewBase(TerminalWidget):
         mouse_tracker = self.track_mouse()
         while True:
             event = mouse_tracker.next()
-            self._selection_to = self._get_cursor_from_xy(*event.position)
+            to = self._get_cursor_from_xy(*event.position)
 
-            self.refresh()
+            if to != self._selection_to:
+                self._selection_to = to
+                self.refresh()
 
             if event.kind == 'mouse_up':
                 try:
@@ -243,7 +252,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         col_width = max(map(lambda x:self._get_width(f, x), SINGLE_WIDE_CHARACTERS))
 
-        logging.getLogger('term_pygui').debug('col_width:{}'.format(col_width))
+        if pymterm.debug_log:
+            logging.getLogger('term_pygui').debug('col_width:{}'.format(col_width))
 
         return col_width
 
@@ -341,7 +351,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
                         for mm in range(0, s_t_c):
                             line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
                     elif i > s_f_r and i < s_t_r:
-                        for cell in line:
+                        for cell in line.get_cells():
                             cell.get_attr().set_mode(TextMode.SELECTION)
 
             col = 0

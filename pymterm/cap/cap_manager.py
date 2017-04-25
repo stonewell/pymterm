@@ -2,10 +2,11 @@ import logging
 import sys
 
 import unknown_cap
-
+import pymterm
 
 def get_cap_handler(name):
-    logging.getLogger('cap_manager').debug("cap:{}".format(name))
+    if pymterm.debug_log:
+        logging.getLogger('cap_manager').debug("cap:{}".format(name))
 
     # Fast path: see if the module has already been imported.
     try:

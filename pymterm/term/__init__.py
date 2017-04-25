@@ -175,7 +175,7 @@ class Cell(object):
         self._is_wide_char = wide_char
 
     def need_draw(self):
-        return True or self._char != ' ' \
+        return self._char != ' ' \
           or self._attr.has_mode(TextMode.CURSOR) \
           or self._attr.has_mode(TextMode.SELECTION) \
           or self._attr.get_bg_idx != DEFAULT_BG_COLOR_IDX

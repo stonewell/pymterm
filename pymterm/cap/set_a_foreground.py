@@ -1,5 +1,5 @@
 import logging
-
+import pymterm
 
 def handle(term, context, cap_turple):
     light = False
@@ -19,5 +19,7 @@ def handle(term, context, cap_turple):
     else:
         color_idx = context.params[0] - 30
 
-    logging.getLogger('set_a_foreground').debug('light={}, color_index={}, params={}'.format(light, color_idx, context.params))
+    if pymterm.debug_log:
+        logging.getLogger('set_a_foreground').debug('light={}, color_index={}, params={}'.format(light, color_idx, context.params))
+        
     term.set_foreground(light, color_idx)

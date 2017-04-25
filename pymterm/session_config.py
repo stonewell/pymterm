@@ -5,6 +5,7 @@ import logging.config
 import os
 import sys
 
+import pymterm
 
 GUI_RENDERS = ["cairo", "pygame", "native"]
 RENDERS = GUI_RENDERS + ["kivy", "console"]
@@ -113,6 +114,10 @@ class SessionConfig:
 
         #init color table
         self.init_color_table()
+
+        #update global debug mode
+        pymterm.debug_log = self.debug
+        pymterm.debug_more_log = self.debug_more
 
     COLOR_SET_0_RATIO = 0x44
     COLOR_SET_1_RATIO = 0xaa

@@ -1,5 +1,5 @@
 import logging
-
+import pymterm
 
 def handle(term, context, cap_turple):
     cap_name, increase = cap_turple
@@ -11,7 +11,7 @@ def handle(term, context, cap_turple):
     mode = -1
     f_color_idx = -2
     b_color_idx = -2
-    
+
     for v in context.params:
         if v == 0:
             #reset
@@ -34,8 +34,9 @@ def handle(term, context, cap_turple):
         elif (v >= 40 and v <= 47) or (v >= 100 and v <= 107):
             #background
             b_color_idx = v % 10 + (8 if v >= 100 else 0)
-            
-    logging.getLogger('set_attributes').debug('params={} mode={} f_color={} b_color={}'.format(context.params, mode, f_color_idx, b_color_idx))
+
+    if pymterm.debug_log:
+        logging.getLogger('set_attributes').debug('params={} mode={} f_color={} b_color={}'.format(context.params, mode, f_color_idx, b_color_idx))
 
     if not (mode == -1 and f_color_idx == -2 and b_color_idx == -2):
         term.set_attributes(mode, f_color_idx, b_color_idx)
