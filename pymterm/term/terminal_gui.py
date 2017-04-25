@@ -1,5 +1,6 @@
 import logging
 import sys
+import threading
 
 from term import TextAttribute, TextMode, reserve, clone_attr, get_default_text_attribute, DEFAULT_FG_COLOR_IDX, DEFAULT_BG_COLOR_IDX
 from term import Cell, Line
@@ -31,6 +32,8 @@ class TerminalGUI(Terminal):
 
         self.charset_modes_translate = [None, None]
         self.charset_mode = 0
+        
+        self._data_lock = threading.RLock()
 
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
@@ -305,16 +308,33 @@ class TerminalGUI(Terminal):
         self.refresh_display()
 
     def refresh_display(self):
-        lines = self.get_text()
-
-        self.term_widget.lines = lines
-        self.term_widget.term_cursor = self.get_cursor()
-        self.term_widget.cursor_visible = self.view_history_begin is None
         self.term_widget.refresh()
-        self.term_widget.focus = True
 
+    def lock_display_data_exec(self, func):
+        try:
+            self._data_lock.acquire()
+            
+            lines = self.get_text()
+
+            self.term_widget.lines = lines
+            self.term_widget.term_cursor = self.get_cursor()
+            self.term_widget.cursor_visible = self.view_history_begin is None
+            self.term_widget.focus = True
+
+            func()
+        except:
+            logging.getLogger('term_gui').exception('lock display data exec')
+        finally:
+            self._data_lock.release()
+        
     def on_data(self, data):
-        Terminal.on_data(self, data)
+        try:
+            self._data_lock.acquire()
+            Terminal.on_data(self, data)
+        except:
+            logging.getLogger('term_gui').exception('on data')
+        finally:
+            self._data_lock.release()
 
         self.refresh_display()
 

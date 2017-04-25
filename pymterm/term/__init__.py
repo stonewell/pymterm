@@ -1,6 +1,4 @@
 #__init__.py
-from collections import namedtuple
-
 
 class TextMode:
     STDOUT = 0
@@ -14,7 +12,13 @@ def reserve(l, size, default=None):
     import copy
 
     while size > len(l):
-        l.append(copy.deepcopy(default) if default is not None else None)
+        if default is not None:
+            if hasattr(default, '__clone__'):
+                l.append(getattr(default, '__clone__')())
+            else:
+                l.append(copy.deepcopy(default))
+        else:
+            l.append(None)
 
 def testBit(int_type, offset):
     mask = 1 << offset
@@ -117,6 +121,9 @@ class TextAttribute(object):
     def __str__(self):
         return ''.join([str(self.get_fg_idx()), str(self.get_bg_idx()), hex(self._mode)])
 
+    def __clone__(self):
+        return clone_attr(self)
+    
 def get_default_text_attribute():
     return TextAttribute(DEFAULT_FG_COLOR_IDX,
                              DEFAULT_BG_COLOR_IDX,
@@ -136,6 +143,9 @@ class Cell(object):
         self._hash = None
         self.get_hash_value()
 
+    def __clone__(self):
+        return Cell(self._char, self._attr, self._is_wide_char)
+    
     def need_calc_hash(self):
         return self._hashed_value != self._char or self._attr.need_calc_hash()
 
@@ -188,6 +198,16 @@ class Line(object):
         self._hash_calc_done = False
         self._hash = None
 
+    def __clone__(self):
+        l = Line()
+
+        l._cells = [Cell(c.get_char(), c.get_attr(), c.is_widechar()) for c in self._cells]
+
+        return l
+
+    def c(self):
+        return self.__clone__()
+    
     def need_calc_hash(self):
         return (not self._hash_calc_done) or any([cell.need_calc_hash() for cell in self._cells])
 

@@ -301,6 +301,12 @@ class TerminalPyGUIViewBase(TerminalWidget):
         return True
 
     def _draw_canvas(self, v_context):
+        def locked_draw_canvas():
+            self._real_draw_canvas(v_context)
+
+        self.session.terminal.lock_display_data_exec(locked_draw_canvas)
+        
+    def _real_draw_canvas(self, v_context):
         x = self.padding_x
         b_x = self.padding_x
         y = self.padding_y
@@ -363,6 +369,9 @@ class TerminalPyGUIViewBase(TerminalWidget):
                 cached_line_surf = _get_surf(key, width, line_height)
                 line_surf = cached_line_surf.surf
 
+                if i == 3:
+                    logging.error('{}. \n\n {} \n\n {}\n\n\n'.format(i, key, self._get_cache_key(line.c())))
+                    
                 if cached_line_surf.cached:
                     self._paint_line_surface(v_context, line_surf, 0, y)
 
@@ -373,6 +382,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
             else:
                 line_surf = create_line_surface(width, line_height)
 
+            print i, 'not cached'
             line_context = self._prepare_line_context(line_surf, x, y, width, line_height)
 
             def render_text(xxxx, cell):
