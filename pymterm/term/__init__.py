@@ -147,7 +147,7 @@ class Cell(object):
         return Cell(self._char, self._attr, self._is_wide_char)
     
     def need_calc_hash(self):
-        return self._hashed_value != self._char or self._attr.need_calc_hash()
+        return (self._hashed_value != self._char) or self._attr.need_calc_hash()
 
     def get_hash_value(self):
         if not self.need_calc_hash():
@@ -166,6 +166,7 @@ class Cell(object):
 
     def set_attr(self, attr):
         self._attr = clone_attr(attr)
+        self._hashed_value = None
 
     def get_attr(self):
         return self._attr
