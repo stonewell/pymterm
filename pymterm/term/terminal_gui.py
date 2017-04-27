@@ -429,10 +429,14 @@ class TerminalGUI(Terminal):
 
     def parm_right_cursor(self, context):
         self.col += context.params[0] if context.params[0] > 0 else 1
+        if self.col > self.get_cols():
+            self.col = self.get_cols() - 1
         self.refresh_display()
 
     def parm_left_cursor(self, context):
         self.col -= context.params[0] if context.params[0] > 0 else 1
+        if self.col < 0:
+            self.col = 0
         self.refresh_display()
 
     def client_report_version(self, context):
@@ -900,12 +904,16 @@ class TerminalGUI(Terminal):
         self.session.send('\033[?62;c')
 
     def screen_alignment_test(self, context):
-        lines = self.get_text()
+        self.save_cursor(context)
+        self.get_line(self.get_rows() - 1)
 
-        for line in lines:
+        for i in range(self.get_rows()):
+            self.set_cursor(0, i)
+            line = self.get_cur_line()
             line.alloc_cells(self.get_cols(), True)
 
             for cell in line.get_cells():
                 cell.set_char('E')
 
+        self.restore_cursor(context)
         self.refresh_display()

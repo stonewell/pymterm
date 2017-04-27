@@ -18,6 +18,7 @@ SCRIPT_PATH=`pwd`;
 popd  > /dev/null
 
 . ${SCRIPT_PATH}/venv/bin/activate
+export TERM=xterm-256color
 python ${SCRIPT_PATH}/pymterm/pymterm.py --session_type pty -l ${SCRIPT_PATH}/run_pymterm.log
 
 deactivate
