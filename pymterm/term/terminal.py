@@ -14,6 +14,7 @@ class Terminal(object):
         try:
             self.cap_str += self.__load_cap_str__(self.cfg.term_name)
         except:
+            logging.exception('unable to load term data:%s' % self.cfg.term_name)
             self.cap_str += self.__load_cap_str__('xterm-256color')
 
         self.cap = parse_termdata.parse_cap(self.cap_str)

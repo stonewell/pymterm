@@ -10,6 +10,7 @@ generic-cap|generic ansi escape:\
 	clr_eos=\E[%dJ:\
 	clr_eos=\E[%d;J:\
 	clr_eol=\E[0K:\
+	clr_bol=\E[1K:\
 	clr_line=\E[2K:\
 	client_report_version=\E[>c:\
 	client_report_version=\E[>0c:\
@@ -38,4 +39,13 @@ generic-cap|generic ansi escape:\
 	enter_alt_charset_mode_g1_british=\E)A:\
 	exit_alt_charset_mode_g1_british=\E)B:\
 	shift_in_to_charset_mode_g0=\017:\
-	shift_out_to_charset_mode_g1=\016:
+	shift_out_to_charset_mode_g1=\016:\
+	change_scroll_region=\E[r:\
+	change_scroll_region=\E[;r:\
+	change_scroll_region_from_start=\E[%i;%dr:\
+	change_scroll_region_to_end=\E[%i%d;r:\
+	change_scroll_region_to_end=\E[%i%dr:\
+	send_primary_device_attributes=\E[%dc:\
+	parm_down_cursor=\ED:\
+	screen_alignment_test=\E#8:
+

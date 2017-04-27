@@ -32,7 +32,7 @@ class TerminalGUI(Terminal):
 
         self.charset_modes_translate = [None, None]
         self.charset_mode = 0
-        
+
         self._data_lock = threading.RLock()
 
     def _translate_char(self, c):
@@ -224,7 +224,7 @@ class TerminalGUI(Terminal):
         if self.col < self.get_cols() - 1:
             self.col += 1
         self.refresh_display()
-        
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('after cursor right:{}, {}'.format(self.col, self.row));
 
@@ -313,7 +313,7 @@ class TerminalGUI(Terminal):
     def lock_display_data_exec(self, func):
         try:
             self._data_lock.acquire()
-            
+
             lines = self.get_text()
 
             self.term_widget.lines = lines
@@ -326,7 +326,7 @@ class TerminalGUI(Terminal):
             logging.getLogger('term_gui').exception('lock display data exec')
         finally:
             self._data_lock.release()
-        
+
     def on_data(self, data):
         try:
             self._data_lock.acquire()
@@ -398,24 +398,41 @@ class TerminalGUI(Terminal):
         self.set_cursor(0, 0)
         self.refresh_display()
 
+    def _row_from_screen(self, s_row):
+        if len(self.lines) <= self.get_rows():
+            return s_row
+        else:
+            return s_row + len(self.lines) - self.get_rows()
+
     def clr_eos(self, context):
         self.get_cur_line()
 
-        self.clr_eol(context)
+        begin = self._row_from_screen(0)
+        end = self._row_from_screen(self.get_rows())
 
-        for row in range(self.row + 1, len(self.lines)):
+        if len(context.params) == 0 or context.params[0] == 0:
+            self.clr_eol(context)
+
+            begin = self.row + 1
+        elif context.params[0] == 1:
+            self.clr_bol(context)
+
+            end = self.row
+
+        for row in range(begin, end):
             line = self.get_line(row)
 
             for cell in line.get_cells():
                 cell.reset()
+
         self.refresh_display()
 
     def parm_right_cursor(self, context):
-        self.col += context.params[0]
+        self.col += context.params[0] if context.params[0] > 0 else 1
         self.refresh_display()
 
     def parm_left_cursor(self, context):
-        self.col -= context.params[0]
+        self.col -= context.params[0] if context.params[0] > 0 else 1
         self.refresh_display()
 
     def client_report_version(self, context):
@@ -478,7 +495,22 @@ class TerminalGUI(Terminal):
     def change_scroll_region(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
-        self.set_scroll_region(context.params[0], context.params[1])
+        if len(context.params) == 0:
+            self.scroll_region = None
+        else:
+            self.set_scroll_region(context.params[0], context.params[1])
+        self.refresh_display()
+
+    def change_scroll_region_from_start(self, context):
+        if self.cfg.debug:
+            logging.getLogger('term_gui').debug('change scroll region from start:{} rows={}'.format(context.params, self.get_rows()))
+        self.set_scroll_region(0, context.params[0])
+        self.refresh_display()
+
+    def change_scroll_region_to_end(self, context):
+        if self.cfg.debug:
+            logging.getLogger('term_gui').debug('change scroll region to end:{} rows={}'.format(context.params, self.get_rows()))
+        self.set_scroll_region(context.params[0], self.get_rows() - 1)
         self.refresh_display()
 
     def insert_line(self, context):
@@ -544,7 +576,7 @@ class TerminalGUI(Terminal):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('keypad transmit mode')
         self.keypad_transmit_mode = True
-        
+
     def keypad_local(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('keypad local mode')
@@ -560,6 +592,10 @@ class TerminalGUI(Terminal):
 
     def cursor_visible(self, context):
         self.cursor_normal(context)
+
+    def next_line(self, context):
+        self.col = 0
+        self.parm_down_cursor(context)
 
     def parm_down_cursor(self, context):
         begin, end = self.get_scroll_region()
@@ -579,7 +615,7 @@ class TerminalGUI(Terminal):
                 self.row += 1
 
             self.get_cur_line()
-            
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
         self.refresh_display()
@@ -761,7 +797,7 @@ class TerminalGUI(Terminal):
 
     def create_new_line(self):
         return Line()
-    
+
     def paste_data(self):
         data = ''
         if self.has_selection():
@@ -859,3 +895,17 @@ class TerminalGUI(Terminal):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('determin_colors:attr={},f={},b={}'.format(attr, map(hex, f_color), map(hex, b_color)))
         return (f_color, b_color)
+
+    def send_primary_device_attributes(self, context):
+        self.session.send('\033[?62;c')
+
+    def screen_alignment_test(self, context):
+        lines = self.get_text()
+
+        for line in lines:
+            line.alloc_cells(self.get_cols(), True)
+
+            for cell in line.get_cells():
+                cell.set_char('E')
+
+        self.refresh_display()

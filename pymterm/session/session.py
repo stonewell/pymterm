@@ -31,6 +31,7 @@ class Session(object):
                         data_len = struct.unpack('!i', data)[0]
                         data = f.read(data_len)
                         if not data or data_len != len(data):
+                            self.terminal.on_data(data)
                             logging.getLogger('session').info("end of dump data, quit")
                             self.stop()
                             break

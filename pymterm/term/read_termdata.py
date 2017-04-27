@@ -7,94 +7,89 @@ _entry_cache = {}
 MAX_DEPTH = 25
 
 def get_entry(termcap_filepath, name):
-	return _get_entry(termcap_filepath, name, 0)
+    return _get_entry(termcap_filepath, name, 0)
 
 def _expand_cap(termcap_filepath, cap, depth):
-	parts = ['']
-	for p in cap.split(':'):
-		if p.startswith('tc='):
-			newcap = _get_entry(termcap_filepath, p[len('tc='):], depth + 1)
+    parts = ['']
+    for p in cap.split(':'):
+        if p.startswith('tc='):
+            newcap = _get_entry(termcap_filepath, p[len('tc='):], depth + 1)
 
-			if newcap is not None:
-				parts.extend([x for x in newcap.split(':') if len(x) > 0])
-		elif len(p) > 0:
-			parts.append(p)
+            if newcap is not None:
+                parts.extend([x for x in newcap.split(':') if len(x) > 0])
+        elif len(p) > 0:
+            parts.append(p)
 
-	parts.append('')
-	
-	return ':'.join(parts)
+    parts.append('')
+
+    return ':'.join(parts)
 
 def _get_entry(termcap_filepath, name, depth):
-	if name in _entry_cache:
-		cap_array = _entry_cache[name]
-		cap_array[0] = _expand_cap(termcap_filepath, cap_array[0], depth)
-		return cap_array[0]
+    if name in _entry_cache:
+        cap_array = _entry_cache[name]
+        cap_array[0] = _expand_cap(termcap_filepath, cap_array[0], depth)
+        return cap_array[0]
 
-	if depth > MAX_DEPTH:
-		return None
+    if depth > MAX_DEPTH:
+        return None
 
-	f = open(termcap_filepath, 'r')
+    f = open(termcap_filepath, 'r')
 
-	lineno = 0
+    lineno = 0
 
-	entry = ''
-	for l in f.readlines():
-		lineno += 1
+    entry = ''
+    for l in f.readlines():
+        lineno += 1
 
-		l = l.strip()
-		
-		#skip empty and comment
-		if len(l) == 0 or l[0] == '#':
-			continue
+        l = l.strip()
 
-		#if line continue
-		if l[-1] == '\\':
-			entry = ''.join([entry, l[:-1]])
-			continue
-		else:
-			entry = ''.join([entry, l])
+        #skip empty and comment
+        if len(l) == 0 or l[0] == '#':
+            continue
 
-		#find names
-		parts = re.split(r'(\||:)', entry)
+        #if line continue
+        if l[-1] == '\\':
+            entry = ''.join([entry, l[:-1]])
+            continue
+        else:
+            entry = ''.join([entry, l])
 
-		names = []
-		cap = ''
-		for i in range(len(parts)):
-			p = parts[i]
-			if p == ':':
-				if i + 1 < len(parts):
-					cap = ''.join(parts[i + 1:])
-				break
-			if p == '|':
-				continue
-			names.append(p)
+        #find names
+        parts = re.split(r'(\||:)', entry)
 
-		if name in names:
-			cap = _expand_cap(termcap_filepath, cap, depth)
-		
-		#cache name with cap
-		cap_array = [cap]
-		for n in names:
-			_entry_cache[n] = cap_array
+        names = []
+        cap = ''
+        for i in range(len(parts)):
+            p = parts[i]
+            if p == ':':
+                if i + 1 < len(parts):
+                    cap = ''.join(parts[i + 1:])
+                break
+            if p == '|':
+                continue
+            names.append(p)
 
-		if name in names:
-			break
+        if name in names:
+            cap = _expand_cap(termcap_filepath, cap, depth)
 
-		entry = ''
+        #cache name with cap
+        cap_array = [cap]
+        for n in names:
+            _entry_cache[n] = cap_array
 
-	f.close()
-	
-	return _entry_cache[name][0]
-		
+        if name in names:
+            break
+
+        entry = ''
+
+    f.close()
+
+    return _entry_cache[name][0]
+
 if __name__ == '__main__':
-#	print get_entry(sys.argv[1], 'xterm'), '\n'		
-	print get_entry(sys.argv[1], 'xterm-256color'), '\n'		
-#	print get_entry(sys.argv[1], 'linux'), '\n'		
-#	print get_entry(sys.argv[1], 'ansi'), '\n'		
-#	print get_entry(sys.argv[1], 'vt100'), '\n'		
-#	print get_entry(sys.argv[1], 'vt200'), '\n'		
-
-		
-		
-	
-	
+#    print get_entry(sys.argv[1], 'xterm'), '\n'
+#    print get_entry(sys.argv[1], 'xterm-256color'), '\n'
+#    print get_entry(sys.argv[1], 'linux'), '\n'
+#    print get_entry(sys.argv[1], 'ansi'), '\n'
+    print get_entry(sys.argv[1], 'vt100'), '\n'
+#    print get_entry(sys.argv[1], 'vt200'), '\n'
