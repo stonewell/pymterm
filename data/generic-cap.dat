@@ -14,6 +14,10 @@ generic-cap|generic ansi escape:\
 	clr_line=\E[2K:\
 	client_report_version=\E[>c:\
 	client_report_version=\E[>0c:\
+	cursor_home=\E[;H:\
+	row_address=\E[%i%dH:\
+	row_address=\E[%i%d;H:\
+	column_address=\E[%i;%dH:\
 	cursor_end=\E[4~:\
 	cursor_home=\E[1~:\
 	cursor_up=\E[A:\
