@@ -268,7 +268,6 @@ class TerminalPyGUIApp(Application):
         view.become_target()
 
     def _remove_session_tab(self, win, view):
-        return
         selected_index = win.tabview.selected_index
         count = len(win.tabview.items)
 

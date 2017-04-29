@@ -97,14 +97,12 @@ class TerminalGUI(Terminal):
 
         if insert:
             if line.cell_count() + len(c) > self.get_cols():
-                wrap_c = line[self.get_cols() - line.cell_count() - len(c):]
+                wrap_c = line.get_cells()[self.get_cols() - line.cell_count() - len(c):]
 
                 if wrap_c[0].get_char() == '\000':
-                    wrap_c = line[self.get_cols() - line.cell_count() - len(c) - 1:]
+                    wrap_c = line.get_cells()[self.get_cols() - line.cell_count() - len(c) - 1:]
 
                 two_bytes = len(wrap_c)
-
-                line = line[:self.get_cols() - two_bytes]
 
                 if self.cfg.debug_more:
                     logging.getLogger('term_gui').debug(u'save buffer wrap:c=[{}], wrap=[{}]'.format(c, wrap_c))
