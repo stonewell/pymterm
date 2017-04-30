@@ -29,7 +29,8 @@ class TextAttribute(object):
 
         self._f_color_idx = f_color_idx
         self._b_color_idx = b_color_idx
-        self._mode = mode
+        self._mode = {}
+        self._mode.update(mode)
 
         self._hashed_value = (None, None, None)
         self._hash = None
@@ -44,7 +45,10 @@ class TextAttribute(object):
         if not self.need_calc_hash():
             return self._hash
 
-        self._hashed_value = (self._f_color_idx, self._b_color_idx, self._mode)
+        mode = {}
+        mode.update(self._mode)
+        
+        self._hashed_value = (self._f_color_idx, self._b_color_idx, mode)
         self._hash = str(self)
 
         return self._hash
@@ -113,7 +117,10 @@ def get_default_text_attribute():
                              DEFAULT_BG_COLOR_IDX,
                              {})
 def clone_attr(attr):
-    return TextAttribute(attr.get_fg_idx(), attr.get_bg_idx(), attr.get_mode())
+    mode = {}
+    mode.update(attr.get_mode())
+    
+    return TextAttribute(attr.get_fg_idx(), attr.get_bg_idx(), mode)
 
 class Cell(object):
     def __init__(self, c = ' ', attr = get_default_text_attribute(), wide_char = False):
