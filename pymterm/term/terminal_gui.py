@@ -7,6 +7,7 @@ from term import Cell, Line
 from term_char_width import char_width
 from terminal import Terminal
 from charset_mode import translate_char, translate_char_british
+from screen_buffer import ScreenBuffer
 
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
@@ -15,17 +16,12 @@ class TerminalGUI(Terminal):
         self.term_widget = None
         self.session = None
 
-        self.lines = []
         self.col = 0
         self.row = 0
         self.remain_buffer = []
 
         self.cur_line_option = get_default_text_attribute()
-        self.saved_lines, self.saved_cursor, self.saved_cur_line_option = [], (0, 0), get_default_text_attribute()
-        self.scroll_region = None
-
-        self.view_history_begin = None
-        self.history_lines = []
+        self.saved_screen_buffer, self.saved_cursor, self.saved_cur_line_option = ScreenBuffer(), (0, 0), get_default_text_attribute()
 
         self.status_line = []
         self.status_line_mode = 0
@@ -34,6 +30,7 @@ class TerminalGUI(Terminal):
         self.charset_mode = 0
 
         self._data_lock = threading.RLock()
+        self._screen_buffer = ScreenBuffer()
 
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
@@ -42,9 +39,7 @@ class TerminalGUI(Terminal):
             return c
 
     def get_line(self, row):
-        reserve(self.lines, row + 1, Line())
-
-        return self.lines[row]
+        return self._screen_buffer.get_line(row)
 
     def get_cur_line(self):
         line = self.get_line(self.row)
@@ -154,22 +149,8 @@ class TerminalGUI(Terminal):
 
         return cols
 
-    def get_history_text(self):
-        return self.history_lines + self.lines
-
     def get_text(self):
-        if self.view_history_begin is not None:
-            l = self.get_history_text()
-            lines = l[self.view_history_begin: self.view_history_begin + self.get_rows()]
-            return lines
-
-        if len(self.lines) <= self.get_rows():
-            return self.lines + [self.create_new_line()] * (self.get_rows() - len(self.lines))
-        else:
-            if self.cfg.debug:
-                logging.getLogger('get_text').debug('{}={}'.format(len(self.lines), self.get_rows))
-            lines = self.lines[len(self.lines) - self.get_rows():]
-            return lines
+        return self._screen_buffer.get_visible_lines()
 
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
@@ -192,7 +173,7 @@ class TerminalGUI(Terminal):
     def save_cursor(self, context):
         self.saved_cursor = self.get_cursor()
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('{} {} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, len(self.lines), self.get_rows(), self.get_cols()))
+            logging.getLogger('term_gui').debug('{} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, self.get_rows(), self.get_cols()))
 
     def restore_cursor(self, context):
         col, row = self.saved_cursor
@@ -201,18 +182,12 @@ class TerminalGUI(Terminal):
         self.set_cursor(col, row)
 
     def get_cursor(self):
-        if len(self.lines) <= self.get_rows():
-            return (self.col, self.row)
-        else:
-            return (self.col, self.row - len(self.lines) + self.get_rows())
+        return (self.col, self.row)
 
     def set_cursor(self, col, row):
         self.col = col
-        if len(self.lines) <= self.get_rows():
-            self.row = row
-        else:
-            self.row = row + len(self.lines) - self.get_rows()
-
+        self.row = row
+        
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
@@ -316,7 +291,7 @@ class TerminalGUI(Terminal):
 
             self.term_widget.lines = lines
             self.term_widget.term_cursor = self.get_cursor()
-            self.term_widget.cursor_visible = self.view_history_begin is None
+            self.term_widget.cursor_visible = True#self.view_history_begin is None
             self.term_widget.focus = True
 
             func()
@@ -396,17 +371,11 @@ class TerminalGUI(Terminal):
         self.set_cursor(0, 0)
         self.refresh_display()
 
-    def _row_from_screen(self, s_row):
-        if len(self.lines) <= self.get_rows():
-            return s_row
-        else:
-            return s_row + len(self.lines) - self.get_rows()
-
     def clr_eos(self, context):
         self.get_cur_line()
 
-        begin = self._row_from_screen(0)
-        end = self._row_from_screen(self.get_rows())
+        begin = 0
+        end = self.get_rows()
 
         if len(context.params) == 0 or context.params[0] == 0:
             self.clr_eol(context)
@@ -464,41 +433,27 @@ class TerminalGUI(Terminal):
         self.parm_delete_line(context)
 
     def parm_delete_line(self, context):
-        begin, end = self.get_scroll_region()
         if self.cfg.debug:
+            begin, end = self.get_scroll_region()
             logging.getLogger('term_gui').debug('delete line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_delete = context.params[0] if len(context.params) > 0 else 1
 
-        for i in range(c_to_delete):
-            if self.row <= end:
-                self.lines = self.lines[:self.row] + self.lines[self.row + 1: end + 1] + [self.create_new_line()] +self.lines[end + 1:]
+        self._screen_buffer.delete_lines(self.row, c_to_delete)
 
         self.refresh_display()
 
     def get_scroll_region(self):
-        if self.scroll_region:
-            return self.scroll_region
-
-        self.set_scroll_region(0, self.get_rows() - 1)
-
-        return self.scroll_region
+        return self._screen_buffer.get_scrolling_region()
 
     def set_scroll_region(self, begin, end):
-        if len(self.lines) > self.get_rows():
-            begin = begin + len(self.lines) - self.get_rows()
-            end = end + len(self.lines) - self.get_rows()
-
-        self.get_line(end)
-        self.get_line(begin)
-
-        self.scroll_region = (begin, end)
+        self._screen_buffer.set_scrolling_region( (begin, end) )
 
     def change_scroll_region(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         if len(context.params) == 0:
-            self.scroll_region = None
+            self._screen_buffer.set_scrolling_region(None)
         else:
             self.set_scroll_region(context.params[0], context.params[1])
         self.refresh_display()
@@ -519,16 +474,14 @@ class TerminalGUI(Terminal):
         self.parm_insert_line(context)
 
     def parm_insert_line(self, context):
-        begin, end = self.get_scroll_region()
         if self.cfg.debug:
+            begin, end = self.get_scroll_region()
             logging.getLogger('term_gui').debug('insert line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_insert = context.params[0] if len(context.params) > 0 else 1
 
-        for i in range(c_to_insert):
-            if self.row <= end:
-                self.lines = self.lines[:self.row] + [self.create_new_line()] + self.lines[self.row: end] +self.lines[end + 1:]
-
+        self._screen_buffer.insert_lines(self.row, c_to_insert)
+        
         self.refresh_display()
 
     def request_background_color(self, context):
@@ -552,16 +505,17 @@ class TerminalGUI(Terminal):
         self.refresh_display()
 
     def enter_ca_mode(self, context):
-        self.saved_lines, self.saved_col, self.saved_row, self.saved_cur_line_option = \
-          self.lines, self.col, self.row, self.cur_line_option
-        self.lines, self.col, self.row, self.cur_line_option = \
-          [], 0, 0, get_default_text_attribute()
+        self.saved_screen_buffer, self.saved_col, self.saved_row, self.saved_cur_line_option = \
+          self._screen_buffer, self.col, self.row, self.cur_line_option
+        self._screen_buffer, self.col, self.row, self.cur_line_option = \
+          ScreenBuffer(), 0, 0, get_default_text_attribute()
+        self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
         self.term_widget.cancel_selection()
         self.refresh_display()
 
     def exit_ca_mode(self, context):
-        self.lines, self.col, self.row, self.cur_line_option = \
-            self.saved_lines, self.saved_col, self.saved_row, self.saved_cur_line_option
+        self._screen_buffer, self.col, self.row, self.cur_line_option = \
+            self.saved_screen_buffer, self.saved_col, self.saved_row, self.saved_cur_line_option
         self.term_widget.cancel_selection()
         self.refresh_display()
 
@@ -605,21 +559,19 @@ class TerminalGUI(Terminal):
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('before parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+            logging.getLogger('term_gui').debug('before parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
         for i in range(count):
             self.get_cur_line()
 
             if self.row == end:
-                if begin == 0:
-                    self.history_lines.append(self.lines[begin])
-                self.lines = self.lines[:begin] + self.lines[begin + 1: end + 1] + [self.create_new_line()] + self.lines[end + 1:]
+                self._screen_buffer.scroll_up()
             else:
                 self.row += 1
 
             self.get_cur_line()
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+            logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
         self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
@@ -692,7 +644,8 @@ class TerminalGUI(Terminal):
 
         if (not view_history_key and
             not ((key == 'shift' or key == 'shift_L' or key == 'shift_R') and len(modifiers) == 0)):
-            self.view_history_begin = None
+            #self.view_history_begin = None
+            pass
 
         return handled
 
@@ -753,39 +706,39 @@ class TerminalGUI(Terminal):
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('before parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+            logging.getLogger('term_gui').debug('before parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
         for i in range(count):
             self.get_cur_line()
 
             if self.row == begin:
-                self.lines = self.lines[:begin] + [self.create_new_line()] + self.lines[begin: end] + self.lines[end + 1:]
+                self._screen_buffer.scroll_down()
             else:
                 self.row -= 1
 
             self.get_cur_line()
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {} {}'.format(begin, end, self.row, count, len(self.lines)))
+            logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
         self.refresh_display()
 
     def view_history(self, pageup):
-        lines = self.get_history_text()
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('view history:pageup={}, lines={}, rows={}, view_history_begin={}'.format(pageup, len(lines), self.get_rows(), self.view_history_begin))
+        ## lines = self.get_history_text()
+        ## if self.cfg.debug:
+        ##     logging.getLogger('term_gui').debug('view history:pageup={}, lines={}, rows={}, view_history_begin={}'.format(pageup, len(lines), self.get_rows(), self.view_history_begin))
 
-        if len(lines) <=  self.get_rows():
-            return
+        ## if len(lines) <=  self.get_rows():
+        ##     return
 
-        if self.view_history_begin is not None:
-            self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
-        elif pageup:
-            self.view_history_begin = len(lines) - 2 * self.get_rows()
-        else:
-            return
+        ## if self.view_history_begin is not None:
+        ##     self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
+        ## elif pageup:
+        ##     self.view_history_begin = len(lines) - 2 * self.get_rows()
+        ## else:
+        ##     return
 
-        if self.view_history_begin < 0:
-            self.view_history_begin = 0
-        if self.view_history_begin > len(lines):
-            self.view_history_begin = len(lines) - self.get_rows()
+        ## if self.view_history_begin < 0:
+        ##     self.view_history_begin = 0
+        ## if self.view_history_begin > len(lines):
+        ##     self.view_history_begin = len(lines) - self.get_rows()
 
         self.refresh_display()
 
@@ -825,21 +778,8 @@ class TerminalGUI(Terminal):
         self.term_widget.cancel_selection()
 
     def resize_terminal(self):
-        if len(self.lines) <= self.get_rows():
-            self.set_scroll_region(0, self.get_rows() - 1)
-            return
-
-        last_line = -1
-        for i in range(len(self.lines) - 1, 0, -1):
-            if len(self.lines[i].get_text().strip()) > 0:
-                last_line = i
-                break
-
-        self.lines = self.lines[:last_line + 1]
-
-        for i in range(len(self.lines)):
-            self.lines[i].alloc_cells(self.get_cols(), True)
-
+        self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
+        
         self.set_scroll_region(0, self.get_rows() - 1)
 
     def enter_status_line(self, mode, enter):

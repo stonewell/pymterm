@@ -123,7 +123,7 @@ class TextAttribute(object):
 
     def __clone__(self):
         return clone_attr(self)
-    
+
 def get_default_text_attribute():
     return TextAttribute(DEFAULT_FG_COLOR_IDX,
                              DEFAULT_BG_COLOR_IDX,
@@ -145,7 +145,7 @@ class Cell(object):
 
     def __clone__(self):
         return Cell(self._char, self._attr, self._is_wide_char)
-    
+
     def need_calc_hash(self):
         return (self._hashed_value != self._char) or self._attr.need_calc_hash()
 
@@ -208,7 +208,7 @@ class Line(object):
 
     def c(self):
         return self.__clone__()
-    
+
     def need_calc_hash(self):
         return (not self._hash_calc_done) or any([cell.need_calc_hash() for cell in self._cells])
 
@@ -246,7 +246,7 @@ class Line(object):
             return ''
 
         raw_text = ''.join([self._cells[i].get_char() for i in range(begin_col, end_col)])
-        
+
         return raw_text if raw else raw_text.replace('\000', '')
 
     def get_cells(self):
