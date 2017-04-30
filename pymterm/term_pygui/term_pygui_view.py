@@ -36,7 +36,7 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _draw(self, canvas, update_rect):
         self._setup_canvas(canvas)
 
-        canvas.fillcolor = self._get_color(self.session.cfg.default_background_color)
+        canvas.fillcolor = self.session.cfg.default_background_color
         width, height = self.size
         canvas.fill_frame_rect((0, 0, width, height))
 
@@ -57,8 +57,8 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
     def _fill_line_background(self, line_context, cur_b_color, l, t, w, h):
         canvas, x, y, width, height = line_context
-        tmp_c, canvas.fillcolor = canvas.fillcolor, self._get_color(cur_b_color)
-        tmp_p_c, canvas.pencolor = canvas.pencolor, self._get_color(cur_b_color)
+        tmp_c, canvas.fillcolor = canvas.fillcolor, cur_b_color
+        tmp_p_c, canvas.pencolor = canvas.pencolor, cur_b_color
 
         canvas.fill_frame_rect((x + l, y + t,
                                     x + l + w,
@@ -68,8 +68,8 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
     def _draw_layouted_line_text(self, line_context, layout, cur_f_color, l, t, w, h):
         canvas, x, y, width, height = line_context
 
-        tmp_c, canvas.textcolor = canvas.textcolor, self._get_color(cur_f_color)
-        tmp_p_c, canvas.pencolor = canvas.pencolor, self._get_color(cur_f_color)
+        tmp_c, canvas.textcolor = canvas.textcolor, cur_f_color
+        tmp_p_c, canvas.pencolor = canvas.pencolor, cur_f_color
         canvas.moveto(x + l, y + t + canvas.font.ascent)
         canvas.show_text(layout)
 

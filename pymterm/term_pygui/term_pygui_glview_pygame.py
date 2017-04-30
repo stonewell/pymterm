@@ -132,3 +132,6 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
             text_pos = text.get_rect()
 
         return (text_pos.width, f.get_linesize())
+
+    def gen_render_color(self, c):
+        return c

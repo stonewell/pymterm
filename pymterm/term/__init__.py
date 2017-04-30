@@ -20,31 +20,11 @@ def reserve(l, size, default=None):
         else:
             l.append(None)
 
-def testBit(int_type, offset):
-    mask = 1 << offset
-    return(int_type & mask)
-
-# setBit() returns an integer with the bit at 'offset' set to 1.
-def setBit(int_type, offset):
-    mask = 1 << offset
-
-    return(int_type | mask)
-
-# clearBit() returns an integer with the bit at 'offset' cleared.
-def clearBit(int_type, offset):
-    mask = ~(1 << offset)
-    return(int_type & mask)
-
-# toggleBit() returns an integer with the bit at 'offset' inverted, 0 -> 1 and 1 -> 0.
-def toggleBit(int_type, offset):
-    mask = 1 << offset
-    return(int_type ^ mask)
-
 DEFAULT_FG_COLOR_IDX = 256
 DEFAULT_BG_COLOR_IDX = 257
 
 class TextAttribute(object):
-    def __init__(self, f_color_idx, b_color_idx, mode = 0):
+    def __init__(self, f_color_idx, b_color_idx, mode = {}):
         super(TextAttribute, self).__init__()
 
         self._f_color_idx = f_color_idx
@@ -70,19 +50,23 @@ class TextAttribute(object):
         return self._hash
 
     def set_mode(self, text_mode):
-        self._mode = setBit(self._mode, text_mode)
+        self._mode[text_mode] = True
 
     def reset_mode(self):
-        self._mode = 0
+        self._mode.clear()
 
     def get_mode(self):
         return self._mode
 
     def unset_mode(self, text_mode):
-        self._mode = clearBit(self._mode, text_mode)
+        self._mode[text_mode] = False
 
     def has_mode(self, text_mode):
-        return testBit(self._mode, text_mode) != 0
+        try:
+            return self._mode[text_mode]
+        except:
+            self.unset_mode(text_mode)
+            return False
 
     def set_fg_idx(self, fg_idx):
         self._f_color_idx = fg_idx
@@ -119,7 +103,7 @@ class TextAttribute(object):
         return ','.join([str(self.get_fg_idx()), str(self.get_bg_idx()), m])
 
     def __str__(self):
-        return ''.join([str(self.get_fg_idx()), str(self.get_bg_idx()), hex(self._mode)])
+        return ''.join([str(self.get_fg_idx()), str(self.get_bg_idx()), str(self._mode)])
 
     def __clone__(self):
         return clone_attr(self)
@@ -127,7 +111,7 @@ class TextAttribute(object):
 def get_default_text_attribute():
     return TextAttribute(DEFAULT_FG_COLOR_IDX,
                              DEFAULT_BG_COLOR_IDX,
-                             0)
+                             {})
 def clone_attr(attr):
     return TextAttribute(attr.get_fg_idx(), attr.get_bg_idx(), attr.get_mode())
 

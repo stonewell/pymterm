@@ -216,7 +216,10 @@ class TerminalPyGUIApp(Application):
         m.prev_tab_cmd.enabled = True
 
     def _create_view(self, doc):
-        return self._cls_view(model=doc)
+        view = self._cls_view(model=doc)
+
+        doc.cfg.update_color_for_render(view.gen_render_color)
+        return view
 
     def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
         cfg = self.cfg.clone()

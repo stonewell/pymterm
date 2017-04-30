@@ -144,6 +144,10 @@ class SessionConfig:
 
     def init_color_table(self):
         #copy default table
+        self.default_foreground_color = [0x00,0x00,0x00,0x88]
+        self.default_background_color = [0xdd,0xdd,0xdd,0xFF]
+        self.default_cursor_color = self.default_foreground_color
+
         self.color_table = [c[:] for c in SessionConfig.COLOR_TABLE]
 
         for i in range(240):
@@ -170,8 +174,11 @@ class SessionConfig:
                     self.default_foreground_color = self.color_table[7]
                     self.default_background_color = self.color_table[0]
 
+        #init render color table
+        self.render_color_table = self.color_table[:]
+
     def get_color(self, idx):
-        return self.color_table[idx]
+        return self.render_color_table[idx]
 
     def clone(self):
         import copy
@@ -424,3 +431,11 @@ class SessionConfig:
             envs.update(_vars)
 
         return (envs, proxy_command)
+
+    def update_color_for_render(self, gen_color_func):
+        for i in range(len(self.render_color_table)):
+            self.render_color_table[i] = gen_color_func(self.render_color_table[i])
+
+        self.default_foreground_color = gen_color_func(self.default_foreground_color)
+        self.default_background_color = gen_color_func(self.default_background_color)
+        self.default_cursor_color = gen_color_func(self.default_cursor_color)

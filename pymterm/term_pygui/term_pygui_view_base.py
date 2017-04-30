@@ -31,8 +31,6 @@ def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''
     return min(max(value, minvalue), maxvalue)
 
-_color_map = {}
-
 class __cached_line_surf(object):
     pass
 
@@ -61,14 +59,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         self._generic_tabbing = False
 
-    def _get_color(self, color_spec):
-        key = repr(color_spec)
-        if key in _color_map:
-            return _color_map[key]
-
+    def gen_render_color(self, color_spec):
         c = map(lambda x: x / 255, map(float, color_spec))
-
-        _color_map[key] = r = rgb(*c)
 
         return r
 
@@ -99,7 +91,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if pymterm.debug_log:
             logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
             logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
-            
+
         if self.session.terminal.process_key(keycode,
                                              text,
                                              modifiers):
@@ -305,7 +297,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
             self._real_draw_canvas(v_context)
 
         self.session.terminal.lock_display_data_exec(locked_draw_canvas)
-        
+
     def _real_draw_canvas(self, v_context):
         x = self.padding_x
         b_x = self.padding_x

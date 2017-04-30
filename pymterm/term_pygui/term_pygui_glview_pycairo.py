@@ -55,7 +55,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         background_context = cairo.Context(background_surf)
 
         background_context.rectangle(0,0,width,height)
-        r,g,b,a = self._get_color(self.session.cfg.default_background_color)
+        r,g,b,a = self.session.cfg.default_background_color
         background_context.set_source_rgba(r, g, b, a)
         background_context.fill()
 
@@ -73,7 +73,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         f_o.set_hint_metrics(cairo.HINT_METRICS_ON)
         line_context.set_font_options(f_o)
 
-        r,g,b,a = self._get_color(self.session.cfg.default_background_color)
+        r,g,b,a = self.session.cfg.default_background_color
         line_context.set_source_rgba(r, g, b, a)
         line_context.rectangle(0, 0, width, height)
         line_context.fill()
@@ -111,7 +111,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
     def _fill_line_background(self, context, cur_b_color, l, t, w, h):
         line_context, line_p_context = context
-        r, g, b, a = self._get_color(cur_b_color)
+        r, g, b, a = cur_b_color
 
         line_context.set_source_rgba(r, g, b, a)
         line_context.rectangle(l, t, w, h)
@@ -122,7 +122,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
         ink, logic = layout.get_line(0).get_pixel_extents()
         ascent, descent = self._get_layout_metrics()
 
-        r, g, b, a = self._get_color(cur_f_color)
+        r, g, b, a = cur_f_color
         line_context.set_source_rgba(r, g, b, a)
         line_context.move_to(l + pango.LBEARING(logic), h - descent -pango.ASCENT(logic))
         line_p_context.update_layout(layout)
@@ -188,7 +188,7 @@ class TerminalPyGUIGLView(TerminalPyGUIGLViewBase):
 
         return l
 
-    def _get_color(self, rgba):
+    def gen_render_color(self, rgba):
         r, g, b, a = map(lambda x: float(x) / 255, rgba)
-
         return (r, g, b, a)
+
