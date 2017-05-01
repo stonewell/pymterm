@@ -19,6 +19,9 @@ class ScreenBuffer(object):
         self._line_index_scrolling_region = 0
         self._line_index_fix_after_scrolling_region = 0
 
+        self._viewing_history = False
+        self._line_index_view_history = 0
+
     def resize_buffer(self, row_count, col_count):
         self._row_count, self._col_count = row_count, col_count
         self._update_buffer_data()
@@ -148,6 +151,9 @@ class ScreenBuffer(object):
     def get_visible_lines(self):
         self._update_buffer_data()
 
+        if self._viewing_history:
+            return self._lines[self._line_index_view_history : self._line_index_view_history + self._row_count]
+        
         if self._scrolling_region:
             begin, end = self._scrolling_region
 
@@ -213,3 +219,37 @@ class ScreenBuffer(object):
         for i in range(count):
             del self._lines[end]
             self._lines.insert(start_row, Line())
+
+    def view_history(self, view_history):
+        self._viewing_history = view_history
+
+        if view_history:
+            if self._scrolling_region:
+                begin, end = self._scrolling_region
+                self._line_index_view_history = self._line_index_scrolling_region - begin
+            else:
+                self._line_index_view_history = self._line_index_fix_before_scrolling_region
+
+    def is_view_history(self):
+        return self._viewing_history
+
+    def view_history_pageup(self):
+        self._view_history_update(-1 * self._row_count)
+
+    def view_history_pagedown(self):
+        self._view_history_update(self._row_count)
+
+    def view_history_lineup(self):
+        self._view_history_update(-1)
+
+    def view_history_linedown(self):
+        self._view_history_update(1)
+
+    def _view_history_update(self, delta):
+        self._line_index_view_history += delta
+
+        if self._line_index_view_history < 0:
+            self._line_index_view_history = 0
+
+        if self._line_index_view_history > len(self._lines) - self._row_count:
+            self._line_index_view_history = len(self._lines) - self._row_count

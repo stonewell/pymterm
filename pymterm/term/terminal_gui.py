@@ -291,7 +291,7 @@ class TerminalGUI(Terminal):
 
             self.term_widget.lines = lines
             self.term_widget.term_cursor = self.get_cursor()
-            self.term_widget.cursor_visible = True#self.view_history_begin is None
+            self.term_widget.cursor_visible = not self._screen_buffer.is_view_history()
             self.term_widget.focus = True
 
             func()
@@ -639,14 +639,19 @@ class TerminalGUI(Terminal):
             self.copy_data()
             handled = True
         elif ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and (key == 'pageup' or key == 'pagedown'):
-            self.view_history(key == 'pageup')
+            if not self._screen_buffer.is_view_history():
+                self._screen_buffer.view_history(True)
+            if key == 'pageup':
+                self._screen_buffer.view_history_pageup()
+            else:
+                self._screen_buffer.view_history_pagedown()
             handled = True
             view_history_key = True
+            self.refresh_display()
 
         if (not view_history_key and
             not ((key == 'shift' or key == 'shift_L' or key == 'shift_R') and len(modifiers) == 0)):
-            #self.view_history_begin = None
-            pass
+            self._screen_buffer.view_history(False)
 
         return handled
 
@@ -719,28 +724,6 @@ class TerminalGUI(Terminal):
             self.get_cur_line()
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
-        self.refresh_display()
-
-    def view_history(self, pageup):
-        ## lines = self.get_history_text()
-        ## if self.cfg.debug:
-        ##     logging.getLogger('term_gui').debug('view history:pageup={}, lines={}, rows={}, view_history_begin={}'.format(pageup, len(lines), self.get_rows(), self.view_history_begin))
-
-        ## if len(lines) <=  self.get_rows():
-        ##     return
-
-        ## if self.view_history_begin is not None:
-        ##     self.view_history_begin -= self.get_rows() if pageup else self.get_rows() * -1
-        ## elif pageup:
-        ##     self.view_history_begin = len(lines) - 2 * self.get_rows()
-        ## else:
-        ##     return
-
-        ## if self.view_history_begin < 0:
-        ##     self.view_history_begin = 0
-        ## if self.view_history_begin > len(lines):
-        ##     self.view_history_begin = len(lines) - self.get_rows()
-
         self.refresh_display()
 
     def prompt_login(self, t, username):
