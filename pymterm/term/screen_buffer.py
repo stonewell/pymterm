@@ -66,7 +66,6 @@ class ScreenBuffer(object):
                                            Line())
                     self._line_index_fix_after_scrolling_region += 1
                     self._line_index_scrolling_region += 1
-                    print begin, end, self._line_index_scrolling_region, self._line_index_fix_after_scrolling_region
             else:
                 self._line_index_fix_before_scrolling_region += 1
 
