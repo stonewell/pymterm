@@ -175,11 +175,11 @@ class ScreenBuffer(object):
                 LOGGER.warning('delete lines, start:{} out of range:({}, {})'.format(start, begin, end))
                 return
 
-            begin += self._line_index_scrolling_region
-            end += self._line_index_scrolling_region
+            begin = self._line_index_scrolling_region
+            end += self._line_index_scrolling_region - begin
             end += 1
             start_row = self._line_index_scrolling_region
-            start_row += start - begin
+            start_row += start - self._scrolling_region[0]
 
         for i in range(count):
             self._lines.insert(end, Line())
@@ -204,11 +204,10 @@ class ScreenBuffer(object):
                 LOGGER.warning('insert lines, start:{} out of range:({}, {})'.format(start, begin, end))
                 return
 
-            begin += self._line_index_scrolling_region
-            end += self._line_index_scrolling_region
-            end += 1
+            begin = self._line_index_scrolling_region
+            end += self._line_index_scrolling_region - begin
             start_row = self._line_index_scrolling_region
-            start_row += start - begin
+            start_row += start - self._scrolling_region[0]
 
         for i in range(count):
             del self._lines[end]

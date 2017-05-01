@@ -299,6 +299,7 @@ class TerminalGUI(Terminal):
             logging.getLogger('term_gui').exception('lock display data exec')
         finally:
             self._data_lock.release()
+            pass
 
     def on_data(self, data):
         try:
