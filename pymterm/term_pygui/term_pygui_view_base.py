@@ -173,6 +173,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
             if to != self._selection_to:
                 self._selection_to = to
+                self.session.terminal.set_selection(self._selection_from, self._selection_to)
                 self.refresh()
 
             if event.kind == 'mouse_up':
@@ -307,12 +308,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         c_col, c_row = self.term_cursor
 
-        s_f, s_t = self.get_selection()
-
-        s_f_c, s_f_r = s_f
-        s_t_c, s_t_r = s_t
-
-
         font = self._get_font();
 
         line_height = self._get_line_height()
@@ -324,33 +319,14 @@ class TerminalPyGUIViewBase(TerminalWidget):
             x = b_x = self.padding_x
             line = lines[i]
 
-            #clean up temp cursor and selection mode
+            #clean up temp cursor mode
             for cell in line.get_cells():
                 cell.get_attr().unset_mode(TextMode.CURSOR)
-                cell.get_attr().unset_mode(TextMode.SELECTION)
 
-            # temprary add cusor and selection mode
+            # temprary add cusor mode
             if self.cursor_visible and i == c_row:
                 line.alloc_cells(c_col + 1)
                 line.get_cell(c_col).get_attr().set_mode(TextMode.CURSOR)
-
-            if s_f != s_t:
-                if s_f_r == s_t_r and i == s_f_r:
-                    line.alloc_cells(s_t_c)
-                    for mm in range(s_f_c, s_t_c):
-                        line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
-                else:
-                    if i == s_f_r:
-                        line.alloc_cells(s_f_c + 1)
-                        for mm in range(s_f_c, len(line.get_cells())):
-                            line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
-                    elif i == s_t_r:
-                        line.alloc_cells(s_t_c)
-                        for mm in range(0, s_t_c):
-                            line.get_cell(mm).get_attr().set_mode(TextMode.SELECTION)
-                    elif i > s_f_r and i < s_t_r:
-                        for cell in line.get_cells():
-                            cell.get_attr().set_mode(TextMode.SELECTION)
 
             col = 0
             last_col = 0

@@ -22,6 +22,8 @@ class ScreenBuffer(object):
         self._viewing_history = False
         self._line_index_view_history = 0
 
+        self._selected_lines = []
+
     def resize_buffer(self, row_count, col_count):
         self._row_count, self._col_count = row_count, col_count
         self._update_buffer_data()
@@ -253,3 +255,32 @@ class ScreenBuffer(object):
 
         if self._line_index_view_history > len(self._lines) - self._row_count:
             self._line_index_view_history = len(self._lines) - self._row_count
+
+    def set_selection(self, s_from, s_to):
+        self.clear_selection()
+
+        if s_from == s_to:
+            return
+        
+        s_f_col, s_f_row = s_from
+        s_t_col, s_t_row = s_to
+
+        lines = self.get_visible_lines()
+
+        for i in range(s_f_row, s_t_row + 1):
+            line = lines[i]
+            line.select_cells(s_f_col if i == s_f_row else 0,
+                            s_t_col if i == s_t_row else self._col_count)
+            self._selected_lines.append(line)
+
+    def clear_selection(self):
+        for line in self._selected_lines:
+            line.clear_selection()
+
+        self._selected_lines = []
+
+    def get_selection_text(self):
+        return self._selected_lines
+
+    def has_selection(self):
+        return len(self._selected_lines) > 0

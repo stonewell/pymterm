@@ -245,3 +245,27 @@ class Line(object):
 
     def cell_count(self):
         return len(self._cells)
+
+    def select_cells(self, begin_col = 0, end_col = -1):
+        if end_col < 0 or end_col > self.cell_count():
+            end_col = self.cell_count()
+        if begin_col < 0:
+            begin_col = 0
+        if begin_col > self.cell_count():
+            begin_col = self.cell_count()
+
+        if begin_col >= end_col:
+            return
+
+        self.alloc_cells(end_col)
+        
+        for i in range(begin_col, end_col):
+            self._cells[i].get_attr().set_mode(TextMode.SELECTION)
+
+    def clear_selection(self):
+        for cell in self._cells:
+            cell.get_attr().unset_mode(TextMode.SELECTION)
+
+    def get_selection_text(self):
+        selected_cells = filter(lambda x: x.get_attr().has_mode(TextMode.SELECTION), self._cells)
+        return map(lambda x:x.get_char(), selected_cells)

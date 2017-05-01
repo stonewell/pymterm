@@ -511,13 +511,13 @@ class TerminalGUI(Terminal):
         self._screen_buffer, self.col, self.row, self.cur_line_option = \
           ScreenBuffer(), 0, 0, get_default_text_attribute()
         self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
-        self.term_widget.cancel_selection()
+        self._screen.clear_selection()
         self.refresh_display()
 
     def exit_ca_mode(self, context):
         self._screen_buffer, self.col, self.row, self.cur_line_option = \
             self.saved_screen_buffer, self.saved_col, self.saved_row, self.saved_cur_line_option
-        self.term_widget.cancel_selection()
+        self._screen_buffer.clear_selection()
         self.refresh_display()
 
     def key_shome(self, context):
@@ -656,42 +656,16 @@ class TerminalGUI(Terminal):
         return handled
 
     def has_selection(self):
-        s_from, s_to = self.term_widget.get_selection()
-
-        return not (s_from == s_to)
+        return self._screen_buffer.has_selection()
 
     def get_selection_text(self):
-        lines = self.get_text()
-
-        s_from, s_to = self.term_widget.get_selection()
-
-        if s_from == s_to:
+        if not self.has_selection():
             return ''
+        
+        lines = self._screen_buffer.get_selection_text()
 
-        s_f_col, s_f_row = s_from
-        s_t_col, s_t_row = s_to
-
-        texts = []
-
-        if s_f_row == s_t_row:
-            line = lines[s_f_row]
-            if not line:
-                return ''
-
-            return line.get_text(s_f_col, s_t_col)
-
-        for line_num, line in enumerate(lines[s_f_row:s_t_row + 1], start=s_f_row):
-            if not line:
-                continue
-            if line_num == s_f_row:
-                if s_f_col < line.cell_count():
-                    texts.append(line.get_text(s_f_col))
-            elif line_num == s_t_row:
-                if s_t_col <= line.cell_count():
-                    texts.append(line.get_text(0, s_t_col))
-            else:
-                texts.append(line.get_text())
-
+        texts = map(lambda x:''.join(x.get_selection_text()), lines)
+        
         d = '\r\n'
 
         if 'carriage_return' in self.cap.cmds:
@@ -741,7 +715,7 @@ class TerminalGUI(Terminal):
         data = ''
         if self.has_selection():
             data = self.get_selection_text()
-            self.term_widget.cancel_selection()
+            self._screen_buffer.clear_selection()
 
         if len(data) == 0:
             data = self.term_widget.paste_from_clipboard()
@@ -759,7 +733,7 @@ class TerminalGUI(Terminal):
 
         self.term_widget.copy_to_clipboard(data)
 
-        self.term_widget.cancel_selection()
+        self._screen_buffer.clear_selection()
 
     def resize_terminal(self):
         self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
@@ -837,3 +811,6 @@ class TerminalGUI(Terminal):
 
         self.restore_cursor(context)
         self.refresh_display()
+
+    def set_selection(self, s_f, s_t):
+        self._screen_buffer.set_selection(s_f, s_t)

@@ -133,3 +133,6 @@ class Terminal(object):
             return self.cap.flags['init_tabs']
 
         return 8
+
+    def set_selection(self, s_f, s_t):
+        pass
