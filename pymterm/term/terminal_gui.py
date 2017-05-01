@@ -800,7 +800,7 @@ class TerminalGUI(Terminal):
         self.session.on_status_line(mode, status_line)
 
     def determin_colors(self, attr):
-        if self.cfg.debug:
+        if self.cfg.debug_more:
             logging.getLogger('term_gui').debug('determin_colors:attr={}'.format(attr))
         def _get_color(idx):
             color = None
@@ -835,8 +835,6 @@ class TerminalGUI(Terminal):
         if attr.has_mode(TextMode.CURSOR):
             f_color, b_color = b_color, self.cfg.default_cursor_color
 
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('determin_colors:attr={},f={},b={}'.format(attr, map(hex, f_color), map(hex, b_color)))
         return (f_color, b_color)
 
     def send_primary_device_attributes(self, context):

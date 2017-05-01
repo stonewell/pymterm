@@ -31,9 +31,10 @@ class ScreenBuffer(object):
         if self._scrolling_region:
             begin, end = self._scrolling_region
 
-            self._line_index_scrolling_region -= begin
-            self._line_index_fix_before_scrolling_region = \
-              self._line_index_scrolling_region
+            #clean up saved scroll buffer
+            del self._lines[self._line_index_fix_before_scrolling_region + begin:self._line_index_scrolling_region]
+            del self._lines[self._line_index_scrolling_region + end - begin + 1:self._line_index_fix_after_scrolling_region]
+
             self._line_index_fix_after_scrolling_region = \
               self._line_index_fix_before_scrolling_region + self._row_count
 
@@ -65,6 +66,7 @@ class ScreenBuffer(object):
                                            Line())
                     self._line_index_fix_after_scrolling_region += 1
                     self._line_index_scrolling_region += 1
+                    print begin, end, self._line_index_scrolling_region, self._line_index_fix_after_scrolling_region
             else:
                 self._line_index_fix_before_scrolling_region += 1
 
