@@ -527,7 +527,7 @@ class TerminalGUI(Terminal):
         self._screen_buffer, self.col, self.row, self.cur_line_option = \
           ScreenBuffer(), 0, 0, get_default_text_attribute()
         self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
-        self._screen.clear_selection()
+        self._screen_buffer.clear_selection()
         self.refresh_display()
 
     def exit_ca_mode(self, context):
