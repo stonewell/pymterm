@@ -38,6 +38,8 @@ class TerminalGUI(Terminal):
 
         self._origin_mode = False
 
+        self._tab_stops = {}
+
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
             return self.charset_modes_translate[self.charset_mode](c)
@@ -211,7 +213,7 @@ class TerminalGUI(Terminal):
 
     def cursor_left(self, context):
         self.parm_left_cursor(context)
-        
+
     def cursor_down(self, context):
         self.parm_down_cursor(context)
 
@@ -402,7 +404,7 @@ class TerminalGUI(Terminal):
         #same as xterm, if cursor out of screen, moving start from last col
         if self.col >= self.get_cols():
             self.col = self.get_cols() - 1
-            
+
         self.col += context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
         if self.col > self.get_cols():
             self.col = self.get_cols() - 1
@@ -412,7 +414,7 @@ class TerminalGUI(Terminal):
         #same as xterm, if cursor out of screen, moving start from last col
         if self.col >= self.get_cols():
             self.col = self.get_cols() - 1
-            
+
         self.col -= context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
         if self.col < 0:
             self.col = 0
@@ -433,9 +435,31 @@ class TerminalGUI(Terminal):
         elif context.params[0] == 5:
             self.session.send('\033[0n')
 
+    def clear_tab(self, context):
+        action = 0
+        if context.params and len(context.params) > 0:
+            action = context.params[0]
+
+        if action == 0:
+            self._tab_stops.pop(self.col, 0)
+        elif action == 3:
+            self._tab_stops.clear()
+
+    def clear_all_tabs(self, context):
+        self._tab_stops.clear()
+
+    def set_tab(self, context):
+        self._tab_stops[self.col] = True
+
     def tab(self, context):
-        col = self.col / self.session.get_tab_width()
-        col = (col + 1) * self.session.get_tab_width();
+        #col = self.col / self.session.get_tab_width()
+        #col = (col + 1) * self.session.get_tab_width();
+
+        tab_width = self.session.get_tab_width()
+        col = self.col
+        for col in range(self.col + 1, self.get_cols()):
+            if col in self._tab_stops or col % tab_width == 0:
+                break
 
         if col >= self.get_cols():
             col = self.get_cols() - 1

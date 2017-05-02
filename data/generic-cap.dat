@@ -84,7 +84,7 @@ generic-cap|generic ansi escape:\
 	cursor_address=\E[%i%d;%dH:\
 	carriage_return=^M:\
 	change_scroll_region=\E[%i%d;%dr:\
-	clear_all_tabs=\E[3g:\
+	clear_tab=\E[%dg:\
 	cursor_down=^J:\
 	ena_acs=\E(B\E)0:\
 	cursor_home=\E[H:\
