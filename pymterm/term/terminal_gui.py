@@ -32,6 +32,12 @@ class TerminalGUI(Terminal):
         self._data_lock = threading.RLock()
         self._screen_buffer = ScreenBuffer()
 
+        self._dec_mode = False
+        self._force_column = False
+        self._force_column_count = 80
+
+        self._origin_mode = False
+
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
             return self.charset_modes_translate[self.charset_mode](c)
@@ -57,7 +63,6 @@ class TerminalGUI(Terminal):
             if c == '\000':
                 continue
             self._save_buffer(c, insert)
-
         if insert:
             self.col, self.row = save_col, save_row
 
@@ -142,9 +147,14 @@ class TerminalGUI(Terminal):
                 self.col += 1
 
     def get_rows(self):
+        if self._force_column:
+            return self.cap.flags['lines']
         return self.term_widget.visible_rows
 
     def get_cols(self):
+        if self._force_column:
+            return self._force_column_count
+
         cols = self.term_widget.visible_cols
 
         return cols
@@ -186,30 +196,22 @@ class TerminalGUI(Terminal):
 
     def set_cursor(self, col, row):
         self.col = col
-        self.row = row
-        
+
+        if not self._origin_mode:
+            self.row = row
+        else:
+            begin, end = self.get_scroll_region()
+            self.row = row + begin
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
     def cursor_right(self, context):
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('cursor right:{}, {}'.format(self.col, self.row));
-        if self.col < self.get_cols() - 1:
-            self.col += 1
-        self.refresh_display()
-
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after cursor right:{}, {}'.format(self.col, self.row));
+        self.parm_right_cursor(context)
 
     def cursor_left(self, context):
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('cursor left:{}, {}'.format(self.col, self.row));
-        if self.col > 0:
-            self.col -= 1
-        self.refresh_display()
-        if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after cursor left:{}, {}'.format(self.col, self.row));
-
+        self.parm_left_cursor(context)
+        
     def cursor_down(self, context):
         self.parm_down_cursor(context)
 
@@ -378,14 +380,15 @@ class TerminalGUI(Terminal):
         begin = 0
         end = self.get_rows()
 
-        if len(context.params) == 0 or context.params[0] == 0:
-            self.clr_eol(context)
+        if context:
+            if len(context.params) == 0 or context.params[0] == 0:
+                self.clr_eol(context)
 
-            begin = self.row + 1
-        elif context.params[0] == 1:
-            self.clr_bol(context)
+                begin = self.row + 1
+            elif context.params[0] == 1:
+                self.clr_bol(context)
 
-            end = self.row
+                end = self.row
 
         for row in range(begin, end):
             line = self.get_line(row)
@@ -396,13 +399,21 @@ class TerminalGUI(Terminal):
         self.refresh_display()
 
     def parm_right_cursor(self, context):
-        self.col += context.params[0] if context.params[0] > 0 else 1
+        #same as xterm, if cursor out of screen, moving start from last col
+        if self.col >= self.get_cols():
+            self.col = self.get_cols() - 1
+            
+        self.col += context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
         if self.col > self.get_cols():
             self.col = self.get_cols() - 1
         self.refresh_display()
 
     def parm_left_cursor(self, context):
-        self.col -= context.params[0] if context.params[0] > 0 else 1
+        #same as xterm, if cursor out of screen, moving start from last col
+        if self.col >= self.get_cols():
+            self.col = self.get_cols() - 1
+            
+        self.col -= context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
         if self.col < 0:
             self.col = 0
         self.refresh_display()
@@ -413,6 +424,11 @@ class TerminalGUI(Terminal):
     def user7(self, context):
         if (context.params[0] == 6):
             col, row = self.get_cursor()
+
+            if self._origin_mode:
+                begin, end = self.get_scroll_region()
+                row -= begin
+
             self.session.send(''.join(['\x1B[', str(row + 1), ';', str(col + 1), 'R']))
         elif context.params[0] == 5:
             self.session.send('\033[0n')
@@ -482,7 +498,7 @@ class TerminalGUI(Terminal):
         c_to_insert = context.params[0] if len(context.params) > 0 else 1
 
         self._screen_buffer.insert_lines(self.row, c_to_insert)
-        
+
         self.refresh_display()
 
     def request_background_color(self, context):
@@ -615,6 +631,20 @@ class TerminalGUI(Terminal):
 
         if mode == 25:
             self.cursor_normal(context)
+        elif mode == 40:
+            self._dec_mode = True
+            self._force_column = True
+            self.resize_terminal()
+        elif mode == 3:
+            if self._dec_mode:
+                self._force_column = True
+                self._force_column_count = 132
+
+                self.clr_eos(None)
+                self.cursor_home(None)
+                self.resize_terminal()
+        elif mode == 6:
+            self._origin_mode = True
 
     def disable_mode(self, context):
         if self.cfg.debug:
@@ -624,6 +654,20 @@ class TerminalGUI(Terminal):
 
         if mode == 25:
             self.cursor_invisible(context)
+        elif mode == 40:
+            self._dec_mode = False
+            self._force_column = False
+            self.resize_terminal()
+        elif mode == 3:
+            if self._dec_mode:
+                self._force_column = True
+                self._force_column_count = 80
+
+                self.clr_eos(None)
+                self.cursor_home(None)
+                self.resize_terminal()
+        elif mode == 6:
+            self._origin_mode = False
 
     def process_key(self, keycode, text, modifiers):
         handled = False
@@ -661,11 +705,11 @@ class TerminalGUI(Terminal):
     def get_selection_text(self):
         if not self.has_selection():
             return ''
-        
+
         lines = self._screen_buffer.get_selection_text()
 
         texts = map(lambda x:''.join(x.get_selection_text()), lines)
-        
+
         d = '\r\n'
 
         if 'carriage_return' in self.cap.cmds:
@@ -737,7 +781,7 @@ class TerminalGUI(Terminal):
 
     def resize_terminal(self):
         self._screen_buffer.resize_buffer(self.get_rows(), self.get_cols())
-        
+
         self.set_scroll_region(0, self.get_rows() - 1)
 
     def enter_status_line(self, mode, enter):

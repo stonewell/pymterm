@@ -5,6 +5,7 @@ import cap.cap_manager
 import parse_termdata
 import read_termdata
 
+from collections import deque
 
 class Terminal(object):
     def __init__(self, cfg):
@@ -23,6 +24,7 @@ class Terminal(object):
         self.control_data = []
         self.in_status_line = False
         self.keypad_transmit_mode = False
+        self._cap_state_stack = deque()
 
         logging.getLogger('terminal').debug('cap-str:{}, cap:{}, self={}'.format(self.cap_str, self.cap, self))
 
@@ -63,9 +65,12 @@ class Terminal(object):
         if cap_turple:
             self.on_control_data(cap_turple)
 
-            self.state = self.cap.control_data_start_state
-            self.context.params = []
-            self.control_data = []
+            if len(self._cap_state_stack) > 0:
+                self.state, self.context.params, self.control_data = self._cap_state_stack.pop()
+            else:
+                self.state = self.cap.control_data_start_state
+                self.context.params = []
+                self.control_data = []
         elif check_unknown and len(self.control_data) > 0:
             m1 = 'start state:{}, params={}, self={}, next_states={}'.format(self.cap.control_data_start_state.cap_name, self.context.params, self, self.cap.control_data_start_state.next_states)
             m2 = 'current state:{}, params={}, next_states={}, {}, [{}]'.format(self.state.cap_name, self.context.params, self.state.next_states, self.state.digit_state, ord(c) if c else 'None')
@@ -73,7 +78,12 @@ class Terminal(object):
             m4 = 'data:[[[' + data.replace('\x1B', '\\E').replace('\r', '\r\n') + ']]]'
             m5 = 'data:[[[' + ' '.join(map(str, map(ord, data))) + ']]]'
 
-            logging.getLogger('terminal').error('\r\n'.join([m1, m2, m3, m4, m5, str(self.in_status_line)]))
+            next_state = self.cap.control_data_start_state.handle(self.context, c)
+
+            if not next_state:
+                logging.getLogger('terminal').error('\r\n'.join([m1, m2, m3, m4, m5, str(self.in_status_line)]))
+
+            self._cap_state_stack.append((self.state, self.context.params, self.control_data))
 
             self.state = self.cap.control_data_start_state
             self.context.params = []
@@ -93,15 +103,12 @@ class Terminal(object):
             if not next_state or self.state.get_cap(self.context.params):
                 cap_turple = self.__handle_cap__(data=data, c=c)
 
-                if cap_turple:
-                    # retry last char
-                    next_state = self.state.handle(self.context, c)
+                # retry last char
+                next_state = self.state.handle(self.context, c)
 
-                    if next_state:
-                        self.state = next_state
-                        self.control_data.append(c if not c == '\x1B' else '\\E')
-                    else:
-                        self.output_data(c)
+                if next_state:
+                    self.state = next_state
+                    self.control_data.append(c if not c == '\x1B' else '\\E')
                 else:
                     self.output_data(c)
 
