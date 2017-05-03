@@ -28,6 +28,9 @@ class TerminalGUI(Terminal):
 
         self.charset_modes_translate = [None, None]
         self.charset_mode = 0
+        
+        self._saved_charset_modes_translate = [None, None]
+        self._saved_charset_mode = 0
 
         self._data_lock = threading.RLock()
         self._screen_buffer = ScreenBuffer()
@@ -37,8 +40,16 @@ class TerminalGUI(Terminal):
         self._force_column_count = 80
 
         self._origin_mode = False
+        self._saved_origin_mode = False
 
         self._tab_stops = {}
+        self._set_default_tab_stops()
+
+    def _set_default_tab_stops(self):
+        tab_width = self.get_tab_width()
+
+        for i in range(0, 999, tab_width):
+            self.set_tab(i)
 
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
@@ -184,13 +195,26 @@ class TerminalGUI(Terminal):
 
     def save_cursor(self, context):
         self.saved_cursor = self.get_cursor()
+        
+        self._saved_charset_modes_translate = self.charset_modes_translate[:]
+        self._saved_charset_mode = self.charset_mode
+
+        self._saved_origin_mode = self._origin_mode
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('{} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, self.get_rows(), self.get_cols()))
 
     def restore_cursor(self, context):
         col, row = self.saved_cursor
+        
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('{} {} {}'.format( 'restore', row, col))
+            
+        self._origin_mode = self._saved_origin_mode
+        
+        self.charset_modes_translate = self._saved_charset_modes_translate[:]
+        self.charset_mode = self._saved_charset_mode
+
         self.set_cursor(col, row)
 
     def get_cursor(self):
@@ -406,6 +430,7 @@ class TerminalGUI(Terminal):
             self.col = self.get_cols() - 1
 
         self.col += context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
+
         if self.col > self.get_cols():
             self.col = self.get_cols() - 1
         self.refresh_display()
@@ -455,11 +480,13 @@ class TerminalGUI(Terminal):
         #col = self.col / self.session.get_tab_width()
         #col = (col + 1) * self.session.get_tab_width();
 
-        tab_width = self.session.get_tab_width()
+        tab_width = self.get_tab_width()
         col = self.col
-        for col in range(self.col + 1, self.get_cols()):
-            if col in self._tab_stops or col % tab_width == 0:
-                break
+
+        if len(self._tab_stops) > 0:
+            for col in range(self.col+1, self.get_cols()):
+                if col in self._tab_stops:
+                    break
 
         if col >= self.get_cols():
             col = self.get_cols() - 1
@@ -489,12 +516,14 @@ class TerminalGUI(Terminal):
 
     def set_scroll_region(self, begin, end):
         self._screen_buffer.set_scrolling_region( (begin, end) )
+        self.cursor_home(None)
 
     def change_scroll_region(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         if len(context.params) == 0:
             self._screen_buffer.set_scrolling_region(None)
+            self.cursor_home(None)
         else:
             self.set_scroll_region(context.params[0], context.params[1])
         self.refresh_display()
@@ -669,6 +698,7 @@ class TerminalGUI(Terminal):
                 self.resize_terminal()
         elif mode == 6:
             self._origin_mode = True
+            self.cursor_home(None)
 
     def disable_mode(self, context):
         if self.cfg.debug:
@@ -692,6 +722,7 @@ class TerminalGUI(Terminal):
                 self.resize_terminal()
         elif mode == 6:
             self._origin_mode = False
+            self.cursor_home(None)
 
     def process_key(self, keycode, text, modifiers):
         handled = False

@@ -4,6 +4,7 @@ generic-cap|generic ansi escape:\
 	to_status_line=\E]2;:\
 	from_status_line=\352:\
 	set_attributes=\E[%d\(;%d\)m:\
+	set_attributes=\E[\(;%d\)m:\
 	request_background_color=\E]11;?^G:\
 	qet_attributes=\E]%d;?\234:\
 	orig_pair=\E[m:\
