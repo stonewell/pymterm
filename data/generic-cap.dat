@@ -39,10 +39,25 @@ generic-cap|generic ansi escape:\
 	enable_keypad_appkeys=\E=:\
 	disable_keypad_appkeys=\E>:\
 	cursor_address=\E[%i%d;%df:\
+	enter_alt_charset_mode=\E(0:\
 	enter_alt_charset_mode_british=\E(A:\
+	exit_alt_charset_mode=\E(B:\
 	enter_alt_charset_mode_g1=\E)0:\
 	enter_alt_charset_mode_g1_british=\E)A:\
 	exit_alt_charset_mode_g1_british=\E)B:\
+	enter_alt_charset_mode_g2=\E*0:\
+	enter_alt_charset_mode_g2_british=\E*A:\
+	exit_alt_charset_mode_g2_british=\E*B:\
+	enter_alt_charset_mode_g3=\E+0:\
+	enter_alt_charset_mode_g3_british=\E+A:\
+	exit_alt_charset_mode_g3_british=\E+B:\
+	invoke_g2_char_set_as_gl=\En:\
+	invoke_g3_char_set_as_gl=\Eo:\
+	invoke_g3_char_set_as_gr=\E|:\
+	invoke_g2_char_set_as_gr=\E}:\
+	invoke_g1_char_set_as_gr=\E~:\
+	shift_g2_single_char=\EN:\
+	shift_g3_single_char=\EO:\
 	shift_in_to_charset_mode_g0=\017:\
 	shift_out_to_charset_mode_g1=\016:\
 	change_scroll_region=\E[r:\
