@@ -48,8 +48,8 @@ class TerminalGUI(Terminal):
     def _set_default_tab_stops(self):
         tab_width = self.get_tab_width()
 
-        for i in range(0, 999, tab_width):
-            self.set_tab(i)
+        for i in range(tab_width, 999, tab_width):
+            self._tab_stops[i] = True
 
     def _translate_char(self, c):
         if self.charset_modes_translate[self.charset_mode]:
@@ -313,7 +313,7 @@ class TerminalGUI(Terminal):
 
     def lock_display_data_exec(self, func):
         try:
-            self._data_lock.acquire()
+            #self._data_lock.acquire()
 
             lines = self.get_text()
 
@@ -326,7 +326,7 @@ class TerminalGUI(Terminal):
         except:
             logging.getLogger('term_gui').exception('lock display data exec')
         finally:
-            self._data_lock.release()
+            #self._data_lock.release()
             pass
 
     def on_data(self, data):
@@ -484,8 +484,9 @@ class TerminalGUI(Terminal):
         col = self.col
 
         if len(self._tab_stops) > 0:
-            for col in range(self.col+1, self.get_cols()):
-                if col in self._tab_stops:
+            for c in range(self.col+1, self.get_cols()):
+                if c in self._tab_stops:
+                    col = c
                     break
 
         if col >= self.get_cols():
@@ -516,28 +517,29 @@ class TerminalGUI(Terminal):
 
     def set_scroll_region(self, begin, end):
         self._screen_buffer.set_scrolling_region( (begin, end) )
-        self.cursor_home(None)
 
     def change_scroll_region(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         if len(context.params) == 0:
             self._screen_buffer.set_scrolling_region(None)
-            self.cursor_home(None)
         else:
             self.set_scroll_region(context.params[0], context.params[1])
+        self.cursor_home(None)
         self.refresh_display()
 
     def change_scroll_region_from_start(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region from start:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(0, context.params[0])
+        self.cursor_home(None)
         self.refresh_display()
 
     def change_scroll_region_to_end(self, context):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('change scroll region to end:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], self.get_rows() - 1)
+        self.cursor_home(None)
         self.refresh_display()
 
     def insert_line(self, context):
