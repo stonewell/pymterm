@@ -48,7 +48,7 @@ class TerminalGUI(Terminal):
     def _set_default_tab_stops(self):
         tab_width = self.get_tab_width()
 
-        for i in range(tab_width, 999, tab_width):
+        for i in range(0, 999, tab_width):
             self._tab_stops[i] = True
 
     def _translate_char(self, c):
@@ -484,7 +484,7 @@ class TerminalGUI(Terminal):
         col = self.col
 
         if len(self._tab_stops) > 0:
-            for c in range(self.col+1, self.get_cols()):
+            for c in range(self.col+1, self.get_cols() + 1):
                 if c in self._tab_stops:
                     col = c
                     break
