@@ -841,6 +841,12 @@ class TerminalGUI(Terminal):
 
         self.set_scroll_region(0, self.get_rows() - 1)
 
+        if self.row >= self.get_rows():
+            self.row = self.get_rows() - 1
+
+        if self.col >= self.get_cols():
+            self.col = self.get_cols() - 1
+
     def enter_status_line(self, mode, enter):
         if not enter:
             status_line = ''.join(self.status_line)
