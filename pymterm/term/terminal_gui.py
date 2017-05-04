@@ -17,7 +17,9 @@ class TerminalGUI(Terminal):
         self.session = None
 
         self.col = 0
-        self.row = 0
+        self.row = 0 #always from 0 to row_count
+        self._cursor_buffer_row = 0 #save any value from cursor_address ctrl sequence
+
         self.remain_buffer = []
 
         self.cur_line_option = get_default_text_attribute()
@@ -28,7 +30,7 @@ class TerminalGUI(Terminal):
 
         self.charset_modes_translate = [None, None]
         self.charset_mode = 0
-        
+
         self._saved_charset_modes_translate = [None, None]
         self._saved_charset_mode = 0
 
@@ -63,14 +65,14 @@ class TerminalGUI(Terminal):
         line.alloc_cells(self.get_cols(), True)
 
         return line
-    
+
     def get_cur_line(self):
         line = self.get_line(self.row)
 
         return line
 
     def wrap_line(self, chars, insert):
-        save_col, save_row = self.col, self.row
+        save_col, save_row, save_cursor_buffer_row = self.col, self.row, self._cursor_buffer_row
 
         self.col = 0
         self.cursor_down(None)
@@ -79,7 +81,7 @@ class TerminalGUI(Terminal):
                 continue
             self._save_buffer(c, insert)
         if insert:
-            self.col, self.row = save_col, save_row
+            self.col, self.row, self._cursor_buffer_row = save_col, save_row, save_cursor_buffer_row
 
     def save_buffer(self, c, insert = False):
         line = self.get_cur_line()
@@ -197,7 +199,7 @@ class TerminalGUI(Terminal):
 
     def save_cursor(self, context):
         self.saved_cursor = self.get_cursor()
-        
+
         self._saved_charset_modes_translate = self.charset_modes_translate[:]
         self._saved_charset_mode = self.charset_mode
 
@@ -208,12 +210,12 @@ class TerminalGUI(Terminal):
 
     def restore_cursor(self, context):
         col, row = self.saved_cursor
-        
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('{} {} {}'.format( 'restore', row, col))
-            
+
         self._origin_mode = self._saved_origin_mode
-        
+
         self.charset_modes_translate = self._saved_charset_modes_translate[:]
         self.charset_mode = self._saved_charset_mode
 
@@ -223,16 +225,36 @@ class TerminalGUI(Terminal):
         return (self.col, self.row)
 
     def set_cursor(self, col, row):
-        self.col = col
+        old_col, self.col = self.col, col
 
-        if not self._origin_mode:
-            self.row = row
-        else:
+        if self._origin_mode:
             begin, end = self.get_scroll_region()
-            self.row = row + begin
+            row += begin
+
+        count = row - self._cursor_buffer_row
+
+        #in case the program didn't care about terminal size,
+        #like windows openssh from powershell
+        #they use continuours row number start from 0,
+        #never go back
+        old_row = self.row
+
+        if self.row + count >= self.get_rows() or self.row + count < 0:
+            if count < 0:
+                for i in range(count * -1):
+                    self.parm_up_cursor(None)
+            elif count > 0:
+                for i in range(count):
+                    self.parm_down_cursor(None)
+        else:
+            self.row += count
+
+        old_cursor_buffer_row, self._cursor_buffer_row = self._cursor_buffer_row, row
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('terminal cursor:{}, {}'.format(self.col, self.row));
+            logging.getLogger('term_gui').debug('terminal cursor:old:{}, new:{}, cursor_buffer_row:{}'.format((old_col, old_row),
+                                                                                                                  (self.col, self.row),
+                                                                                                                  (old_cursor_buffer_row, self._cursor_buffer_row)))
 
     def cursor_right(self, context):
         self.parm_right_cursor(context)
@@ -396,6 +418,7 @@ class TerminalGUI(Terminal):
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
+
         self.refresh_display()
 
     def cursor_home(self, context):
@@ -627,7 +650,7 @@ class TerminalGUI(Terminal):
         self.col = 0
         self.parm_down_cursor(context)
 
-    def parm_down_cursor(self, context):
+    def parm_down_cursor(self, context, do_refresh = True):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
@@ -639,14 +662,18 @@ class TerminalGUI(Terminal):
 
             if self.row == end:
                 self._screen_buffer.scroll_up()
+                self._cursor_buffer_row += 1
             else:
                 self.row += 1
+                self._cursor_buffer_row += 1
 
             self.get_cur_line()
 
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
-        self.refresh_display()
+
+        if do_refresh:
+            self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = None
@@ -783,7 +810,7 @@ class TerminalGUI(Terminal):
         self.set_cursor(context.params[0], row)
         self.refresh_display()
 
-    def parm_up_cursor(self, context):
+    def parm_up_cursor(self, context, do_refresh = True):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
@@ -795,13 +822,18 @@ class TerminalGUI(Terminal):
 
             if self.row == begin:
                 self._screen_buffer.scroll_down()
+                self._cursor_buffer_row -= 1
             else:
                 self.row -= 1
+                self._cursor_buffer_row -= 1
 
             self.get_cur_line()
+
         if self.cfg.debug:
             logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
-        self.refresh_display()
+
+        if do_refresh:
+            self.refresh_display()
 
     def prompt_login(self, t, username):
         logging.getLogger('term_gui').warn('sub class must implement prompt login')
@@ -845,6 +877,7 @@ class TerminalGUI(Terminal):
 
         if self.row >= self.get_rows():
             self.row = self.get_rows() - 1
+            self._cursor_buffer_row = self.row
 
         if self.col >= self.get_cols():
             self.col = self.get_cols() - 1
