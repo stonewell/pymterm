@@ -397,7 +397,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
                     last_col = cur_col
 
                 cur_col += 1
-                b_width += t_w
 
             if last_col < cur_col:
                 if last_b_color != self.session.cfg.default_background_color:
