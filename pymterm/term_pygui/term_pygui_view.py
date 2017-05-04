@@ -6,6 +6,7 @@ from GUI import View
 from GUI.Alerts import stop_alert
 import GUI.Font
 from functools32 import lru_cache
+from GUI.Colors import rgb
 
 import cap.cap_manager
 from session import create_session
@@ -107,3 +108,8 @@ class TerminalPyGUIView(TerminalPyGUIViewBase, View):
 
         w = f.width(t)
         return w, f.line_height
+    
+    def gen_render_color(self, color_spec):
+        c = map(lambda x: x / 255, map(float, color_spec))
+
+        return rgb(*c)

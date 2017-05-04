@@ -58,12 +58,14 @@ class TerminalGUI(Terminal):
             return c
 
     def get_line(self, row):
-        return self._screen_buffer.get_line(row)
+        line = self._screen_buffer.get_line(row)
 
+        line.alloc_cells(self.get_cols(), True)
+
+        return line
+    
     def get_cur_line(self):
         line = self.get_line(self.row)
-
-        line.alloc_cells(self.col + 1)
 
         return line
 
@@ -109,11 +111,11 @@ class TerminalGUI(Terminal):
             logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}, line_len={}, cols={}'.format(self.col, self.row, w, len(c), line.cell_count(), self.get_cols()))
 
         if insert:
-            if line.cell_count() + len(c) > self.get_cols():
-                wrap_c = line.get_cells()[self.get_cols() - line.cell_count() - len(c):]
+            if self.col + len(c) > self.get_cols():
+                wrap_c = line.get_cells()[self.get_cols() - self.col - len(c):]
 
                 if wrap_c[0].get_char() == '\000':
-                    wrap_c = line.get_cells()[self.get_cols() - line.cell_count() - len(c) - 1:]
+                    wrap_c = line.get_cells()[self.get_cols() - self.col - len(c) - 1:]
 
                 two_bytes = len(wrap_c)
 
@@ -263,7 +265,7 @@ class TerminalGUI(Terminal):
         line = self.get_cur_line()
 
         for cell in line.get_cells():
-            cell.reset()
+            cell.reset(self.cur_line_option)
 
         self.refresh_display()
 
@@ -275,7 +277,7 @@ class TerminalGUI(Terminal):
             begin -= 1
 
         for i in range(begin, line.cell_count()):
-            line.get_cell(i).reset()
+            line.get_cell(i).reset(self.cur_line_option)
 
         self.refresh_display()
 
@@ -287,7 +289,7 @@ class TerminalGUI(Terminal):
             end = end + 1
 
         for i in range(end + 1):
-            line.get_cell(i).reset()
+            line.get_cell(i).reset(self.cur_line_option)
 
         self.refresh_display()
 
@@ -304,7 +306,7 @@ class TerminalGUI(Terminal):
             if not overwrite and i + count < line.cell_count():
                 line.get_cell(i).copy(line.get_cell(i + count))
             else:
-                line.get_cell(i).reset()
+                line.get_cell(i).reset(self.cur_line_option)
 
         self.refresh_display()
 
@@ -420,7 +422,7 @@ class TerminalGUI(Terminal):
             line = self.get_line(row)
 
             for cell in line.get_cells():
-                cell.reset()
+                cell.reset(self.cur_line_option)
 
         self.refresh_display()
 

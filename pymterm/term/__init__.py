@@ -162,9 +162,9 @@ class Cell(object):
     def get_attr(self):
         return self._attr
 
-    def reset(self):
+    def reset(self, attr=get_default_text_attribute()):
         self.set_char(' ')
-        self.set_attr(get_default_text_attribute())
+        self.set_attr(attr)
 
     def copy(self, cell):
         self.set_char(cell.get_char())

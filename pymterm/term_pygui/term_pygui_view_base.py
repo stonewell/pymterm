@@ -62,7 +62,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
     def gen_render_color(self, color_spec):
         c = map(lambda x: x / 255, map(float, color_spec))
 
-        return r
+        return c
 
     def __refresh(self):
         if self.session and not self.session.stopped:
