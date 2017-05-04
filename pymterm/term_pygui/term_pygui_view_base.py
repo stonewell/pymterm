@@ -368,11 +368,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
                                                               xxxx, y, col_width * 2 if wide_char else col_width, line_height,
                                                               cur_f_color)
 
-                if cur_b_color != self.session.cfg.default_background_color:
-                    self._fill_line_background(line_context, cur_b_color, xxxx, 0,
-                                                   max(t_w, col_width * 2 if wide_char else col_width),
-                                                   t_h)
-
                 self._draw_layouted_line_text(line_context, layout, cur_f_color, xxxx, 0, t_w, t_h)
 
                 if cell.get_attr().has_mode(TextMode.BOLD):
@@ -380,8 +375,38 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
                 return xxxx + t_w
 
+            last_b_color = self.session.cfg.default_background_color
+            last_col = 0
+            cur_col = 0
+
             for cell in line.get_cells():
-                if cell.need_draw():
+                if cell.get_char() == '\000':
+                    cur_col += 1
+                    continue
+                cur_f_color, cur_b_color = self.session.terminal.determin_colors(cell.get_attr())
+                t_w, t_h, layout = self._layout_line_text(line_context, cell.get_char(), font,
+                                                              0, 0, col_width * 2 if cell.is_widechar() else col_width, line_height,
+                                                              cur_f_color)
+
+                if cur_b_color != last_b_color:
+                    if last_b_color != self.session.cfg.default_background_color and cur_col > last_col:
+                        self._fill_line_background(line_context, last_b_color, b_x + last_col * col_width, 0,
+                                                       col_width * (cur_col - last_col),
+                                                       line_height)
+                    last_b_color = cur_b_color
+                    last_col = cur_col
+
+                cur_col += 1
+                b_width += t_w
+
+            if last_col < cur_col:
+                if last_b_color != self.session.cfg.default_background_color:
+                    self._fill_line_background(line_context, last_b_color, b_x + last_col * col_width, 0,
+                                                   col_width * (cur_col - last_col),
+                                                   line_height)
+
+            for cell in line.get_cells():
+                if cell.get_char() != ' ':
                     render_text(b_x, cell)
 
                 b_x += col_width
