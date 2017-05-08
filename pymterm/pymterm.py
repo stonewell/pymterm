@@ -76,6 +76,9 @@ def pymterm_main():
         #Logger.setLevel(logging.ERROR)
 
         TerminalKivyApp(cfg).start()
+    elif cfg.render and cfg.render in session_config.PYGLET_RENDERS:
+        from term_pyglet.term_pyglet import TerminalPygletApp
+        TerminalPygletApp(cfg).start()
     else:
         from term_pygui.term_pygui import TerminalPyGUIApp
         TerminalPyGUIApp(cfg).start()

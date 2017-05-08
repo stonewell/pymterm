@@ -8,7 +8,8 @@ import sys
 import pymterm
 
 GUI_RENDERS = ["cairo", "pygame", "native"]
-RENDERS = GUI_RENDERS + ["kivy", "console"]
+PYGLET_RENDERS = ["pyglet"]
+RENDERS = GUI_RENDERS + ["kivy", "console"] + PYGLET_RENDERS
 
 def get_default_user():
 	return getpass.getuser()

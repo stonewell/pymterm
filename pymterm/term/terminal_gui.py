@@ -9,6 +9,8 @@ from terminal import Terminal
 from charset_mode import translate_char, translate_char_british
 from screen_buffer import ScreenBuffer
 
+LOGGER = logging.getLogger('term_gui')
+
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
@@ -91,7 +93,7 @@ class TerminalGUI(Terminal):
 
         if len(c) == 0:
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('remain_buffer found:{}'.format(map(ord, self.remain_buffer)))
+                LOGGER.debug('remain_buffer found:{}'.format(map(ord, self.remain_buffer)))
             return
 
         self.remain_buffer = []
@@ -102,13 +104,13 @@ class TerminalGUI(Terminal):
         w = char_width(c)
 
         if w == 0 or w == -1:
-            logging.getLogger('term_gui').warning(u'save buffer get a invalid width char: w= {}, c={}'.format(w, c))
+            LOGGER.warning(u'save buffer get a invalid width char: w= {}, c={}'.format(w, c))
 
         if len(c.encode('utf_8')) > 1 and w > 1:
             c += '\000'
 
         if self.cfg.debug_more:
-            logging.getLogger('term_gui').debug(u'save buffer width:{},{},{},len={}, line_len={}, cols={}'.format(self.col, self.row, w, len(c), line.cell_count(), self.get_cols()))
+            LOGGER.debug(u'save buffer width:{},{},{},len={}, line_len={}, cols={}'.format(self.col, self.row, w, len(c), line.cell_count(), self.get_cols()))
 
         if insert:
             if self.col + len(c) > self.get_cols():
@@ -120,7 +122,7 @@ class TerminalGUI(Terminal):
                 two_bytes = len(wrap_c)
 
                 if self.cfg.debug_more:
-                    logging.getLogger('term_gui').debug(u'save buffer wrap:c=[{}], wrap=[{}]'.format(c, wrap_c))
+                    LOGGER.debug(u'save buffer wrap:c=[{}], wrap=[{}]'.format(c, wrap_c))
 
                 self._save_buffer(c, insert)
                 self.wrap_line(''.join([c.get_char() for c in wrap_c]), insert)
@@ -138,7 +140,7 @@ class TerminalGUI(Terminal):
         line = self.get_cur_line()
 
         if self.cfg.debug_more:
-            logging.getLogger('term_gui').debug(u'save buffer:{},{},{},len={}'.format(self.col, self.row, c, len(c)))
+            LOGGER.debug(u'save buffer:{},{},{},len={}'.format(self.col, self.row, c, len(c)))
 
         if insert:
             line.insert_cell(self.col, Cell(c[0], self.cur_line_option, len(c) > 1))
@@ -148,7 +150,7 @@ class TerminalGUI(Terminal):
         else:
             line.alloc_cells(self.col + len(c))
             if self.cfg.debug_more:
-                logging.getLogger('term_gui').debug(u'save buffer option:{},{},{},option={}'.format(self.col, self.row,
+                LOGGER.debug(u'save buffer option:{},{},{},option={}'.format(self.col, self.row,
                                                                                                             c, self.cur_line_option))
             line.get_cell(self.col).set_char(c[0])
             line.get_cell(self.col).set_attr(self.cur_line_option)
@@ -179,18 +181,18 @@ class TerminalGUI(Terminal):
 
     def output_normal_data(self, c, insert = False):
         if c == '\x1b':
-            logging.getLogger('term_gui').error('normal data has escape char')
+            LOGGER.error('normal data has escape char')
             sys.exit(1)
 
         try:
             for cc in c:
                 self.save_buffer(cc, insert)
         except:
-            logging.getLogger('term_gui').exception('save buffer failed')
+            LOGGER.exception('save buffer failed')
 
     def output_status_line_data(self, c):
         if c == '\x1b':
-            logging.getLogger('term_gui').error('status line data has escape char')
+            LOGGER.error('status line data has escape char')
             sys.exit(1)
 
         self.status_line.append(c)
@@ -204,13 +206,13 @@ class TerminalGUI(Terminal):
         self._saved_origin_mode = self._origin_mode
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('{} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, self.get_rows(), self.get_cols()))
+            LOGGER.debug('{} {} {} {} {} {}'.format( 'save', self.saved_cursor, self.row, self.col, self.get_rows(), self.get_cols()))
 
     def restore_cursor(self, context):
         col, row = self.saved_cursor
         
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('{} {} {}'.format( 'restore', row, col))
+            LOGGER.debug('{} {} {}'.format( 'restore', row, col))
             
         self._origin_mode = self._saved_origin_mode
         
@@ -232,7 +234,7 @@ class TerminalGUI(Terminal):
             self.row = row + begin
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('terminal cursor:{}, {}'.format(self.col, self.row));
+            LOGGER.debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
     def cursor_right(self, context):
         self.parm_right_cursor(context)
@@ -326,7 +328,7 @@ class TerminalGUI(Terminal):
 
             func()
         except:
-            logging.getLogger('term_gui').exception('lock display data exec')
+            LOGGER.exception('lock display data exec')
         finally:
             #self._data_lock.release()
             pass
@@ -336,7 +338,7 @@ class TerminalGUI(Terminal):
             self._data_lock.acquire()
             Terminal.on_data(self, data)
         except:
-            logging.getLogger('term_gui').exception('on data')
+            LOGGER.exception('on data')
         finally:
             self._data_lock.release()
 
@@ -344,7 +346,7 @@ class TerminalGUI(Terminal):
 
     def meta_on(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('meta_on')
+            LOGGER.debug('meta_on')
 
     def set_attributes(self, mode, f_color_idx, b_color_idx):
         fore_color = None
@@ -367,34 +369,34 @@ class TerminalGUI(Terminal):
         elif mode == 0:
             self.cur_line_option.reset_mode()
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('reset mode')
+                LOGGER.debug('reset mode')
 
         if f_color_idx >= 0:
             self.cur_line_option.set_fg_idx(f_color_idx)
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('set fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
+                LOGGER.debug('set fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
         elif f_color_idx == -1:
             #reset fore color
             self.cur_line_option.reset_fg_idx()
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('reset fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
+                LOGGER.debug('reset fore color:{} {} {}, cur_option:{}'.format(f_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
 
         if b_color_idx >= 0:
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('set back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
+                LOGGER.debug('set back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
             self.cur_line_option.set_bg_idx(b_color_idx)
         elif b_color_idx == -1:
             #reset back color
             if self.cfg.debug:
-                logging.getLogger('term_gui').debug('reset back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
+                LOGGER.debug('reset back color:{} {} {}, cur_option:{}'.format(b_color_idx, ' at ', self.get_cursor(), self.cur_line_option))
             self.cur_line_option.reset_bg_idx()
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('set attribute:{}'.format(self.cur_line_option))
+            LOGGER.debug('set attribute:{}'.format(self.cur_line_option))
 
     def cursor_address(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('cursor address:{}'.format(context.params))
+            LOGGER.debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
         self.refresh_display()
 
@@ -506,7 +508,7 @@ class TerminalGUI(Terminal):
     def parm_delete_line(self, context):
         if self.cfg.debug:
             begin, end = self.get_scroll_region()
-            logging.getLogger('term_gui').debug('delete line:{} begin={} end={}'.format(context.params, begin, end))
+            LOGGER.debug('delete line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_delete = context.params[0] if len(context.params) > 0 else 1
 
@@ -522,7 +524,7 @@ class TerminalGUI(Terminal):
 
     def change_scroll_region(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
+            LOGGER.debug('change scroll region:{} rows={}'.format(context.params, self.get_rows()))
         if len(context.params) == 0:
             self._screen_buffer.set_scrolling_region(None)
         else:
@@ -532,14 +534,14 @@ class TerminalGUI(Terminal):
 
     def change_scroll_region_from_start(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('change scroll region from start:{} rows={}'.format(context.params, self.get_rows()))
+            LOGGER.debug('change scroll region from start:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(0, context.params[0])
         self.cursor_home(None)
         self.refresh_display()
 
     def change_scroll_region_to_end(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('change scroll region to end:{} rows={}'.format(context.params, self.get_rows()))
+            LOGGER.debug('change scroll region to end:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], self.get_rows() - 1)
         self.cursor_home(None)
         self.refresh_display()
@@ -550,7 +552,7 @@ class TerminalGUI(Terminal):
     def parm_insert_line(self, context):
         if self.cfg.debug:
             begin, end = self.get_scroll_region()
-            logging.getLogger('term_gui').debug('insert line:{} begin={} end={}'.format(context.params, begin, end))
+            LOGGER.debug('insert line:{} begin={} end={}'.format(context.params, begin, end))
 
         c_to_insert = context.params[0] if len(context.params) > 0 else 1
 
@@ -562,12 +564,12 @@ class TerminalGUI(Terminal):
         rbg_response = '\033]11;rgb:%04x/%04x/%04x/%04x\007' % (self.cfg.default_background_color[0], self.cfg.default_background_color[1], self.cfg.default_background_color[2], self.cfg.default_background_color[3])
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug("response background color request:{}".format(rbg_response.replace('\033', '\\E')))
+            LOGGER.debug("response background color request:{}".format(rbg_response.replace('\033', '\\E')))
         self.session.send(rbg_response)
 
     def user9(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('response terminal type:{} {}'.format(context.params, self.cap.cmds['user8'].cap_value))
+            LOGGER.debug('response terminal type:{} {}'.format(context.params, self.cap.cmds['user8'].cap_value))
         self.session.send(self.cap.cmds['user8'].cap_value)
 
     def enter_reverse_mode(self, context):
@@ -600,16 +602,16 @@ class TerminalGUI(Terminal):
     def enter_bold_mode(self, context):
         self.cur_line_option.set_mode(TextMode.BOLD)
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('set bold mode:attr={}'.format(self.cur_line_option))
+            LOGGER.debug('set bold mode:attr={}'.format(self.cur_line_option))
 
     def keypad_xmit(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('keypad transmit mode')
+            LOGGER.debug('keypad transmit mode')
         self.keypad_transmit_mode = True
 
     def keypad_local(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('keypad local mode')
+            LOGGER.debug('keypad local mode')
         self.keypad_transmit_mode = False
 
     def cursor_invisible(self, context):
@@ -627,13 +629,25 @@ class TerminalGUI(Terminal):
         self.col = 0
         self.parm_down_cursor(context)
 
+    def parm_index(self, context):
+        saved_cursor = self.get_cursor()
+        self.parm_down_cursor(context)
+        col, row = self.saved_cursor
+        self.set_cursor(col, row)
+
+    def parm_rindex(self, context):
+        saved_cursor = self.get_cursor()
+        self.parm_up_cursor(context)
+        col, row = self.saved_cursor
+        self.set_cursor(col, row)
+    
     def parm_down_cursor(self, context):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('before parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('before parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
         for i in range(count):
             self.get_cur_line()
 
@@ -645,19 +659,19 @@ class TerminalGUI(Terminal):
             self.get_cur_line()
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('after parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
         self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = None
         self.exit_standout_mode(context)
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('exit alt:{} {}'.format(' at ', self.get_cursor()))
+            LOGGER.debug('exit alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode(self, context):
         self.charset_modes_translate[0] = translate_char
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('enter alt:{} {}'.format(' at ', self.get_cursor()))
+            LOGGER.debug('enter alt:{} {}'.format(' at ', self.get_cursor()))
 
     def enter_alt_charset_mode_british(self, context):
         self.charset_modes_translate[0] = translate_char_british
@@ -682,7 +696,7 @@ class TerminalGUI(Terminal):
 
     def enable_mode(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('enable mode:{}'.format(context.params))
+            LOGGER.debug('enable mode:{}'.format(context.params))
 
         mode = context.params[0]
 
@@ -703,10 +717,12 @@ class TerminalGUI(Terminal):
         elif mode == 6:
             self._origin_mode = True
             self.cursor_home(None)
+        else:
+            LOGGER.warning('not implemented enable mode:{}'.format(context.params))
 
     def disable_mode(self, context):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('disable mode:{}'.format(context.params))
+            LOGGER.debug('disable mode:{}'.format(context.params))
 
         mode = context.params[0]
 
@@ -727,6 +743,8 @@ class TerminalGUI(Terminal):
         elif mode == 6:
             self._origin_mode = False
             self.cursor_home(None)
+        else:
+            LOGGER.warning('not implemented disable mode:{}'.format(context.params))
 
     def process_key(self, keycode, text, modifiers):
         handled = False
@@ -789,7 +807,7 @@ class TerminalGUI(Terminal):
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('before parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('before parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
         for i in range(count):
             self.get_cur_line()
 
@@ -800,15 +818,15 @@ class TerminalGUI(Terminal):
 
             self.get_cur_line()
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
         self.refresh_display()
 
     def prompt_login(self, t, username):
-        logging.getLogger('term_gui').warn('sub class must implement prompt login')
+        LOGGER.warn('sub class must implement prompt login')
         pass
 
     def prompt_password(self, action):
-        logging.getLogger('term_gui').warn('sub class must implement prompt password')
+        LOGGER.warn('sub class must implement prompt password')
         pass
 
     def create_new_line(self):
@@ -862,12 +880,12 @@ class TerminalGUI(Terminal):
 
     def process_status_line(self, mode, status_line):
         if self.cfg.debug:
-            logging.getLogger('term_gui').debug('status line:mode={}, {}'.format(mode, status_line))
+            LOGGER.debug('status line:mode={}, {}'.format(mode, status_line))
         self.session.on_status_line(mode, status_line)
 
     def determin_colors(self, attr):
         if self.cfg.debug_more:
-            logging.getLogger('term_gui').debug('determin_colors:attr={}'.format(attr))
+            LOGGER.debug('determin_colors:attr={}'.format(attr))
         def _get_color(idx):
             color = None
 
@@ -882,7 +900,7 @@ class TerminalGUI(Terminal):
             elif idx == DEFAULT_BG_COLOR_IDX:
                 color = self.cfg.default_background_color
             else:
-                logging.getLogger('term_gui').error('not implemented color:{} mode={}'.format(idx, mode))
+                LOGGER.error('not implemented color:{} mode={}'.format(idx, mode))
                 sys.exit(1)
 
             if attr.has_mode(TextMode.DIM):
@@ -923,3 +941,4 @@ class TerminalGUI(Terminal):
 
     def set_selection(self, s_f, s_t):
         self._screen_buffer.set_selection(s_f, s_t)
+
