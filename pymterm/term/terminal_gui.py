@@ -10,6 +10,7 @@ from charset_mode import translate_char, translate_char_british
 from screen_buffer import ScreenBuffer
 
 LOGGER = logging.getLogger('term_gui')
+TAB_MAX = 999
 
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
@@ -51,7 +52,7 @@ class TerminalGUI(Terminal):
     def _set_default_tab_stops(self):
         tab_width = self.get_tab_width()
 
-        for i in range(0, 999, tab_width):
+        for i in range(0, TAB_MAX, tab_width):
             self._tab_stops[i] = True
 
     def _translate_char(self, c):
@@ -228,7 +229,7 @@ class TerminalGUI(Terminal):
         self.col = col
 
         end = self.get_rows() - 1
-        
+
         if self._origin_mode:
             begin, end = self.get_scroll_region()
             row += begin
@@ -240,7 +241,7 @@ class TerminalGUI(Terminal):
 
         if self.col > self.get_cols():
             self.col = self.get_cols() - 1
-        
+
         if self.cfg.debug:
             LOGGER.debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
@@ -439,23 +440,30 @@ class TerminalGUI(Terminal):
 
     def parm_right_cursor(self, context):
         #same as xterm, if cursor out of screen, moving start from last col
-        if self.col >= self.get_cols():
-            self.col = self.get_cols() - 1
+        col = self.col
 
-        self.col += context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
+        if col >= self.get_cols():
+            col = self.get_cols() - 1
 
-        if self.col > self.get_cols():
-            self.col = self.get_cols() - 1
+        col += context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
+
+        if col > self.get_cols():
+            col = self.get_cols() - 1
+
+        self.col = col
         self.refresh_display()
 
     def parm_left_cursor(self, context):
         #same as xterm, if cursor out of screen, moving start from last col
-        if self.col >= self.get_cols():
-            self.col = self.get_cols() - 1
+        col = self.col
+        if col >= self.get_cols():
+            col = self.get_cols() - 1
 
-        self.col -= context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
-        if self.col < 0:
-            self.col = 0
+        col -= context.params[0] if len(context.params) > 0 and context.params[0] > 0 else 1
+        if col < 0:
+            col = 0
+
+        self.col = col
         self.refresh_display()
 
     def client_report_version(self, context):
@@ -497,7 +505,7 @@ class TerminalGUI(Terminal):
         col = self.col
 
         if len(self._tab_stops) > 0:
-            for c in range(self.col+1, self.get_cols() + 1):
+            for c in range(self.col+1, TAB_MAX):
                 if c in self._tab_stops:
                     col = c
                     break
@@ -649,7 +657,7 @@ class TerminalGUI(Terminal):
         self.parm_up_cursor(context)
         col, row = self.saved_cursor
         self.set_cursor(col, row)
-    
+
     def parm_down_cursor(self, context, do_refresh = True):
         begin, end = self.get_scroll_region()
 
@@ -954,4 +962,3 @@ class TerminalGUI(Terminal):
 
     def set_selection(self, s_f, s_t):
         self._screen_buffer.set_selection(s_f, s_t)
-

@@ -45,6 +45,10 @@ class ScreenBuffer(object):
 
         self._scrolling_region = scrolling_region
 
+        if self._scrolling_region == (0, self._row_count - 1):
+            #reset
+            self._scrolling_region = None
+
         if self._scrolling_region:
             begin, end = self._scrolling_region
 
@@ -155,7 +159,7 @@ class ScreenBuffer(object):
 
         if self._viewing_history:
             return self._lines[self._line_index_view_history : self._line_index_view_history + self._row_count]
-        
+
         if self._scrolling_region:
             begin, end = self._scrolling_region
 
@@ -261,7 +265,7 @@ class ScreenBuffer(object):
 
         if s_from == s_to:
             return
-        
+
         s_f_col, s_f_row = s_from
         s_t_col, s_t_row = s_to
 

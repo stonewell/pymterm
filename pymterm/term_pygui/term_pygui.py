@@ -402,7 +402,7 @@ class TermTabView(TabView):
     def __init__(self, *args, **kwargs):
         TabView.__init__(self, *args, **kwargs)
         self._generic_tabbing = False
-        
+
     def tab_changed(self, tab_index):
         if tab_index >= 0 and tab_index < len(self.items):
             v = self.items[tab_index]
