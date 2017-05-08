@@ -20,7 +20,6 @@ class TerminalGUI(Terminal):
 
         self.col = 0
         self.row = 0 #always from 0 to row_count
-        self._cursor_buffer_row = 0 #save any value from cursor_address ctrl sequence
 
         self.remain_buffer = []
 
@@ -74,7 +73,7 @@ class TerminalGUI(Terminal):
         return line
 
     def wrap_line(self, chars, insert):
-        save_col, save_row, save_cursor_buffer_row = self.col, self.row, self._cursor_buffer_row
+        save_col, save_row = self.col, self.row
 
         self.col = 0
         self.cursor_down(None)
@@ -83,7 +82,7 @@ class TerminalGUI(Terminal):
                 continue
             self._save_buffer(c, insert)
         if insert:
-            self.col, self.row, self._cursor_buffer_row = save_col, save_row, save_cursor_buffer_row
+            self.col, self.row = save_col, save_row
 
     def save_buffer(self, c, insert = False):
         line = self.get_cur_line()
@@ -226,32 +225,22 @@ class TerminalGUI(Terminal):
         return (self.col, self.row)
 
     def set_cursor(self, col, row):
-        old_col, self.col = self.col, col
+        self.col = col
 
+        end = self.get_rows() - 1
+        
         if self._origin_mode:
             begin, end = self.get_scroll_region()
             row += begin
 
-        count = row - self._cursor_buffer_row
+        self.row = row
 
-        #in case the program didn't care about terminal size,
-        #like windows openssh from powershell
-        #they use continuours row number start from 0,
-        #never go back
-        old_row = self.row
+        if self.row > end:
+            self.row = end
 
-        if self.row + count >= self.get_rows() or self.row + count < 0:
-            if count < 0:
-                for i in range(count * -1):
-                    self.parm_up_cursor(None)
-            elif count > 0:
-                for i in range(count):
-                    self.parm_down_cursor(None)
-        else:
-            self.row += count
-
-        old_cursor_buffer_row, self._cursor_buffer_row = self._cursor_buffer_row, row
-
+        if self.col > self.get_cols():
+            self.col = self.get_cols() - 1
+        
         if self.cfg.debug:
             LOGGER.debug('terminal cursor:{}, {}'.format(self.col, self.row));
 
@@ -673,10 +662,8 @@ class TerminalGUI(Terminal):
 
             if self.row == end:
                 self._screen_buffer.scroll_up()
-                self._cursor_buffer_row += 1
             else:
                 self.row += 1
-                self._cursor_buffer_row += 1
 
             self.get_cur_line()
 
@@ -837,10 +824,8 @@ class TerminalGUI(Terminal):
 
             if self.row == begin:
                 self._screen_buffer.scroll_down()
-                self._cursor_buffer_row -= 1
             else:
                 self.row -= 1
-                self._cursor_buffer_row -= 1
 
             self.get_cur_line()
 
@@ -891,7 +876,6 @@ class TerminalGUI(Terminal):
 
         if self.row >= self.get_rows():
             self.row = self.get_rows() - 1
-            self._cursor_buffer_row = self.row
 
         if self.col >= self.get_cols():
             self.col = self.get_cols() - 1
