@@ -34,7 +34,6 @@ xterm-256color|xterm with 256 colors:\
 	cursor_visible=\E[?12;25h:\
 	delete_character=\E[P:\
 	delete_line=\E[M:\
-	enter_am_mode=\E[?7h:\
 	enter_blink_mode=\E[5m:\
 	enter_bold_mode=\E[1m:\
 	enter_ca_mode=\E[?1049h:\
@@ -43,7 +42,6 @@ xterm-256color|xterm with 256 colors:\
 	enter_secure_mode=\E[8m:\
 	enter_underline_mode=\E[4m:\
 	erase_chars=\E[%dX:\
-	exit_am_mode=\E[?7l:\
 	exit_attribute_mode=\E(B\E[m:\
 	exit_ca_mode=\E[?1049l:\
 	exit_insert_mode=\E[4l:\

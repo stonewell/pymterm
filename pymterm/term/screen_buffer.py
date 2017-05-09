@@ -68,6 +68,8 @@ class ScreenBuffer(object):
                     self._line_index_fix_after_scrolling_region):
                     #there is line can scroll up
                     self._line_index_scrolling_region += 1
+                    #reset the old lines
+                    self._lines[self._line_index_scrolling_region].reset()
                 else:
                     #there is no line can scroll up
                     #add new line at scrolling region end
@@ -89,6 +91,8 @@ class ScreenBuffer(object):
                     self._line_index_fix_before_scrolling_region + begin):
                     #there is line can scroll down
                     self._line_index_scrolling_region -= 1
+                    #reset the old lines
+                    self._lines[self._line_index_scrolling_region].reset()
                 else:
                     #there is no line can scroll down
                     #add new line at scrolling region begin

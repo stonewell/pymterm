@@ -269,3 +269,7 @@ class Line(object):
     def get_selection_text(self):
         selected_cells = filter(lambda x: x.get_attr().has_mode(TextMode.SELECTION), self._cells)
         return map(lambda x:x.get_char(), selected_cells)
+
+    def reset(self):
+        for c in self._cells:
+            c.reset()

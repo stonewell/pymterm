@@ -87,9 +87,7 @@ generic-cap|generic ansi escape:\
 	key_c1=\EOp:\
 	key_c3=\EOn:\
 	parm_left_cursor=\E[%dD:\
-	exit_am_mode=\E[?7l:\
 	parm_right_cursor=\E[%dC:\
-	enter_am_mode=\E[?7h:\
 	parm_up_cursor=\E[%dA:\
 	bell=^G:\
 	clr_bol=\E[1K:\

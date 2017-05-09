@@ -733,6 +733,8 @@ class TerminalGUI(Terminal):
                 self.clr_eos(None)
                 self.cursor_home(None)
                 self.resize_terminal()
+        elif mode == 5:
+            self.cur_line_option.set_mode(TextMode.REVERSE)
         elif mode == 6:
             self._origin_mode = True
             self.cursor_home(None)
@@ -759,6 +761,8 @@ class TerminalGUI(Terminal):
                 self.clr_eos(None)
                 self.cursor_home(None)
                 self.resize_terminal()
+        elif mode == 5:
+            self.cur_line_option.unset_mode(TextMode.REVERSE)
         elif mode == 6:
             self._origin_mode = False
             self.cursor_home(None)
