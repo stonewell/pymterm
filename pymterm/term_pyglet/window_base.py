@@ -26,13 +26,18 @@ SINGLE_WIDE_CHARACTERS =	\
 					"{|}~" \
 					""
 
+PADDING = 5
+
 class TermPygletWindowBase(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
         super(TermPygletWindowBase, self).__init__(width=1440, height=1024, *args, **kwargs)
-        self.visible_cols = 80
+        self.visible_cols = 132
         self.visible_rows = 24
 
     def on_resize(self, w, h):
+        self.visible_cols = (w - 2 * PADDING) / 14
+        self.visible_rows = (h - 2 * PADDING) / 17
+
         if self.session:
             self.session.resize_pty(self.visible_cols, self.visible_rows, w, h)
             self.session.terminal.resize_terminal()
@@ -41,18 +46,21 @@ class TermPygletWindowBase(pyglet.window.Window):
     def on_draw(self):
         def locked_draw():
             self.clear()
-            y = self.height
+            y = self.height - PADDING
 
-            text = '\n'.join(map(lambda x:x.get_text().strip(), self.lines))
-
-            label = pyglet.text.Label(text,
+            batch = pyglet.graphics.Batch()
+            for text in map(lambda x:x.get_text().strip(), self.lines):
+                label = pyglet.text.Label(text,
                             font_name='Monospace',
                             font_size=14,
-                            multiline=True,
+                            multiline=False,
                             width=self.width,
-                            x=0, y=y,
-                            anchor_x='left', anchor_y='top')
-            label.draw()
+                            x=PADDING, y=y,
+                            anchor_x='left', anchor_y='top',
+                                              batch=batch)
+                y -= 17
+
+            batch.draw()
 
         if (self.session):
             self.session.terminal.lock_display_data_exec(locked_draw)
@@ -60,12 +68,12 @@ class TermPygletWindowBase(pyglet.window.Window):
     def on_show(self):
         if self.session:
             self.session.start()
-            
+
     def refresh(self):
         def update(dt):
-            pass 
+            pass
 
-        pyglet.clock.schedule_once(update, .1)
+        pyglet.clock.schedule_once(update, 0)
 
     ## def on_key_press(self, symbol, modifiers):
     ##     self.session.send(chr(symbol))

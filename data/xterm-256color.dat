@@ -164,7 +164,6 @@ xterm-256color|xterm with 256 colors:\
 	restore_cursor=\E8:\
 	row_address=\E[%i%dd:\
 	save_cursor=\E7:\
-	parm_up_cursor=\EM:\
 	set_tab=\EH:\
 	tab=^I:\
 	user6=\E[%i%d;%dR:\

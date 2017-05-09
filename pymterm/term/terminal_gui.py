@@ -644,21 +644,21 @@ class TerminalGUI(Terminal):
 
     def next_line(self, context):
         self.col = 0
-        self.parm_down_cursor(context)
+        self.parm_down_cursor(context, True, True)
 
     def parm_index(self, context):
         saved_cursor = self.get_cursor()
-        self.parm_down_cursor(context)
+        self.parm_down_cursor(context, True, True)
         col, row = self.saved_cursor
         self.set_cursor(col, row)
 
     def parm_rindex(self, context):
         saved_cursor = self.get_cursor()
-        self.parm_up_cursor(context)
+        self.parm_up_cursor(context, True, True)
         col, row = self.saved_cursor
         self.set_cursor(col, row)
 
-    def parm_down_cursor(self, context, do_refresh = True):
+    def parm_down_cursor(self, context, do_refresh = True, do_scroll = False):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
@@ -668,9 +668,10 @@ class TerminalGUI(Terminal):
         for i in range(count):
             self.get_cur_line()
 
-            if self.row == end:
+            
+            if do_scroll and self.row == end:
                 self._screen_buffer.scroll_up()
-            else:
+            elif self.row < end:
                 self.row += 1
 
             self.get_cur_line()
@@ -820,7 +821,7 @@ class TerminalGUI(Terminal):
         self.set_cursor(context.params[0], row)
         self.refresh_display()
 
-    def parm_up_cursor(self, context, do_refresh = True):
+    def parm_up_cursor(self, context, do_refresh = True, do_scroll = False):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
@@ -830,9 +831,9 @@ class TerminalGUI(Terminal):
         for i in range(count):
             self.get_cur_line()
 
-            if self.row == begin:
+            if do_scroll and self.row == begin:
                 self._screen_buffer.scroll_down()
-            else:
+            elif self.row > begin:
                 self.row -= 1
 
             self.get_cur_line()

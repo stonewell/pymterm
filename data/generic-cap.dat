@@ -66,7 +66,6 @@ generic-cap|generic ansi escape:\
 	change_scroll_region_to_end=\E[%i%d;r:\
 	change_scroll_region_to_end=\E[%i%dr:\
 	send_primary_device_attributes=\E[%dc:\
-	parm_down_cursor=\ED:\
 	screen_alignment_test=\E#8:\
 #	Reconstructed via infocmp from file: /lib/terminfo/v/vt100\
 #vt100|vt100 terminal:\
@@ -142,9 +141,9 @@ generic-cap|generic ansi escape:\
 	clr_eol=\E[K:\
 	clr_eos=\E[J:\
 	#index
-	parm_down_cursor=\ED:\
+	parm_index=\ED:\
 	#reverse index
-	parm_up_cursor=\EM:\
+	parm_rindex=\EM:\
 	next_line=\EE:\
 	parm_down_cursor=^K:\
 	nope=\177:\
