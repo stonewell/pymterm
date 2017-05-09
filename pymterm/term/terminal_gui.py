@@ -252,10 +252,10 @@ class TerminalGUI(Terminal):
         self.parm_left_cursor(context)
 
     def cursor_down(self, context):
-        self.parm_down_cursor(context)
+        self.parm_down_cursor(context, True, False)
 
     def cursor_up(self, context):
-        self.parm_up_cursor(context)
+        self.parm_up_cursor(context, True, False)
 
     def carriage_return(self, context):
         self.col = 0
@@ -658,7 +658,7 @@ class TerminalGUI(Terminal):
         col, row = self.saved_cursor
         self.set_cursor(col, row)
 
-    def parm_down_cursor(self, context, do_refresh = True, do_scroll = False):
+    def parm_down_cursor(self, context, do_refresh = True, do_scroll = True):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1
@@ -668,7 +668,6 @@ class TerminalGUI(Terminal):
         for i in range(count):
             self.get_cur_line()
 
-            
             if do_scroll and self.row == end:
                 self._screen_buffer.scroll_up()
             elif self.row < end:
@@ -821,7 +820,7 @@ class TerminalGUI(Terminal):
         self.set_cursor(context.params[0], row)
         self.refresh_display()
 
-    def parm_up_cursor(self, context, do_refresh = True, do_scroll = False):
+    def parm_up_cursor(self, context, do_refresh = True, do_scroll = True):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1

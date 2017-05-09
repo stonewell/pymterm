@@ -100,7 +100,7 @@ generic-cap|generic ansi escape:\
 	carriage_return=^M:\
 	change_scroll_region=\E[%i%d;%dr:\
 	clear_tab=\E[%dg:\
-	cursor_down=^J:\
+	next_line=^J:\
 	ena_acs=\E(B\E)0:\
 	cursor_home=\E[H:\
 	key_f0=\EOy:\
@@ -134,16 +134,15 @@ generic-cap|generic ansi escape:\
 	#exit_standout_mode=\E[m:\
 	set_tab=\EH:\
 	tab=^I:\
-	cursor_up=\E[A:\
 	cursor_address=\E[%i%d;%dH:\
 	clear_screen=\E[H\E[2J:\
 	clr_bol=\E[1K:\
 	clr_eol=\E[K:\
 	clr_eos=\E[J:\
 	#index
-	parm_index=\ED:\
+	parm_down_cursor=\ED:\
 	#reverse index
-	parm_rindex=\EM:\
+	parm_up_cursor=\EM:\
 	next_line=\EE:\
 	parm_down_cursor=^K:\
 	nope=\177:\

@@ -27,6 +27,7 @@ SINGLE_WIDE_CHARACTERS =	\
 					""
 
 PADDING = 5
+FONT_NAME = 'WenQuanYi Micro Hei Mono'
 
 class TermPygletWindowBase(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
@@ -51,7 +52,7 @@ class TermPygletWindowBase(pyglet.window.Window):
             batch = pyglet.graphics.Batch()
             for text in map(lambda x:x.get_text().strip(), self.lines):
                 label = pyglet.text.Label(text,
-                            font_name='Monospace',
+                            font_name=FONT_NAME,
                             font_size=14,
                             multiline=False,
                             width=self.width,

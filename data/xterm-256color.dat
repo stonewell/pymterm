@@ -26,13 +26,11 @@ xterm-256color|xterm with 256 colors:\
 	clr_eos=\E[J:\
 	column_address=\E[%i%dG:\
 	cursor_address=\E[%i%d;%dH:\
-	cursor_down=^J:\
 	cursor_home=\E[H:\
 	cursor_invisible=\E[?25l:\
 	cursor_left=^H:\
 	cursor_normal=\E[?12l\E[?25h:\
 	cursor_right=\E[C:\
-	cursor_up=\E[A:\
 	cursor_visible=\E[?12;25h:\
 	delete_character=\E[P:\
 	delete_line=\E[M:\
