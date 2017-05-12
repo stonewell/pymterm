@@ -769,23 +769,23 @@ class TerminalGUI(Terminal):
         else:
             LOGGER.warning('not implemented disable mode:{}'.format(context.params))
 
-    def process_key(self, keycode, text, modifiers):
+    def process_key(self, key_state):
         handled = False
-        code, key = keycode
         view_history_key = False
 
-        if ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and key == 'insert':
-            #paste
+        if key_state.has_shift() and key_state.is_insert_key():
+            # paste
             self.paste_data()
             handled = True
-        elif ('ctrl' in modifiers or 'ctrl_L' in modifiers or 'ctrl_R' in modifiers) and key == 'insert':
-            #copy
+        elif key_state.has_ctrl() and key_state.is_insert_key():
+            # copy
             self.copy_data()
             handled = True
-        elif ('shift' in modifiers or 'shift_L' in modifiers or 'shift_R' in modifiers ) and (key == 'pageup' or key == 'pagedown'):
+        elif key_state.has_shift() and \
+                (key_state.is_pageup_key() or key_state.is_pagedown_key()):
             if not self._screen_buffer.is_view_history():
                 self._screen_buffer.view_history(True)
-            if key == 'pageup':
+            if key_state.is_pageup_key():
                 self._screen_buffer.view_history_pageup()
             else:
                 self._screen_buffer.view_history_pagedown()
@@ -794,7 +794,7 @@ class TerminalGUI(Terminal):
             self.refresh_display()
 
         if (not view_history_key and
-            not ((key == 'shift' or key == 'shift_L' or key == 'shift_R') and len(modifiers) == 0)):
+                (not key_state.is_shift_key() or key_state.has_modifier())):
             self._screen_buffer.view_history(False)
 
         return handled
@@ -808,7 +808,7 @@ class TerminalGUI(Terminal):
 
         lines = self._screen_buffer.get_selection_text()
 
-        texts = map(lambda x:''.join(x.get_selection_text()), lines)
+        texts = map(lambda x: ''.join(x.get_selection_text()), lines)
 
         d = '\r\n'
 

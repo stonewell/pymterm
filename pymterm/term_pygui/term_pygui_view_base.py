@@ -1,40 +1,39 @@
-#coding=utf-8
+# coding=utf-8
 import logging
-import string
 import threading
 
 from GUI import Task
 from GUI import application
-from GUI.Colors import rgb
 from functools32 import lru_cache
 
-import cap.cap_manager
-from session import create_session
-from term import TextAttribute, TextMode, reserve, get_default_text_attribute
 import term.term_keyboard
-from term.terminal_gui import TerminalGUI
 from term.terminal_widget import TerminalWidget
-import term_pygui_key_translate
+from term_pygui_key_translate import KeyState
+from term import TextMode
 import pymterm
 
-SINGLE_WIDE_CHARACTERS =	\
-					" !\"#$%&'()*+,-./" \
-					"0123456789" \
-					":;<=>?@" \
-					"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-					"[\\]^_`" \
-					"abcdefghijklmnopqrstuvwxyz" \
-					"{|}~" \
-					""
+SINGLE_WIDE_CHARACTERS =    \
+                    " !\"#$%&'()*+,-./" \
+                    "0123456789" \
+                    ":;<=>?@" \
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                    "[\\]^_`" \
+                    "abcdefghijklmnopqrstuvwxyz" \
+                    "{|}~" \
+                    ""
+
 
 def boundary(value, minvalue, maxvalue):
     '''Limit a value between a minvalue and maxvalue.'''
     return min(max(value, minvalue), maxvalue)
 
+
 class __cached_line_surf(object):
     pass
 
+
 create_line_surface = None
+
 
 @lru_cache(maxsize=1000)
 def _get_surf(k, width, line_height):
@@ -44,8 +43,8 @@ def _get_surf(k, width, line_height):
 
     return cached_line_surf
 
-class TerminalPyGUIViewBase(TerminalWidget):
 
+class TerminalPyGUIViewBase(TerminalWidget):
     def __init__(self, **kwargs):
         self.padding_x = 5
         self.padding_y = 5
@@ -75,44 +74,26 @@ class TerminalPyGUIViewBase(TerminalWidget):
         self._refresh_task.start()
 
     def key_down(self, e):
-        key = term_pygui_key_translate.translate_key(e)
+        key_state = KeyState(e)
 
-        keycode = (e.char, key)
-        text = key if len(key) == 1 and key[0] in string.printable else e.char if len(e.char) > 0 else None
-        modifiers = []
-
-        if e.option:
-            modifiers.append('alt')
-        if e.control:
-            modifiers.append('ctrl')
-        if e.shift:
-            modifiers.append('shift')
-
-        if pymterm.debug_log:
-            logging.getLogger('term_pygui').debug('view key_down:{}'.format(e))
-            logging.getLogger('term_pygui').debug('view key_down:{}, {}, {}'.format(keycode, text, modifiers))
-
-        if self.session.terminal.process_key(keycode,
-                                             text,
-                                             modifiers):
+        if self.session.terminal.process_key(key_state):
             if pymterm.debug_log:
                 logging.getLogger('term_pygui').debug(' processed by term_gui')
             return
 
         v, handled = term.term_keyboard.translate_key(self.session.terminal,
-                                                 keycode,
-                                                 text,
-                                                 modifiers)
+                                                      key_state)
 
         if len(v) > 0:
             self.session.send(v)
         elif len(e.char) > 0:
             self.session.send(e.char)
-        elif text:
-            self.session.send(text)
+        elif key_state.has_text():
+            self.session.send(key_state.get_text())
 
         if pymterm.debug_log:
-            logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
+            logging.getLogger('term_pygui').debug(
+                ' - translated %r, %d' % (v, handled))
 
         # Return True to accept the key. Otherwise, it will be used by
         # the system.
@@ -125,7 +106,7 @@ class TerminalPyGUIViewBase(TerminalWidget):
     def resized(self, delta):
         w, h = self.size
 
-        if w <= 0 or h <=0:
+        if w <= 0 or h <= 0:
             return
 
         w -= self.padding_x * 2
@@ -164,7 +145,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
         self.cancel_selection()
 
-        self._selection_from = self._selection_to = self._get_cursor_from_xy(*event.position)
+        self._selection_from = self._selection_to = \
+            self._get_cursor_from_xy(*event.position)
 
         mouse_tracker = self.track_mouse()
         while True:
@@ -173,7 +155,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
 
             if to != self._selection_to:
                 self._selection_to = to
-                self.session.terminal.set_selection(self._selection_from, self._selection_to)
+                self.session.terminal.set_selection(self._selection_from,
+                                                    self._selection_to)
                 self.refresh()
 
             if event.kind == 'mouse_up':
@@ -197,7 +180,8 @@ class TerminalPyGUIViewBase(TerminalWidget):
         if cy >= len(l) or cy < 0:
             return 0, 0
 
-        text = self.norm_text(l[cy].get_text(raw=True), False)#reserve double width padding char to calculate width
+        # reserve double width padding char to calculate width
+        text = self.norm_text(l[cy].get_text(raw=True), False)
         width_before = 0
 
         for i in range(0, len(text)):
