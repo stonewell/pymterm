@@ -47,7 +47,7 @@ class TextAttribute(object):
 
         mode = {}
         mode.update(self._mode)
-        
+
         self._hashed_value = (self._f_color_idx, self._b_color_idx, mode)
         self._hash = str(self)
 
@@ -119,7 +119,7 @@ def get_default_text_attribute():
 def clone_attr(attr):
     mode = {}
     mode.update(attr.get_mode())
-    
+
     return TextAttribute(attr.get_fg_idx(), attr.get_bg_idx(), mode)
 
 class Cell(object):
@@ -258,7 +258,7 @@ class Line(object):
             return
 
         self.alloc_cells(end_col)
-        
+
         for i in range(begin_col, end_col):
             self._cells[i].get_attr().set_mode(TextMode.SELECTION)
 

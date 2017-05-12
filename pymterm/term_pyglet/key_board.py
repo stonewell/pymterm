@@ -8,7 +8,10 @@ class KeyState(object):
         _key = key.symbol_string(symbol).lower()
 
         _text = _key if len(_key) == 1 and _key[0] in string.printable \
+            else chr(symbol) if symbol < 256 \
+            and chr(symbol) in string.printable \
             else None
+
         _modifiers = []
 
         if modifiers & key.MOD_ALT or modifiers & key.MOD_OPTION:
@@ -71,7 +74,7 @@ class KeyState(object):
         return self._key == 'delete'
 
     def is_enter_key(self):
-        return self._key == 'enter' or self._key == 'return'
+        return self._key == 'enter'
 
     def is_backspace_key(self):
         return self._key == 'backspace'
