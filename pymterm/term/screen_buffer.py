@@ -2,11 +2,13 @@ import logging
 
 from term import reserve
 from term import Line, Cell
+from term import TextMode
 
 LOGGER = logging.getLogger('screen_buffer')
 
+
 class ScreenBuffer(object):
-    def __init__(self, max_lines = 1000):
+    def __init__(self, max_lines=1000):
         super(ScreenBuffer, self).__init__()
 
         self._max_lines = max_lines
@@ -23,30 +25,33 @@ class ScreenBuffer(object):
         self._line_index_view_history = 0
 
         self._selected_lines = []
+        
+        self._cursor_cell = None
 
     def resize_buffer(self, row_count, col_count):
         self._row_count, self._col_count = row_count, col_count
         self._update_buffer_data()
 
     def get_scrolling_region(self):
-        return self._scrolling_region if self._scrolling_region else (0, self._row_count - 1)
+        return self._scrolling_region \
+            if self._scrolling_region else (0, self._row_count - 1)
 
     def set_scrolling_region(self, scrolling_region):
-        #reset old scrolling region
+        # reset old scrolling region
         if self._scrolling_region:
             begin, end = self._scrolling_region
 
-            #clean up saved scroll buffer
+            # clean up saved scroll buffer
             del self._lines[self._line_index_fix_before_scrolling_region + begin:self._line_index_scrolling_region]
             del self._lines[self._line_index_scrolling_region + end - begin + 1:self._line_index_fix_after_scrolling_region]
 
             self._line_index_fix_after_scrolling_region = \
-              self._line_index_fix_before_scrolling_region + self._row_count
+                self._line_index_fix_before_scrolling_region + self._row_count
 
         self._scrolling_region = scrolling_region
 
         if self._scrolling_region == (0, self._row_count - 1):
-            #reset
+            # reset
             self._scrolling_region = None
 
         if self._scrolling_region:
@@ -59,20 +64,20 @@ class ScreenBuffer(object):
 
         self._update_buffer_data()
 
-    def scroll_up(self, count = 1):
+    def scroll_up(self, count=1):
         for i in range(count):
             if self._scrolling_region:
                 begin, end = self._scrolling_region
 
                 if (self._line_index_scrolling_region + end - begin + 1 <
-                    self._line_index_fix_after_scrolling_region):
-                    #there is line can scroll up
+                        self._line_index_fix_after_scrolling_region):
+                    # there is line can scroll up
                     self._line_index_scrolling_region += 1
-                    #reset the old lines
+                    # reset the old lines
                     self._lines[self._line_index_scrolling_region].reset()
                 else:
-                    #there is no line can scroll up
-                    #add new line at scrolling region end
+                    # there is no line can scroll up
+                    # add new line at scrolling region end
                     self._lines.insert(self._line_index_scrolling_region + end - begin + 1,
                                            Line())
                     self._line_index_fix_after_scrolling_region += 1
@@ -278,7 +283,7 @@ class ScreenBuffer(object):
         for i in range(s_f_row, s_t_row + 1):
             line = lines[i]
             line.select_cells(s_f_col if i == s_f_row else 0,
-                            s_t_col if i == s_t_row else self._col_count)
+                              s_t_col if i == s_t_row else self._col_count)
             self._selected_lines.append(line)
 
     def clear_selection(self):
@@ -292,3 +297,16 @@ class ScreenBuffer(object):
 
     def has_selection(self):
         return len(self._selected_lines) > 0
+
+    def set_cursor(self, cursor):
+        if self._cursor_cell:
+            self._cursor_cell.get_attr().unset_mode(TextMode.CURSOR)
+
+        if cursor:
+            col, row = cursor
+
+            line = self.get_line(row)
+
+            cell = line.get_cell(col)
+            cell.get_attr().set_mode(TextMode.CURSOR)
+            self._cursor_cell = cell

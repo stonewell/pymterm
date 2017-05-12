@@ -303,15 +303,6 @@ class TerminalPyGUIViewBase(TerminalWidget):
             x = b_x = self.padding_x
             line = lines[i]
 
-            #clean up temp cursor mode
-            for cell in line.get_cells():
-                cell.get_attr().unset_mode(TextMode.CURSOR)
-
-            # temprary add cusor mode
-            if self.cursor_visible and i == c_row:
-                line.alloc_cells(c_col + 1)
-                line.get_cell(c_col).get_attr().set_mode(TextMode.CURSOR)
-
             col = 0
             last_col = 0
             text = ''

@@ -49,6 +49,8 @@ class TerminalGUI(Terminal):
         self._tab_stops = {}
         self._set_default_tab_stops()
 
+        self._cursor_visible = True
+
     def _set_default_tab_stops(self):
         tab_width = self.get_tab_width()
 
@@ -304,14 +306,16 @@ class TerminalGUI(Terminal):
 
         self.refresh_display()
 
-    def delete_chars(self, count, overwrite = False):
+    def delete_chars(self, count, overwrite=False):
         line = self.get_cur_line()
         begin = self.col
 
         if line.get_cell(begin).get_char() == '\000':
             begin -= 1
 
-        end = line.cell_count() if not overwrite or begin + count > line.cell_count() else begin + count
+        end = line.cell_count() \
+            if not overwrite or begin + count > line.cell_count() \
+            else begin + count
 
         for i in range(begin, end):
             if not overwrite and i + count < line.cell_count():
@@ -326,20 +330,25 @@ class TerminalGUI(Terminal):
 
     def lock_display_data_exec(self, func):
         try:
-            #self._data_lock.acquire()
+            # self._data_lock.acquire()
 
             lines = self.get_text()
 
+            cursor_visible = not self._screen_buffer.is_view_history() \
+                and self._cursor_visible
+            
             self.term_widget.lines = lines
             self.term_widget.term_cursor = self.get_cursor()
-            self.term_widget.cursor_visible = not self._screen_buffer.is_view_history()
+            self.term_widget.cursor_visible = cursor_visible
             self.term_widget.focus = True
+            self._screen_buffer.set_cursor(self.get_cursor()
+                                           if cursor_visible else None)
 
             func()
         except:
             LOGGER.exception('lock display data exec')
         finally:
-            #self._data_lock.release()
+            # self._data_lock.release()
             pass
 
     def on_data(self, data):
@@ -632,11 +641,11 @@ class TerminalGUI(Terminal):
         self.keypad_transmit_mode = False
 
     def cursor_invisible(self, context):
-        self.term_widget.cursor_visible = False
+        self._cursor_visible = False
         self.refresh_display()
 
     def cursor_normal(self, context):
-        self.term_widget.cursor_visible = True
+        self._cursor_visible = True
         self.refresh_display()
 
     def cursor_visible(self, context):

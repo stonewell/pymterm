@@ -88,6 +88,8 @@ class TermPygletWindowBase(pyglet.window.Window):
 
         if b_color != \
            self.session.cfg.default_background_color:
+            if begin == 2 and end == 3:
+                LOGGER.error('update curosor background')
             attrs.update({'background_color': b_color})
 
         if bold:
@@ -96,7 +98,7 @@ class TermPygletWindowBase(pyglet.window.Window):
         doc.set_style(begin, end, attrs)
 
     def _create_line_layout(self, line, batch):
-        text = line.get_text().strip()
+        text = line.get_text()
 
         last_b_color = self.session.cfg.default_background_color
         last_f_color = self.session.cfg.default_foreground_color
@@ -127,8 +129,15 @@ class TermPygletWindowBase(pyglet.window.Window):
 
             cur_bold = cell.get_attr().has_mode(TextMode.BOLD)
 
+            if cell.get_attr().has_mode(TextMode.CURSOR):
+                LOGGER.error('cursor found')
             if (cur_b_color, cur_f_color, cur_bold) != \
                (last_b_color, last_f_color, last_bold):
+                if cell.get_attr().has_mode(TextMode.CURSOR):
+                    LOGGER.error('cursor found:{}, {}'.format(cur_col, last_col))
+                elif last_col == 2:
+                    LOGGER.error('cursor found:{}, {}'.format(cur_col, last_col))
+
                 if cur_col > last_col:
                     self._set_doc_attribute(doc,
                                             last_col,
@@ -199,10 +208,6 @@ class TermPygletWindowBase(pyglet.window.Window):
                 key.symbol_string(symbol),
                 key.modifiers_string(modifiers)))
 
-        LOGGER.error('on_key_press:{}, {}'.format(
-                key.symbol_string(symbol),
-                key.modifiers_string(modifiers)))
-        
         key_state = KeyState(symbol, modifiers)
 
         if symbol == key.Q and \
@@ -228,7 +233,6 @@ class TermPygletWindowBase(pyglet.window.Window):
         if pymterm.debug_log:
             LOGGER.debug(u'on_text:{}'.format(text))
 
-        LOGGER.error(u'on_text:{}'.format(text))
         self.session.send(text.encode('utf_8'))
 
     def on_text_motion(self, motion):
