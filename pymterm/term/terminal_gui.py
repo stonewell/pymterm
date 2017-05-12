@@ -793,8 +793,8 @@ class TerminalGUI(Terminal):
             view_history_key = True
             self.refresh_display()
 
-        if (not view_history_key and
-                (not key_state.is_shift_key() or key_state.has_modifier())):
+        if not view_history_key and \
+                not key_state.is_shift_key():
             self._screen_buffer.view_history(False)
 
         return handled

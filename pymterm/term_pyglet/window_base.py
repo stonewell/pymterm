@@ -1,39 +1,41 @@
-#coding=utf-8
+# coding=utf-8
 import logging
 import string
 import threading
 
 import pyglet
+from pyglet.window import key
 
-from functools32 import lru_cache
-
-import cap.cap_manager
-from session import create_session
-from term import TextAttribute, TextMode, reserve, get_default_text_attribute
 import term.term_keyboard
-from term.terminal_gui import TerminalGUI
-from term.terminal_widget import TerminalWidget
 
 import pymterm
 
-SINGLE_WIDE_CHARACTERS =	\
-					" !\"#$%&'()*+,-./" \
-					"0123456789" \
-					":;<=>?@" \
-					"ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
-					"[\\]^_`" \
-					"abcdefghijklmnopqrstuvwxyz" \
-					"{|}~" \
-					""
+from key_board import KeyState
+
+SINGLE_WIDE_CHARACTERS =    \
+                    " !\"#$%&'()*+,-./" \
+                    "0123456789" \
+                    ":;<=>?@" \
+                    "ABCDEFGHIJKLMNOPQRSTUVWXYZ" \
+                    "[\\]^_`" \
+                    "abcdefghijklmnopqrstuvwxyz" \
+                    "{|}~" \
+                    ""
+LOGGER = logging.getLogger('term_pyglet')
 
 PADDING = 5
 FONT_NAME = 'WenQuanYi Micro Hei Mono'
 
+
 class TermPygletWindowBase(pyglet.window.Window):
     def __init__(self, *args, **kwargs):
-        super(TermPygletWindowBase, self).__init__(width=1440, height=1024, *args, **kwargs)
+        super(TermPygletWindowBase, self).__init__(width=1280,
+                                                   height=800, *args, **kwargs)
         self.visible_cols = 132
         self.visible_rows = 24
+        self._keys_handler = key.KeyStateHandler()
+        self.push_handlers(self._keys_handler)
+        self._key_first_down = False
 
     def on_resize(self, w, h):
         self.visible_cols = (w - 2 * PADDING) / 14
@@ -50,15 +52,16 @@ class TermPygletWindowBase(pyglet.window.Window):
             y = self.height - PADDING
 
             batch = pyglet.graphics.Batch()
+
             for text in map(lambda x:x.get_text().strip(), self.lines):
-                label = pyglet.text.Label(text,
-                            font_name=FONT_NAME,
-                            font_size=14,
-                            multiline=False,
-                            width=self.width,
-                            x=PADDING, y=y,
-                            anchor_x='left', anchor_y='top',
-                                              batch=batch)
+                pyglet.text.Label(text,
+                    font_name=FONT_NAME,
+                    font_size=14,
+                    multiline=False,
+                    width=self.width,
+                    x=PADDING, y=y,
+                    anchor_x='left', anchor_y='top',
+                    batch=batch)
                 y -= 17
 
             batch.draw()
@@ -76,15 +79,36 @@ class TermPygletWindowBase(pyglet.window.Window):
 
         pyglet.clock.schedule_once(update, 0)
 
-    ## def on_key_press(self, symbol, modifiers):
-    ##     self.session.send(chr(symbol))
+    def on_key_press(self, symbol, modifiers):
+        if pymterm.debug_log:
+            LOGGER.debug('on_key_press:{}, {}'.format(
+                key.symbol_string(symbol),
+                key.modifiers_string(modifiers)))
 
-    ##     if pymterm.debug_log:
-    ##         logging.getLogger('term_pygui').debug(' - translated %r, %d' % (v, handled))
+        key_state = KeyState(symbol, modifiers)
 
-    ##     # Return True to accept the key. Otherwise, it will be used by
-    ##     # the system.
-    ##     return
+        if self.session.terminal.process_key(key_state):
+            if pymterm.debug_log:
+                logging.getLogger('term_pygui').debug(' processed by pyterm')
+            return
+
+        v, handled = term.term_keyboard.translate_key(self.session.terminal,
+                                                      key_state)
+
+        if len(v) > 0:
+            self.session.send(v)
+
+        self._key_first_down = True
 
     def on_text(self, text):
-        self.session.send(text)
+        if pymterm.debug_log:
+            LOGGER.debug(u'on_text:{}'.format(text))
+
+        self.session.send(text.encode('utf_8'))
+
+    def on_text_motion(self, motion):
+        if motion == key.MOTION_BACKSPACE:
+            if self._key_first_down:
+                self._key_first_down = False
+            else:
+                self.on_key_press(key.BACKSPACE, 0)

@@ -61,16 +61,9 @@ def translate_key(term, key_state):
     else:
         # numpad
         # function keys
-        if 'key_' + key_state.get_key_name() in term.cap.cmds:
-            cap_name = 'key_' + key_state.get_key_name()
+        cap_name = 'key_' + key_state.get_key_name()
+        if cap_name in term.cap.cmds:
             result.append(term.cap.cmds[cap_name].cap_value)
-            handled = True
-
-    # not handled and no text
-    if not handled and not key_state.has_text():
-        # todo convert keycode to bytes
-        if key_state.get_key_code() < 256:
-            result.append(chr(key_state.get_key_code()))
             handled = True
 
     # do not translate single Alt
