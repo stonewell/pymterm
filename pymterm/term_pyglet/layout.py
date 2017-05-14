@@ -13,7 +13,11 @@ _is_epydoc = hasattr(sys, 'is_epydoc') and sys.is_epydoc
 
 _distance_re = re.compile(r'([-0-9.]+)([a-zA-Z]+)')
 
-col_width = 14
+
+def _get_glyph_advance(col_width, glyph):
+    return col_width if glyph.advance <= col_width \
+        else col_width * 2
+
 
 def _parse_distance(distance, dpi):
     '''Parse a distance string and return corresponding distance in pixels as
@@ -137,7 +141,7 @@ class _AbstractBox(object):
 
 
 class _GlyphBox(_AbstractBox):
-    def __init__(self, owner, font, glyphs, advance):
+    def __init__(self, owner, font, glyphs, advance, col_width):
         '''Create a run of glyphs sharing the same texture.
 
         :Parameters:
@@ -160,6 +164,7 @@ class _GlyphBox(_AbstractBox):
         self.font = font
         self.glyphs = glyphs
         self.advance = advance
+        self._col_width = col_width
 
     def place(self, layout, i, x, y, context):
         assert self.glyphs
@@ -186,7 +191,7 @@ class _GlyphBox(_AbstractBox):
                 vertices.extend(map(int, [v0, v1, v2, v1, v2, v3, v0, v3]))
                 t = glyph.tex_coords
                 tex_coords.extend(t)
-                x1 += col_width if glyph.advance <= col_width else col_width * 2
+                x1 += _get_glyph_advance(self._col_width, glyph)
 
         # Text color
         colors = []
@@ -219,7 +224,7 @@ class _GlyphBox(_AbstractBox):
             bg, underline = decoration
             x2 = x1
             for kern, glyph in self.glyphs[start - i:end - i]:
-                x2 += kern + (col_width if glyph.advance <= col_width else col_width * 2)
+                x2 += kern + _get_glyph_advance(self._col_width, glyph)
 
             if bg is not None:
                 background_vertices.extend(
@@ -258,7 +263,7 @@ class _GlyphBox(_AbstractBox):
             if position == 0:
                 break
             position -= 1
-            x += kern + (col_width if glyph.advance <= col_width else col_width * 2)  # glyph.advance + kern
+            x += kern + _get_glyph_advance(self._col_width, glyph)  # glyph.advance + kern
         return x
 
     def get_position_in_box(self, x):
@@ -267,10 +272,10 @@ class _GlyphBox(_AbstractBox):
         for kern, glyph in self.glyphs:
             last_glyph_x += kern
             # if last_glyph_x + glyph.advance // 2 > x:
-            if last_glyph_x + (col_width if glyph.advance <= col_width else col_width * 2) // 2 > x:
+            if last_glyph_x + _get_glyph_advance(self._col_width, glyph) // 2 > x:
                 return position
             position += 1
-            last_glyph_x += (col_width if glyph.advance <= col_width else col_width * 2)  # glyph.advance
+            last_glyph_x += _get_glyph_advance(self._col_width, glyph)  # glyph.advance
         return position
 
     def __repr__(self):
@@ -477,13 +482,15 @@ class TextLayout(object):
     _own_batch = False
     _origin_layout = False  # Lay out relative to origin?  Otherwise to box.
 
-    def __init__(self, document, width=None, height=None,
+    def __init__(self, document, col_width, width=None, height=None,
                  dpi=None, batch=None, group=None):
         '''Create a text layout.
 
         :Parameters:
             `document` : `AbstractDocument`
                 Document to display.
+            `col_width` : int
+                Fixed column width for glyphs
             `width` : int
                 Width of the layout in pixels, or None
             `height` : int
@@ -504,6 +511,7 @@ class TextLayout(object):
         self.groups = {}
         self._init_groups(group)
 
+        self._col_width = col_width
         if batch is None:
             batch = graphics.Batch()
             self._own_batch = True
@@ -769,7 +777,7 @@ class TextLayout(object):
             for kern_start, kern_end, kern in kern_iterator.ranges(start, end):
                 gs = glyphs[kern_start:kern_end]
                 # width += sum([g.advance for g in gs])
-                width += sum([(col_width if glyph.advance <= col_width else col_width * 2) for glyph in gs])
+                width += sum([_get_glyph_advance(self._col_width, glyph) for glyph in gs])
                 width += kern * (kern_end - kern_start)
                 owner_glyphs.extend(zip([kern] * (kern_end - kern_start), gs))
             if owner is None:
@@ -777,7 +785,7 @@ class TextLayout(object):
                 for kern, glyph in owner_glyphs:
                     line.add_box(glyph)
             else:
-                line.add_box(_GlyphBox(owner, font, owner_glyphs, width))
+                line.add_box(_GlyphBox(owner, font, owner_glyphs, width, self._col_width))
 
         if not line.boxes:
             line.ascent = font.ascent

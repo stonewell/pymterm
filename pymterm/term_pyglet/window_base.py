@@ -80,7 +80,6 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
         col_width = max([g.advance for g in glyphs])
         line_height = f.ascent - f.descent + LEADING
 
-        LOGGER.error('{}, {}'.format(col_width, line_height))
         return col_width, line_height
 
     def _set_doc_attribute(self, doc, begin, end, f_color, b_color, bold):
@@ -158,6 +157,7 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
 
         col_width, line_height = self._get_layout_info()
         return layout.TextLayout(doc,
+                                 col_width,
                                  batch=batch,
                                  height=line_height)
 
