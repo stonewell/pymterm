@@ -70,6 +70,22 @@ class TerminalPygletApp():
     def new_window_cmd(self):
         self.connect_to()
 
+
 class TerminalPyglet(TerminalGUI):
     def __init__(self, cfg):
         super(TerminalPyglet, self).__init__(cfg)
+
+    def prompt_login(self, transport, username):
+        pass
+
+    def prompt_password(self, action):
+        pass
+
+    def report_error(self, msg):
+        pass
+
+    def ask_user(self, msg):
+        pass
+
+    def process_status_line(self, mode, status_line):
+        TerminalGUI.process_status_line(self, mode, status_line)

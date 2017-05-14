@@ -1,6 +1,8 @@
 # coding=utf-8
 import logging
 
+import layout
+
 from functools32 import lru_cache
 
 from OpenGL.GL import glClearColor
@@ -10,6 +12,7 @@ from pyglet.window import key
 
 import term.term_keyboard
 from term import TextMode
+from term.terminal_widget import TerminalWidget
 
 import pymterm
 
@@ -28,10 +31,10 @@ LOGGER = logging.getLogger('term_pyglet')
 
 PADDING = 5
 FONT_NAME = 'WenQuanYi Micro Hei Mono'
-LEADING = 3
+LEADING = 1
 
 
-class TermPygletWindowBase(pyglet.window.Window):
+class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
     def __init__(self, *args, **kwargs):
         super(TermPygletWindowBase, self).__init__(width=1280,
                                                    height=800,
@@ -77,6 +80,7 @@ class TermPygletWindowBase(pyglet.window.Window):
         col_width = max([g.advance for g in glyphs])
         line_height = f.ascent - f.descent + LEADING
 
+        LOGGER.error('{}, {}'.format(col_width, line_height))
         return col_width, line_height
 
     def _set_doc_attribute(self, doc, begin, end, f_color, b_color, bold):
@@ -88,8 +92,6 @@ class TermPygletWindowBase(pyglet.window.Window):
 
         if b_color != \
            self.session.cfg.default_background_color:
-            if begin == 2 and end == 3:
-                LOGGER.error('update curosor background')
             attrs.update({'background_color': b_color})
 
         if bold:
@@ -129,15 +131,8 @@ class TermPygletWindowBase(pyglet.window.Window):
 
             cur_bold = cell.get_attr().has_mode(TextMode.BOLD)
 
-            if cell.get_attr().has_mode(TextMode.CURSOR):
-                LOGGER.error('cursor found')
             if (cur_b_color, cur_f_color, cur_bold) != \
                (last_b_color, last_f_color, last_bold):
-                if cell.get_attr().has_mode(TextMode.CURSOR):
-                    LOGGER.error('cursor found:{}, {}'.format(cur_col, last_col))
-                elif last_col == 2:
-                    LOGGER.error('cursor found:{}, {}'.format(cur_col, last_col))
-
                 if cur_col > last_col:
                     self._set_doc_attribute(doc,
                                             last_col,
@@ -161,10 +156,10 @@ class TermPygletWindowBase(pyglet.window.Window):
                                     last_b_color,
                                     last_bold)
 
-        return pyglet.text.layout.TextLayout(doc,
-                                             multiline=False,
-                                             wrap_lines=False,
-                                             batch=batch)
+        col_width, line_height = self._get_layout_info()
+        return layout.TextLayout(doc,
+                                 batch=batch,
+                                 height=line_height)
 
     def on_draw(self):
         col_width, line_height = self._get_layout_info()
@@ -217,7 +212,7 @@ class TermPygletWindowBase(pyglet.window.Window):
 
         if self.session.terminal.process_key(key_state):
             if pymterm.debug_log:
-                logging.getLogger('term_pygui').debug(' processed by pyterm')
+                LOGGER.debug(' processed by pyterm')
             return
 
         v, handled = term.term_keyboard.translate_key(self.session.terminal,
@@ -226,7 +221,6 @@ class TermPygletWindowBase(pyglet.window.Window):
         if len(v) > 0:
             self.session.send(v)
 
-        logging.error('{},{}'.format(v, handled))
         self._key_first_down = True
 
     def on_text(self, text):
