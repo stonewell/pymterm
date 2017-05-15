@@ -157,15 +157,15 @@ class SessionConfig:
                 g = (i / 6) % 6
                 b = i % 6
                 self.color_table.append([r * 40 + 55 if r > 0 else 0,
-                                                 g * 40 + 55 if g > 0 else 0,
-                                                 b * 40 + 55 if b > 0 else 0,
-                                                 0xFF])
+                                         g * 40 + 55 if g > 0 else 0,
+                                         b * 40 + 55 if b > 0 else 0,
+                                         0xFF])
             else:
                 shade = (i - 216) * 10 + 8
                 self.color_table.append([shade,
-                                             shade,
-                                             shade,
-                                             0xFF])
+                                         shade,
+                                         shade,
+                                         0xFF])
         #load config
         if self.color_theme:
             from colour.color_manager import get_color_theme

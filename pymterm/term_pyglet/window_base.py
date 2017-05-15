@@ -31,7 +31,7 @@ LOGGER = logging.getLogger('term_pyglet')
 
 PADDING = 5
 FONT_NAME = 'WenQuanYi Micro Hei Mono'
-LEADING = 1
+LEADING = 0
 
 
 class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):

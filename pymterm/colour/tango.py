@@ -15,14 +15,6 @@ TANGO_PALLETE = [
     'adad7f7fa8a8',
     '3434e2e2e2e2',
     'eeeeeeeeecec',
-    '4c4c4c4c4c4c',
-    'a8a830303030',
-    '202088882020',
-    'a8a888880000',
-    '555555559898',
-    '888830308888',
-    '303088888888',
-    'd8d8d8d8d8d8',
 ]
 
 def parse_tango_color(c):
