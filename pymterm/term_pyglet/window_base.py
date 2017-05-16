@@ -29,9 +29,30 @@ SINGLE_WIDE_CHARACTERS =    \
                     ""
 LOGGER = logging.getLogger('term_pyglet')
 
+
+def update(dt):
+    pass
+
+
+# this interval task make sure the window
+# will be refreshed at most 5 times persecond
+# the real window update only happends
+# when window.invlid and _legacy_invalid are true
+pyglet.clock.schedule_interval(update, .2)
+
 PADDING = 5
 FONT_NAME = 'WenQuanYi Micro Hei Mono'
 LEADING = 0
+
+
+class LineDocumentCache(object):
+    cached = False
+    doc = None
+
+
+@lru_cache(200)
+def _get_line_doc(key):
+    return LineDocumentCache()
 
 
 class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
@@ -45,6 +66,8 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
         self._keys_handler = key.KeyStateHandler()
         self.push_handlers(self._keys_handler)
         self._key_first_down = False
+        self._need_redraw = False
+        self._batch = pyglet.graphics.Batch()
 
     def on_resize(self, w, h):
         col_width, line_height = self._get_layout_info()
@@ -98,7 +121,7 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
 
         doc.set_style(begin, end, attrs)
 
-    def _create_line_layout(self, line, batch):
+    def _create_line_doc(self, line):
         text = line.get_text()
 
         last_b_color = self.session.cfg.default_background_color
@@ -155,6 +178,18 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
                                     last_b_color,
                                     last_bold)
 
+        return doc
+
+    def _create_line_layout(self, line, batch):
+        cache = _get_line_doc(line.get_hash_value())
+
+        if cache.cached:
+            doc = cache.doc
+        else:
+            doc = self._create_line_doc(line)
+            cache.doc = doc
+            cache.cached = True
+
         col_width, line_height = self._get_layout_info()
         return layout.TextLayout(doc,
                                  col_width,
@@ -162,14 +197,20 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
                                  height=line_height)
 
     def on_draw(self):
+        glClearColor(*self._clear_color)
+        self.clear()
+        self._draw_content()
+        self._batch.draw()
+        self.invalid = False
+        self._legacy_invalid = False
+
+    def _draw_content(self):
         col_width, line_height = self._get_layout_info()
 
-        def locked_draw():
-            glClearColor(*self._clear_color)
-            self.clear()
-            y = self.height - PADDING - line_height
+        batch = pyglet.graphics.Batch()
 
-            batch = pyglet.graphics.Batch()
+        def locked_draw():
+            y = self.height - PADDING - line_height
 
             for line in self.lines:
                 layout = self._create_line_layout(line, batch)
@@ -182,20 +223,21 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
 
                 y -= line_height
 
-            batch.draw()
-
         if (self.session):
             self.session.terminal.lock_display_data_exec(locked_draw)
+
+        self._batch = batch
 
     def on_show(self):
         if self.session:
             self.session.start()
 
     def refresh(self):
-        def update(dt):
-            pass
+        def update_content(dt):
+            self.invalid = True
+            self._legacy_invalid = True
 
-        pyglet.clock.schedule_once(update, 0)
+        pyglet.clock.schedule_once(update_content, 0)
 
     def on_key_press(self, symbol, modifiers):
         if pymterm.debug_log:

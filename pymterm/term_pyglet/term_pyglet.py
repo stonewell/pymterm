@@ -16,13 +16,16 @@ from window import TermPygletWindow
 
 LOGGER = logging.getLogger('term_pyglet')
 
+
 class TerminalPygletApp():
     def __init__(self, cfg):
         self.cfg = cfg
         self.conn_history = []
         self._windows = []
+        self._event_loop = TermPygletEventLoop()
+        pyglet.app.event_loop = self._event_loop
 
-    def connect_to(self, conn_str = None, port = None, session_name = None, win = None):
+    def connect_to(self, conn_str=None, port=None, session_name=None, win=None):
         cfg = self.cfg.clone()
         if conn_str:
             cfg.set_conn_str(conn_str)
@@ -40,7 +43,8 @@ class TerminalPygletApp():
 
     def start(self):
         self.open_app()
-        pyglet.app.run()
+
+        self._event_loop.run()
 
     def open_app(self):
         self.connect_to()
@@ -63,12 +67,32 @@ class TerminalPygletApp():
         window.session = session
         window.tab_width = session.get_tab_width()
 
-        #session.start()
-
         self._windows.append(window)
 
     def new_window_cmd(self):
         self.connect_to()
+
+
+class TermPygletEventLoop(pyglet.app.EventLoop):
+    def __init__(self, *args, **kwargs):
+        super(TermPygletEventLoop, self).__init__(*args, **kwargs)
+
+    def idle(self):
+        dt = self.clock.update_time()
+        self.clock.call_scheduled_functions(dt)
+
+        # Redraw all windows only when windows is invalid
+        for window in pyglet.app.windows:
+            if (window._legacy_invalid and window.invalid):
+                window.switch_to()
+                window.dispatch_event('on_draw')
+                window.flip()
+                window._legacy_invalid = False
+
+        # Update timout
+        timeout = self.clock.get_sleep_time(True)
+
+        return timeout
 
 
 class TerminalPyglet(TerminalGUI):
