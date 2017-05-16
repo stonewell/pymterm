@@ -68,6 +68,7 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
         self._key_first_down = False
         self._need_redraw = False
         self._batch = pyglet.graphics.Batch()
+        self._draw_lines = []
 
     def on_resize(self, w, h):
         col_width, line_height = self._get_layout_info()
@@ -207,13 +208,26 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
     def _draw_content(self):
         col_width, line_height = self._get_layout_info()
 
-        batch = pyglet.graphics.Batch()
-
         def locked_draw():
             y = self.height - PADDING - line_height
 
+            index = 0
             for line in self.lines:
-                layout = self._create_line_layout(line, batch)
+                try:
+                    if self._draw_lines[index][0] == line \
+                       and not line.need_calc_hash():
+                        index += 1
+                        y -= line_height
+                        continue
+                except:
+                    pass
+
+                try:
+                    self._draw_lines[index][1].delete()
+                except:
+                    pass
+
+                layout = self._create_line_layout(line, self._batch)
                 layout.begin_update()
                 layout.x = PADDING
                 layout.y = y
@@ -221,12 +235,16 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
                 layout.height = line_height
                 layout.end_update()
 
+                try:
+                    self._draw_lines[index] = (line, layout)
+                except:
+                    self._draw_lines.append((line, layout))
+
                 y -= line_height
+                index += 1
 
         if (self.session):
             self.session.terminal.lock_display_data_exec(locked_draw)
-
-        self._batch = batch
 
     def on_show(self):
         if self.session:
