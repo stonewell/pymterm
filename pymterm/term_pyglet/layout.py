@@ -8,6 +8,7 @@ from OpenGL.GL import *
 from pyglet import graphics
 from pyglet.text import runlist
 
+from term.term_char_width import char_width
 
 _is_epydoc = hasattr(sys, 'is_epydoc') and sys.is_epydoc
 
@@ -15,6 +16,8 @@ _distance_re = re.compile(r'([-0-9.]+)([a-zA-Z]+)')
 
 
 def _get_glyph_advance(col_width, glyph):
+    if glyph.char_width >= 0:
+        return col_width * glyph.char_width
     return col_width if glyph.advance <= col_width \
         else col_width * 2
 
@@ -263,7 +266,7 @@ class _GlyphBox(_AbstractBox):
             if position == 0:
                 break
             position -= 1
-            x += kern + _get_glyph_advance(self._col_width, glyph)  # glyph.advance + kern
+            x += kern + _get_glyph_advance(self._col_width, glyph)
         return x
 
     def get_position_in_box(self, x):
@@ -271,11 +274,10 @@ class _GlyphBox(_AbstractBox):
         last_glyph_x = 0
         for kern, glyph in self.glyphs:
             last_glyph_x += kern
-            # if last_glyph_x + glyph.advance // 2 > x:
             if last_glyph_x + _get_glyph_advance(self._col_width, glyph) // 2 > x:
                 return position
             position += 1
-            last_glyph_x += _get_glyph_advance(self._col_width, glyph)  # glyph.advance
+            last_glyph_x += _get_glyph_advance(self._col_width, glyph)
         return position
 
     def __repr__(self):
@@ -738,9 +740,14 @@ class TextLayout(object):
         text = self._document.text
         for start, end, (font, element) in runs.ranges(0, len(text)):
             if element:
-                glyphs.append(_InlineElementBox(element))
+                ee = _InlineElementBox(element)
+                ee.char_width = -1
+                glyphs.append(ee)
             else:
-                glyphs.extend(font.get_glyphs(text[start:end]))
+                f_glyphs = font.get_glyphs(text[start:end])
+                for i in range(start, end):
+                    f_glyphs[i - start].char_width = char_width(text[i])
+                glyphs.extend(f_glyphs)
         return glyphs
 
     def _get_owner_runs(self, owner_runs, glyphs, start, end):

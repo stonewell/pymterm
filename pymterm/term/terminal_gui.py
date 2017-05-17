@@ -2,7 +2,9 @@ import logging
 import sys
 import threading
 
-from term import TextAttribute, TextMode, reserve, clone_attr, get_default_text_attribute, DEFAULT_FG_COLOR_IDX, DEFAULT_BG_COLOR_IDX
+from term import TextMode
+from term import get_default_text_attribute
+from term import DEFAULT_FG_COLOR_IDX, DEFAULT_BG_COLOR_IDX
 from term import Cell, Line
 from term_char_width import char_width
 from terminal import Terminal
@@ -12,6 +14,7 @@ from screen_buffer import ScreenBuffer
 LOGGER = logging.getLogger('term_gui')
 TAB_MAX = 999
 
+
 class TerminalGUI(Terminal):
     def __init__(self, cfg):
         Terminal.__init__(self, cfg)
@@ -20,12 +23,14 @@ class TerminalGUI(Terminal):
         self.session = None
 
         self.col = 0
-        self.row = 0 #always from 0 to row_count
+        self.row = 0
 
         self.remain_buffer = []
 
         self.cur_line_option = get_default_text_attribute()
-        self.saved_screen_buffer, self.saved_cursor, self.saved_cur_line_option = ScreenBuffer(), (0, 0), get_default_text_attribute()
+        self.saved_screen_buffer, self.saved_cursor, \
+            self.saved_cur_line_option = \
+            ScreenBuffer(), (0, 0), get_default_text_attribute()
 
         self.status_line = []
         self.status_line_mode = 0
@@ -105,7 +110,10 @@ class TerminalGUI(Terminal):
         #translate g0, g1 charset
         c = self._translate_char(c)
 
-        w = char_width(c)
+        try:
+            w = char_width(c)
+        except:
+            LOGGER.exception(u'char width failed:{}'.format(c))
 
         if w == 0 or w == -1:
             LOGGER.warning(u'save buffer get a invalid width char: w= {}, c={}'.format(w, c))
@@ -183,7 +191,7 @@ class TerminalGUI(Terminal):
     def get_text(self):
         return self._screen_buffer.get_visible_lines()
 
-    def output_normal_data(self, c, insert = False):
+    def output_normal_data(self, c, insert=False):
         if c == '\x1b':
             LOGGER.error('normal data has escape char')
             sys.exit(1)
@@ -336,7 +344,7 @@ class TerminalGUI(Terminal):
 
             cursor_visible = not self._screen_buffer.is_view_history() \
                 and self._cursor_visible
-            
+
             self.term_widget.lines = lines
             self.term_widget.term_cursor = self.get_cursor()
             self.term_widget.cursor_visible = cursor_visible
@@ -655,19 +663,22 @@ class TerminalGUI(Terminal):
         self.col = 0
         self.parm_down_cursor(context, True, True)
 
+    def line_feed(self, context):
+        self.parm_down_cursor(context, True, True)
+
     def parm_index(self, context):
         saved_cursor = self.get_cursor()
         self.parm_down_cursor(context, True, True)
-        col, row = self.saved_cursor
+        col, row = saved_cursor
         self.set_cursor(col, row)
 
     def parm_rindex(self, context):
         saved_cursor = self.get_cursor()
         self.parm_up_cursor(context, True, True)
-        col, row = self.saved_cursor
+        col, row = saved_cursor
         self.set_cursor(col, row)
 
-    def parm_down_cursor(self, context, do_refresh = True, do_scroll = True):
+    def parm_down_cursor(self, context, do_refresh=True, do_scroll=True):
         begin, end = self.get_scroll_region()
 
         count = context.params[0] if context and context.params and len(context.params) > 0 else 1

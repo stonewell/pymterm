@@ -8,9 +8,11 @@ generic-cap|generic ansi escape:\
 	request_background_color=\E]11;?^G:\
 	qet_attributes=\E]%d;?\234:\
 	orig_pair=\E[m:\
+	clr_eos=\E[J:\
 	clr_eos=\E[%dJ:\
 	clr_eos=\E[%d;J:\
 	clr_eol=\E[0K:\
+	clr_eol=\E[K:\
 	clr_bol=\E[1K:\
 	clr_line=\E[2K:\
 	client_report_version=\E[>c:\
@@ -90,15 +92,12 @@ generic-cap|generic ansi escape:\
 	parm_right_cursor=\E[%dC:\
 	parm_up_cursor=\E[%dA:\
 	bell=^G:\
-	clr_bol=\E[1K:\
-	clr_eos=\E[J:\
-	clr_eol=\E[K:\
 	clear_screen=\E[H\E[J:\
 	cursor_address=\E[%i%d;%dH:\
 	carriage_return=^M:\
 	change_scroll_region=\E[%i%d;%dr:\
 	clear_tab=\E[%dg:\
-	next_line=^J:\
+	line_feed=^J:\
 	ena_acs=\E(B\E)0:\
 	cursor_home=\E[H:\
 	key_f0=\EOy:\
@@ -132,11 +131,7 @@ generic-cap|generic ansi escape:\
 	#exit_standout_mode=\E[m:\
 	set_tab=\EH:\
 	tab=^I:\
-	cursor_address=\E[%i%d;%dH:\
 	clear_screen=\E[H\E[2J:\
-	clr_bol=\E[1K:\
-	clr_eol=\E[K:\
-	clr_eos=\E[J:\
 	#index
 	parm_down_cursor=\ED:\
 	#reverse index

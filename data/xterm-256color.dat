@@ -21,11 +21,7 @@ xterm-256color|xterm with 256 colors:\
 	change_scroll_region=\E[%i%d;%dr:\
 	clear_all_tabs=\E[3g:\
 	clear_screen=\E[H\E[2J:\
-	clr_bol=\E[1K:\
-	clr_eol=\E[K:\
-	clr_eos=\E[J:\
 	column_address=\E[%i%dG:\
-	cursor_address=\E[%i%d;%dH:\
 	cursor_home=\E[H:\
 	cursor_invisible=\E[?25l:\
 	cursor_left=^H:\
