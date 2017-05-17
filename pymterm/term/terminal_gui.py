@@ -269,7 +269,6 @@ class TerminalGUI(Terminal):
 
     def carriage_return(self, context):
         self.col = 0
-        self.refresh_display()
 
     def set_foreground(self, light, color_idx):
         self.set_attributes(1 if light else -1, color_idx, -2)
@@ -361,12 +360,13 @@ class TerminalGUI(Terminal):
 
     def on_data(self, data):
         try:
-            self._data_lock.acquire()
+            # self._data_lock.acquire()
             Terminal.on_data(self, data)
         except:
             LOGGER.exception('on data')
         finally:
-            self._data_lock.release()
+            # self._data_lock.release()
+            pass
 
         self.refresh_display()
 
@@ -375,11 +375,6 @@ class TerminalGUI(Terminal):
             LOGGER.debug('meta_on')
 
     def set_attributes(self, mode, f_color_idx, b_color_idx):
-        fore_color = None
-        back_color = None
-
-        text_mode = None
-
         if (mode > 0):
             if mode & (1 << 1):
                 self.cur_line_option.set_mode(TextMode.BOLD)
@@ -425,11 +420,8 @@ class TerminalGUI(Terminal):
             LOGGER.debug('cursor address:{}'.format(context.params))
         self.set_cursor(context.params[1], context.params[0])
 
-        self.refresh_display()
-
     def cursor_home(self, context):
         self.set_cursor(0, 0)
-        self.refresh_display()
 
     def clr_eos(self, context):
         self.get_cur_line()
@@ -468,7 +460,6 @@ class TerminalGUI(Terminal):
             col = self.get_cols() - 1
 
         self.col = col
-        self.refresh_display()
 
     def parm_left_cursor(self, context):
         #same as xterm, if cursor out of screen, moving start from last col
@@ -481,7 +472,6 @@ class TerminalGUI(Terminal):
             col = 0
 
         self.col = col
-        self.refresh_display()
 
     def client_report_version(self, context):
         self.session.send('\033[>0;136;0c')
@@ -515,10 +505,6 @@ class TerminalGUI(Terminal):
         self._tab_stops[self.col] = True
 
     def tab(self, context):
-        #col = self.col / self.session.get_tab_width()
-        #col = (col + 1) * self.session.get_tab_width();
-
-        tab_width = self.get_tab_width()
         col = self.col
 
         if len(self._tab_stops) > 0:
@@ -564,21 +550,18 @@ class TerminalGUI(Terminal):
         else:
             self.set_scroll_region(context.params[0], context.params[1])
         self.cursor_home(None)
-        self.refresh_display()
 
     def change_scroll_region_from_start(self, context):
         if self.cfg.debug:
             LOGGER.debug('change scroll region from start:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(0, context.params[0])
         self.cursor_home(None)
-        self.refresh_display()
 
     def change_scroll_region_to_end(self, context):
         if self.cfg.debug:
             LOGGER.debug('change scroll region to end:{} rows={}'.format(context.params, self.get_rows()))
         self.set_scroll_region(context.params[0], self.get_rows() - 1)
         self.cursor_home(None)
-        self.refresh_display()
 
     def insert_line(self, context):
         self.parm_insert_line(context)
@@ -631,7 +614,6 @@ class TerminalGUI(Terminal):
 
     def key_shome(self, context):
         self.set_cursor(1, 0)
-        self.refresh_display()
 
     def enter_bold_mode(self, context):
         self.cur_line_option.set_mode(TextMode.BOLD)
@@ -650,11 +632,9 @@ class TerminalGUI(Terminal):
 
     def cursor_invisible(self, context):
         self._cursor_visible = False
-        self.refresh_display()
 
     def cursor_normal(self, context):
         self._cursor_visible = True
-        self.refresh_display()
 
     def cursor_visible(self, context):
         self.cursor_normal(context)
@@ -681,24 +661,30 @@ class TerminalGUI(Terminal):
     def parm_down_cursor(self, context, do_refresh=True, do_scroll=True):
         begin, end = self.get_scroll_region()
 
-        count = context.params[0] if context and context.params and len(context.params) > 0 else 1
+        count = context.params[0] if context and context.params \
+            and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            LOGGER.debug('before parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('before parm down cursor:{} {} {} {}'
+                         .format(begin, end, self.row, count))
+
+        scrolled = False
         for i in range(count):
             self.get_cur_line()
 
             if do_scroll and self.row == end:
                 self._screen_buffer.scroll_up()
+                scrolled = True
             elif self.row < end:
                 self.row += 1
 
             self.get_cur_line()
 
         if self.cfg.debug:
-            LOGGER.debug('after parm down cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('after parm down cursor:{} {} {} {}'
+                         .format(begin, end, self.row, count))
 
-        if do_refresh:
+        if do_refresh and scrolled:
             self.refresh_display()
 
     def exit_alt_charset_mode(self, context):
@@ -727,11 +713,9 @@ class TerminalGUI(Terminal):
 
     def shift_in_to_charset_mode_g0(self, context):
         self.charset_mode = 0
-        self.refresh_display()
 
     def shift_out_to_charset_mode_g1(self, context):
         self.charset_mode = 1
-        self.refresh_display()
 
     def enable_mode(self, context):
         if self.cfg.debug:
@@ -842,28 +826,33 @@ class TerminalGUI(Terminal):
     def column_address(self, context):
         col, row = self.get_cursor()
         self.set_cursor(context.params[0], row)
-        self.refresh_display()
 
-    def parm_up_cursor(self, context, do_refresh = True, do_scroll = True):
+    def parm_up_cursor(self, context, do_refresh=True, do_scroll=True):
         begin, end = self.get_scroll_region()
 
-        count = context.params[0] if context and context.params and len(context.params) > 0 else 1
+        count = context.params[0] if context and context.params \
+            and len(context.params) > 0 else 1
 
         if self.cfg.debug:
-            LOGGER.debug('before parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
+            LOGGER.debug('before parm up cursor:{} {} {} {}'
+                         .format(begin, end, self.row, count))
+
+        scrolled = False
         for i in range(count):
             self.get_cur_line()
 
             if do_scroll and self.row == begin:
                 self._screen_buffer.scroll_down()
+                scrolled = True
             elif self.row > begin:
                 self.row -= 1
 
             self.get_cur_line()
 
         if self.cfg.debug:
-            LOGGER.debug('after parm up cursor:{} {} {} {}'.format(begin, end, self.row, count))
-        if do_refresh:
+            LOGGER.debug('after parm up cursor:{} {} {} {}'
+                         .format(begin, end, self.row, count))
+        if do_refresh and scrolled:
             self.refresh_display()
 
     def prompt_login(self, t, username):
@@ -931,6 +920,7 @@ class TerminalGUI(Terminal):
     def determin_colors(self, attr):
         if self.cfg.debug_more:
             LOGGER.debug('determin_colors:attr={}'.format(attr))
+
         def _get_color(idx):
             color = None
 
