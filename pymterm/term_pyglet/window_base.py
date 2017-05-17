@@ -120,8 +120,11 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
         if bold:
             attrs.update({'bold': True})
 
-        doc.set_style(begin, end, attrs)
+        if len(attrs) > 0:
+            doc.set_style(begin, end, attrs)
 
+        return len(attrs)
+    
     def _create_line_doc(self, line):
         text = line.get_text()
 
@@ -145,6 +148,8 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
                        }
                       )
 
+        has_attr = False
+        
         for cell in line.get_cells():
             if cell.get_char() == '\000':
                 continue
@@ -157,12 +162,12 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
             if (cur_b_color, cur_f_color, cur_bold) != \
                (last_b_color, last_f_color, last_bold):
                 if cur_col > last_col:
-                    self._set_doc_attribute(doc,
-                                            last_col,
-                                            cur_col,
-                                            last_f_color,
-                                            last_b_color,
-                                            last_bold)
+                    has_attr |= self._set_doc_attribute(doc,
+                                                        last_col,
+                                                        cur_col,
+                                                        last_f_color,
+                                                        last_b_color,
+                                                        last_bold)
 
                 last_b_color = cur_b_color
                 last_f_color = cur_f_color
@@ -172,14 +177,14 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
             cur_col += 1
 
         if last_col < cur_col:
-            self._set_doc_attribute(doc,
-                                    last_col,
-                                    cur_col,
-                                    last_f_color,
-                                    last_b_color,
-                                    last_bold)
+            has_attr |= self._set_doc_attribute(doc,
+                                                last_col,
+                                                cur_col,
+                                                last_f_color,
+                                                last_b_color,
+                                                last_bold)
 
-        return doc
+        return doc, has_attr, len(text.strip())
 
     def _create_line_layout(self, line, batch):
         cache = _get_line_doc(line.get_hash_value())
@@ -187,10 +192,14 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
         if cache.cached:
             doc = cache.doc
         else:
-            doc = self._create_line_doc(line)
+            doc, has_attr, printable_text_len = self._create_line_doc(line)
+            doc = doc if has_attr or printable_text_len > 0 else None
             cache.doc = doc
             cache.cached = True
 
+        if not doc:
+            return None
+        
         col_width, line_height = self._get_layout_info()
         return layout.TextLayout(doc,
                                  col_width,
@@ -228,12 +237,14 @@ class TermPygletWindowBase(pyglet.window.Window, TerminalWidget):
                     pass
 
                 layout = self._create_line_layout(line, self._batch)
-                layout.begin_update()
-                layout.x = PADDING
-                layout.y = y
-                layout.width = self.width
-                layout.height = line_height
-                layout.end_update()
+
+                if layout:
+                    layout.begin_update()
+                    layout.x = PADDING
+                    layout.y = y
+                    layout.width = self.width - PADDING * 2
+                    layout.height = line_height
+                    layout.end_update()
 
                 try:
                     self._draw_lines[index] = (line, layout)
